@@ -1,11 +1,18 @@
 PL 20/02/2014
 michelle
+Updated: DP 08/05/2014
 
 Here is the newly created thorn for FLRW.  
 Directions:
 	* Put the entire thorn (i.e., the folder FLRWSolver) in the directory Cactus/arrangements/EinsteinInitialData/
+          You can do this directly from the git repository on bitbucket using:
+          
+          cd Cactus/arrangements/EinsteinInitialData/
+          git clone https://USERNAME@bitbucket.org/danielprice/flrwsolver.git
+          
+          replacing USERNAME with your bitbucket username.
 
 	* add a line in the thornlist file that says (for me this is the file Cactus/manifest/einsteintoolkit.th):
-	      EinsteinInitialData/FLRWSolver
+	      EinsteinInitialData/flrwSolver
 
 	* Recompile and enjoy
