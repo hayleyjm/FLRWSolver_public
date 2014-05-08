@@ -1,0 +1,71 @@
+# Parameter definitions for thorn FLRWSolver
+
+CCTK_REAL FLRW_init_rho "FLRW Initial Density"
+{
+  0.0:* :: "Must be positive"
+} 0.0
+
+CCTK_REAL FLRW_gamma "The polytropic constant in P = K rho^Gamma"
+{
+  1.0: :: "P = K rho**gamma"
+} 2.0
+
+CCTK_REAL FLRW_K "The polytropic constant in P = K rho^Gamma"
+{
+  0.0:* :: "P = K rho**gamma -- note this may run into trouble if P = 0"
+} 0.0
+
+BOOLEAN FLRW_perturb "Add density perturbation"
+{
+} "no"
+
+CCTK_REAL FLRW_pert_amplitude "Amplitude of perturbation"
+{
+  *:* :: "Anything"
+} 0.0
+
+
+shares:HydroBase
+
+EXTENDS KEYWORD initial_hydro ""
+{
+  "flrw" :: "flrw star initial hydrobase variables"
+}
+
+shares:admbase
+
+EXTENDS KEYWORD initial_data
+{
+  "flrw" :: "FLRW star initial metric"
+}
+
+EXTENDS KEYWORD initial_lapse
+{
+  "flrw" :: "FLRW initial lapse"
+}
+
+EXTENDS KEYWORD initial_dtlapse
+{
+  "flrw" :: FLRW initial dtlapse
+}
+
+EXTENDS KEYWORD initial_shift
+{
+  "flrw" :: "FLRW initial shift"
+}
+
+USES KEYWORD metric_type
+
+shares:StaticConformal
+
+USES KEYWORD conformal_storage
+
+shares:GRHydro
+
+USES real rho_abs_min
+USES real rho_rel_min
+USES REAL initial_rho_abs_min
+USES REAL initial_rho_rel_min
+USES REAL initial_atmosphere_factor
+USES real GRHydro_rho_central
+

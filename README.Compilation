@@ -1,0 +1,34 @@
+
+
+Build Cactus from the build directory:
+
+./simfactory/bin/sim build --thornlist manifest/einsteintoolkit.th --optionlist=debian-intel.cfg
+
+OR (can't remember which one -- to confirm)
+
+./simfactory/bin/sim build --thornlist manifest/einsteintoolkit.th --optionlist=massive.cfg
+
+to clean the previous build, add --clean to the above command.
+
+
+
+Note: common errors include anything to do with Meudon portions of the code!  If so, go into manifest/einsteintoolkit.th
+and comment out the following (using #) 
+# EinsteinInitialData/Meudon_Bin_BH
+# EinsteinInitialData/Meudon_Bin_NS
+# EinsteinInitialData/Meudon_Mag_NS
+
+# ExternalLibraries/LORENE
+
+
+Configuration files for the build are in simfactory/mdb/optionlists/
+Default config is debian-intel.cfg
+Paul has a config on massive (massive.cfg)
+
+Then need to run:
+
+simfactory/bin/sim setup
+
+to set various options. And run build command again...
+
+On MASSIVE need to load various modules (Paul's are in modules.lasky in the FLRW directory)

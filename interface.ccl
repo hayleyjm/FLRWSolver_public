@@ -1,0 +1,10 @@
+# Interface definition for thorn FLRWSolver
+
+implements: FLRWSolver
+inherits: ADMBase, HydroBase, Constants, StaticConformal
+
+CCTK_REAL FLRW_params TYPE=gf
+{
+	FLRW_rho0
+	FLRW_Lambda
+} "FLRW parameters"

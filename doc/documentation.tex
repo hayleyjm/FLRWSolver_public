@@ -1,0 +1,384 @@
+% *======================================================================*
+%  Cactus Thorn template for ThornGuide documentation
+%  Author: Ian Kelley
+%  Date: Sun Jun 02, 2002
+%
+%  Thorn documentation in the latex file doc/documentation.tex
+%  will be included in ThornGuides built with the Cactus make system.
+%  The scripts employed by the make system automatically include
+%  pages about variables, parameters and scheduling parsed from the
+%  relevant thorn CCL files.
+%
+%  This template contains guidelines which help to assure that your
+%  documentation will be correctly added to ThornGuides. More
+%  information is available in the Cactus UsersGuide.
+%
+%  Guidelines:
+%   - Do not change anything before the line
+%       % START CACTUS THORNGUIDE",
+%     except for filling in the title, author, date, etc. fields.
+%        - Each of these fields should only be on ONE line.
+%        - Author names should be separated with a \\ or a comma.
+%   - You can define your own macros, but they must appear after
+%     the START CACTUS THORNGUIDE line, and must not redefine standard
+%     latex commands.
+%   - To avoid name clashes with other thorns, 'labels', 'citations',
+%     'references', and 'image' names should conform to the following
+%     convention:
+%       ARRANGEMENT_THORN_LABEL
+%     For example, an image wave.eps in the arrangement CactusWave and
+%     thorn WaveToyC should be renamed to CactusWave_WaveToyC_wave.eps
+%   - Graphics should only be included using the graphicx package.
+%     More specifically, with the "\includegraphics" command.  Do
+%     not specify any graphic file extensions in your .tex file. This
+%     will allow us to create a PDF version of the ThornGuide
+%     via pdflatex.
+%   - References should be included with the latex "\bibitem" command.
+%   - Use \begin{abstract}...\end{abstract} instead of \abstract{...}
+%   - Do not use \appendix, instead include any appendices you need as
+%     standard sections.
+%   - For the benefit of our Perl scripts, and for future extensions,
+%     please use simple latex.
+%
+% *======================================================================*
+%
+% Example of including a graphic image:
+%    \begin{figure}[ht]
+% 	\begin{center}
+%    	   \includegraphics[width=6cm]{MyArrangement_MyThorn_MyFigure}
+% 	\end{center}
+% 	\caption{Illustration of this and that}
+% 	\label{MyArrangement_MyThorn_MyLabel}
+%    \end{figure}
+%
+% Example of using a label:
+%   \label{MyArrangement_MyThorn_MyLabel}
+%
+% Example of a citation:
+%    \cite{MyArrangement_MyThorn_Author99}
+%
+% Example of including a reference
+%   \bibitem{MyArrangement_MyThorn_Author99}
+%   {J. Author, {\em The Title of the Book, Journal, or periodical}, 1 (1999),
+%   1--16. {\tt http://www.nowhere.com/}}
+%
+% *======================================================================*
+
+% If you are using CVS use this line to give version information
+
+
+\documentclass{article}
+
+
+% Use the Cactus ThornGuide style file
+% (Automatically used from Cactus distribution, if you have a
+%  thorn without the Cactus Flesh download this from the Cactus
+%  homepage at www.cactuscode.org)
+\usepackage{../../../../doc/latex/cactus}
+\usepackage{latexsym}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+
+
+\begin{document}
+
+% The author of the documentation
+\author{I.~Hawke,\\
+ F.~Loeffler \textless loeffler@sissa.it \textgreater } 
+%A.~Nagar \textless alessandro.nagar@polito.it\textgreater}
+
+% The title of the document (not necessarily the name of the Thorn)
+\title{TOVSolver}
+
+% the date your document was last changed, if your document is in CVS,
+% please use:
+%    \date{$ $Date: 2009-09-17 15:39:33 -0500 (Thu, 17 Sep 2009) $ $}
+
+\date{\today}
+
+\maketitle
+
+% Do not delete next line
+% START CACTUS THORNGUIDE
+
+% Add all definitions used in this documentation here
+%   \def\mydef etc
+
+\begin{abstract}
+  This thorn solves the Tolman-Oppenheimer-Volkov equations of hydrostatic equilibrium
+  for a spherically symmetric static star. 
+\end{abstract}
+
+
+%---------------------
+\section{Introduction}
+\label{sec:intro}
+%---------------------
+
+The Tolman-Oppenheimer-Volkoff solution is a static perfect fluid
+``star''. It is frequently used as a test of relativistic hydro
+codes. Here it is intended for use without evolving the matter
+terms. This provides a compact strong field solution which is static
+but does not contain singularities.
+
+
+%------------------
+\section{Equations}
+\label{sec:eqn}
+%------------------
+
+The equations for a TOV star~\cite{Tolman39,OppVol39,mtw} are usually
+derived in Schwarzschild coordinates. In these coordinates, the metric can
+be brought into the form
+\begin{equation}
+ds^2 = -e^{2\phi}dt^2 + \left(1-\dfrac{2m}{r}\right)^{-1}dr^2 + r^2 d\Omega^2 \ .
+\end{equation}
+
+
+This thorn is based on the notes of Thomas Baumgarte~\cite{Baumgarte-file} that 
+have been partially included in this documentation. However the notation for the
+fluid quantities follows~\cite{Font00a}. 
+Here we are assuming that the stress energy tensor is given by
+\begin{equation}
+  \label{eq:Tmunu}
+  T^{\mu\nu} = (\mu + P)u^{\mu}u^{\nu} + Pg^{\mu\nu},
+\end{equation}
+where $\mu$ is the total energy, $P$ the pressure, $u^{\mu}$ the fluid
+four velocity, $\rho$ the rest-mass density, $\epsilon$ the specific
+internal energy, and
+\begin{eqnarray}
+  \label{eq:fluidquantities}
+  \mu & = & \rho (1 + \epsilon), \\
+  P & = & (\Gamma - 1)\rho\epsilon, \\
+  P & = & K \rho^{\Gamma}.
+\end{eqnarray}
+This enforces a polytropic equation of state. We note that in Cactus
+the units are $c = G = M_{\odot} = 1$.
+
+The equations to give the initial data are solved (as usual) in the
+Schwarzschild-like coordinates with the areal radius labelled $r$.
+The equations of the relativistic hydrostatic equilibrium are
+\begin{eqnarray}
+  \label{eq:TOViso}
+  \frac{d P}{d r} & = & -(\mu + P) \frac{m + 4\pi r^3 P}{r(r - 2m)}, \\
+%
+  \frac{d m}{d r} & = & 4 \pi r^2 \mu, \\
+%
+  \frac{d \phi}{d r} & = & \frac{m + 4\pi r^3 P}{r(r -
+    2m)} \ . \\
+\end{eqnarray}
+Here $m$ is the gravitational mass inside the sphere radius $r$, and
+$\phi$ the logarithm of the lapse. Once the integration is done for the 
+interior of the star we match to the exterior (see below). In the exterior 
+we have
+\begin{align}
+  \label{eq:TOVexterior}
+     P & =  {\tt TOV\_atmosphere}, \\
+     m & =  M, \\
+  \phi & = \dfrac{1}{2} \log(1-2M / r).
+\end{align}
+
+In order to impose initial data in cartesian coordinates, we want to transform
+this solution to isotropic coordinates, in which the metric takes the form
+\begin{equation}
+\label{eq:metr_iso}
+ds^2 = -e^{2\phi}dt^2+e^{2\Lambda}\left(d\bar{r}^2+\bar{r}^2d\Omega^2\right) \ .
+\end{equation}
+Here $\bar{r}$ denotes the isotropic radius. Matching the two metrics, one
+obviously finds
+\begin{align}
+r^2                                    &= e^{2\Lambda}\bar{r}^2 \ , \\
+\left(1-\dfrac{2m}{r}\right)^{-1} dr^2 &= e^{2\Lambda}d\bar{r}^2 \ .
+\end{align}
+As a result, we have an additional differential equation to solve in order
+to have $\bar{r}(r)$, that is
+\begin{equation}
+\label{eq:rbar}
+\frac{d (\log(\bar{r} / r))}{\partial r} =  \frac{r^{1/2} - (r-2m)^{1/2}}{r(r-2m)^{1/2}} \ .
+\end{equation}
+Given such a solution, the missing metric potential is simply given by
+\begin{equation}
+e^{\Lambda} = \dfrac{r}{\bar{r}} \ .
+\end{equation}
+In the following section we concentrate on solving Eq.~(\ref{eq:rbar}) in the
+exterior and in the interior of the star.
+
+Then, given these one-dimensional data we interpolate to get data on 
+the three-dimensional Cactus grid; that is, we interpolate on the three dimensional 
+{\tt r} given by the {\tt x, y, z} variables the physical hydro and spacetime
+quantities that are function of the isotropic radius $\bar{r}$ computed above. 
+Only linear interpolation is used. This avoids problems at the surface of the 
+star, and does not cause problems if the number of points in the one dimensional 
+array is sufficient ($1\times 10^5$ is the default, which should be sufficient for 
+medium-sized grids).
+
+%--------------------
+\subsection{Exterior}
+\label{sbsc:exterior}
+%--------------------
+
+In the exterior of the star, $r>R$, the mass $M\equiv m(R)$ is constant, and 
+Eq.~(\ref{eq:rbar}) can be solved analytically up to a constant of integration. 
+Fixing this constant such that $r$ and $\bar{r}$ agree at infinity, we find
+\begin{equation}
+\bar{r} = \dfrac{1}{2}\left(\sqrt{r^2-2Mr}+r -M\right) \ ,
+\end{equation}
+or, solving for $r$ [cfr. Exercise 31.7 of MTW~\cite{mtw}]
+\begin{equation}
+r=\bar{r}\left(1+\dfrac{M}{2\bar{r}}\right)^2 \ .
+\end{equation}
+The metric potential as a function of $\bar{r}$ is obviously
+\begin{equation}
+e^{2\Lambda} = \left(1+\dfrac{M}{2\bar{r}}\right)^2 \ .
+\end{equation}
+
+%--------------------
+\subsection{Interior}
+\label{sbsc:interior}
+%--------------------
+
+In the interior, Eq,~(\ref{eq:rbar}) can not be integrated analytically, because
+$m$ is now a function of $r$. Instead, we have to integrate
+\begin{equation}
+\int_0^{\bar{r}} \dfrac{d\bar{r}}{\bar{r}} = \int_0^r\left(1-\dfrac{2m}{r}\right)^{-1/2}\dfrac{dr}{r} \ .
+\end{equation}
+The left hand side can be integrated analytically, and has a singular point at
+$\bar{r}=0$. The right hand side cannot be integrated analytically, but will also
+be singular at $r=0$, which poses problems when trying to integrate the equation
+numerically. We therefore rewrite the right hand side by adding and subracting
+a term $1/r$, which yields
+\begin{equation}
+\int_0^r\dfrac{1}{r(1-2m/r)^{1/2}}dr = \int_0^r\dfrac{1-(1-2m/r)^{1/2}}{r(1-2m/r)^{1/2}}dr+\int_0^r\dfrac{dr}{r} \ .
+\end{equation}
+Since $m\sim r^3$ close to the origin, the first term on the right hand side is now
+regular and the second one can be integrated analytically. As a result, we find
+\begin{equation}
+\int_0^{\bar{r}}d\ln\bar{r}-\int_0^rd\ln r=\int_0^r\dfrac{1-(1-2m/r)^{1/2}}{r(1-2m/r)^{1/2}}dr \ .
+\end{equation}
+Replacing the lower limits ($r=\bar{r}=0$) temporarily with $r_0$ and $\bar{r}_0$, we can integrate
+the right hand side and find
+\begin{equation}
+\ln\left(\dfrac{\bar{r}}{r}\right)-\ln\left(\dfrac{\bar{r}_0}{r_0}\right)=\int_0^r\dfrac{1-(1-2m/r)^{1/2}}{r(1-2m/r)^{1/2}}dr \ ,
+\end{equation}
+or
+\begin{equation}
+\bar{r} = C r \exp\left[\int_0^r\dfrac{1-(1-2m/r)^{1/2}}{r(1-2m/r)^{1/2}}dr\right] \ .
+\end{equation}
+Here the constant of integration $C$ is related to the ratio $\bar{r}_0/r_0$ evaluated at
+the origin (which is perfectly regular). It can be chosen such that the interior solution
+matches the exterior solution at the surface of the star. This requirement implies
+\begin{equation}
+C = \dfrac{1}{2R}\left(\sqrt{R^2-2MR}+R-M\right)\exp\left[\int_0^R\dfrac{1-(1-2m/r)^{1/2}}{r(1-2m/r)^{1/2}}dr\right] \ .
+\end{equation}
+In this respect, let us recall how we do initial data for the system of 
+equations at $r=0$.  Given a value of the central density $\rho_c$ (in
+Cactus units) we pose $P_0 = K\rho_c^{\Gamma}$, $m_0=0$, $\phi_0=0$ and 
+$\bar{r}_0 = {\tt TOV\_Tiny}$, $r_0 = {\tt TOV\_Tiny}$. The {\tt TOV\_Tiny} 
+number is hardwired into the code to avoid divide by zero errors; it is $10^{-20}$. 
+Also the default parameters will give the TOV star used for the long term evolutions
+in~\cite{Font02a}. That is, a nonrotating $N=1$ ($\gamma=1+1/N=2$) polytropic star 
+with gravitational mass $M=1.4M_{\odot}$, circumferential radius $R=14.15$km, central 
+rest-mass density $\rho_c=1.28 \times 10^{-3}$ and $K=100$.
+
+
+%--------------------------
+\section{Use of this thorn}
+\label{sec:use}
+%--------------------------
+
+To use this thorn to provide initial data for the {\tt ADMBase}
+variables $\alpha$, $\beta$, $g$ and $K$ just activate the thorn and
+set {\tt ADMBase:initial\_data = ``TOV''}.
+
+There are two ways of coupling the matter sources to the thorn that
+evolves the Einstein equations. One is to use the {\tt CalcTmunu}
+interface. This will give the components of the stress energy tensor
+\emph{pointwise} across the grid. For an example of this, see thorn
+{\tt ADM} in {\tt CactusEinstein}.
+
+To use the {\tt CalcTmunu} interface you should
+\begin{itemize}
+\item put the lines
+\begin{verbatim}
+friend: ADMCoupling
+
+USES INCLUDE: CalcTmunu.inc
+USES INCLUDE: CalcTmunu_temps.inc
+USES INCLUDE: CalcTmunu_rfr.inc
+\end{verbatim}
+in your {\tt interface.ccl}
+\item In any routine requiring the matter terms, put 
+  \begin{itemize}
+  \item {\tt \#include ``CalcTmunu\_temps.inc''} in the variable
+    declarations
+  \item declare {\tt CCTK\_REAL}s {\tt Ttt, Ttx, Tty, Ttz, Txx, Txy,
+      Txz, Tyy, Tyz, Tzz}.
+  \item Inside an {\tt i,j,k} loop put {\tt \#include
+      ``CalcTmunu.inc''}. {\bf This must be a Fortran routine} (We
+    could probably fix this if requested).
+  \end{itemize}
+\item You then use the real numbers {\tt Ttt} etc.~as the stress
+  energy tensor at a point.
+\end{itemize}
+
+As an alternative you can use the grid functions {\tt StressEnergytt,
+  StressEnergytx}, etc.~directly to have the stress energy tensor over
+the entire grid. To do this you just need the line {\tt friend:
+  ADMCoupling} in your {\tt interface.ccl}. Although this seems much
+simpler, you will now \emph{only} get the contributions from the {\tt
+  TOVSolver} thorn. If you want to use other matter sources, most of
+the current thorns ({\tt CosmologicalConstant}, the hydro code, the
+scalar field code) all use the {\tt CalcTmunu} interface.
+
+You also have the possibility to use a parameter
+{\tt GRHydrotovsolver::TOV\_Separation} to obtain a spacetime consisting
+of one TOV-system for $x>0$ and a second (similar) for $x<0$. This parameter
+sets the separation of the centers of two neutron stars, has to be positive
+and should be larger than twice the radius of one star.\\
+Be aware that the spacetime obtained by this is no physical spacetime and
+no solution of Einsteins Equations and therefore an IVP-run has to follow.
+This parameter was only introduced for testing purposes of the IVP-Solver
+and should only be considered as such. There would be better (and also easy)
+ways to obtain initial data for two TOVs than that.
+
+
+
+
+
+\begin{thebibliography}{10}
+
+\bibitem{Tolman39}
+R.~C. Tolman, Phys. Rev. {\bf 55}, 364 (1939).
+%
+\bibitem{OppVol39}
+J.~R. Oppenheimer and G. Volkoff, Physical Review {\bf 55}, 374 (1939).
+%
+\bibitem{mtw}
+C.W.~Misner, K.S.~Thorn and J.A.~Wheeler, Gravitation (Freeman and co. NY, 1973).
+%
+\bibitem{Baumgarte-file}
+T.~W. Baumgarte. There is a copy of his notes in this directory: \\
+TOVSolver/doc.
+%
+\bibitem{Font00a}
+J.~A. Font, M. Miller, W. Suen and M. Tobias, Phys. Rev. {\bf D61},
+044011 (2000).
+%
+\bibitem{Font02a}
+J.~A. Font, T. Goodale, S. Iyer, M. Miller, L. Rezzolla, E. Seidel,
+N. Stergioulas, W. Suen and M. Tobias, Phys. Rev. {\bf D65},
+084024 (2002).
+
+
+\end{thebibliography}
+
+\include{interface}
+\include{param}
+\include{schedule}
+
+% Do not delete next line
+% END CACTUS THORNGUIDE
+
+
+\end{document}

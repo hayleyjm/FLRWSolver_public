@@ -1,0 +1,9 @@
+# Schedule definitions for thorn FLRWSolver
+
+schedule FLRW_InitialData IN HydroBase_Initial
+{
+	LANG: Fortran
+} "Sets up the initial data for FLRW"
+
+
+
