@@ -13,9 +13,9 @@ ActiveThorns = "ADMConstraints NaNChecker"
 CartGrid3D::type         = "coordbase"
 CartGrid3D::domain       = "full"
 CartGrid3D::avoid_origin = "no"
-CoordBase::xmin =   0.0
-CoordBase::ymin =   0.0
-CoordBase::zmin =   0.0
+CoordBase::xmin = -240.0
+CoordBase::ymin = -240.0
+CoordBase::zmin = -240.0
 CoordBase::xmax = 240.0
 CoordBase::ymax = 240.0
 CoordBase::zmax = 240.0
@@ -32,9 +32,9 @@ CoordBase::boundary_size_z_upper        = 3
 CoordBase::boundary_shiftout_x_lower    = 1
 CoordBase::boundary_shiftout_y_lower    = 1
 CoordBase::boundary_shiftout_z_lower    = 1
-CoordBase::boundary_shiftout_x_upper    = 0
-CoordBase::boundary_shiftout_y_upper    = 0
-CoordBase::boundary_shiftout_z_upper    = 0
+CoordBase::boundary_shiftout_x_upper    = 1
+CoordBase::boundary_shiftout_y_upper    = 1
+CoordBase::boundary_shiftout_z_upper    = 1
 
 ActiveThorns = "Periodic Slab CarpetSlab"
 Periodic::periodic = "yes"
@@ -47,7 +47,7 @@ TmunuBase::stress_energy_at_RHS  = yes
 TmunuBase::timelevels            =  1
 TmunuBase::prolongation_type     = none
 
-HydroBase::timelevels            = 3
+HydroBase::timelevels            = 3 # Number of time levels in evolution scheme
 
 ADMMacros::spatial_order = 4
 
@@ -85,14 +85,19 @@ Carpet::prolongation_order_time  = 2
 CarpetRegrid2::regrid_every = 0
 CarpetRegrid2::num_centres  = 1
 
-CarpetRegrid2::num_levels_1 = 5
-CarpetRegrid2::radius_1[1]  =120.0
-CarpetRegrid2::radius_1[2]  = 60.0
-CarpetRegrid2::radius_1[3]  = 30.0
-CarpetRegrid2::radius_1[4]  = 15.0
+CarpetRegrid2::num_levels_1 = 1
+CarpetRegrid2::radius_1[1]  =240.0
+
+# CarpetRegrid2::num_levels_1 = 5
+# CarpetRegrid2::radius_1[1]  =120.0
+# CarpetRegrid2::radius_1[2]  = 60.0
+# CarpetRegrid2::radius_1[3]  = 30.0
+# CarpetRegrid2::radius_1[4]  = 15.0
 
 
-time::dtfac = 0.25
+# time::dtfac = 0.25
+time::dtfac = 0.1
+
 MoL::ODE_Method             = "rk4"
 MoL::MoL_Intermediate_Steps = 4
 MoL::MoL_Num_Scratch_Levels = 1
@@ -169,17 +174,24 @@ ADMBase::initial_dtlapse         = "flrw"
 ADMBase::initial_dtshift         = "zero"
 HYDROBase::initial_hydro	 = "flrw"
 
-FLRWSolver::FLRW_init_rho	 = 1.e-4
+FLRWSolver::FLRW_init_rho	 = 1.e-8
 FLRWSolver::FLRW_gamma         	 = 2.0
-FLRWSolver::FLRW_K             	 = 100.0
+FLRWSolver::FLRW_K             	 = 0.0
 FLRWSolver::FLRW_perturb	 = no
 
-IOBasic::outInfo_every              = 1
+
+IOBasic::outInfo_criterion	= "iteration"
+IOBasic::outInfo_every              = 10
+# IOBasic::outInfo_dt 		= 1.0
 IOBasic::outInfo_vars               = "HydroBase::rho ADMBase::lapse"
 
 IO::out_dir      = $parfile
 
-IOScalar::outScalar_every = 32
+
+# IOScalar::outScalar_every = 1
+IOScalar::outscalar_criterion         = "time"
+IOScalar::outscalar_dt                = 0.2
+
 IOScalar::one_file_per_group = yes
 IOScalar::outScalar_vars  = "
  HydroBase::rho
@@ -195,7 +207,7 @@ IOScalar::outScalar_vars  = "
  
 "
 
-IOASCII::out1D_every     = 256
+IOASCII::out1D_every     = 20
 IOASCII::one_file_per_group = yes
 IOASCII::output_symmetry_points = no
 IOASCII::out3D_ghosts           = no
