@@ -70,7 +70,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
          ! set up  matter variables
          if (hydro) then
             rho(i,j,k) = rho0
-            press(i,j,k) = 0.0
+            press(i,j,k) = FLRW_init_K * rho0 ** FLRW_init_gamma
             eps(i,j,k) = 0.0
             vel(i,j,k,1) = 0.0
             vel(i,j,k,2) = 0.0
