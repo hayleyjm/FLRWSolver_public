@@ -69,3 +69,7 @@ USES REAL initial_rho_rel_min
 USES REAL initial_atmosphere_factor
 USES real GRHydro_rho_central
 
+
+shares:EOS_Omni
+USES REAL gl_gamma
+

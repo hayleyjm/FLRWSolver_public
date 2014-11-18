@@ -23,7 +23,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   shift = CCTK_EQUALS (initial_shift, "flrw")
   data  = CCTK_EQUALS (initial_data,  "flrw")
   hydro = CCTK_EQUALS (initial_hydro, "flrw")
-  
+
   rho0 = FLRW_init_rho
   a0 = 1.0
   asq = a0*a0
@@ -77,6 +77,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
             vel(i,j,k,3) = 0.0
          end if
          
+
         end do
      end do
   end do

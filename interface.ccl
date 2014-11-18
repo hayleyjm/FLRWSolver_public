@@ -1,7 +1,11 @@
 # Interface definition for thorn FLRWSolver
 
 implements: FLRWSolver
-inherits: ADMBase, HydroBase, Constants, StaticConformal
+inherits: ADMBase, HydroBase, Constants, StaticConformal, EOS_Omni
+
+#USES INCLUDE: EOS_Base.inc
+USES INCLUDE: SpaceMask.h
+#USES INCLUDE: EOS_Base.h
 
 CCTK_REAL FLRW_params TYPE=gf
 {
