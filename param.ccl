@@ -19,6 +19,18 @@ BOOLEAN FLRW_perturb "Add density perturbation"
 {
 } "no"
 
+KEYWORD FLRW_perturb_type "Add perturbation"
+{ 
+ "Sine" :: "Sine wave density perturbation"
+ "Tophat" :: "Tophat perturbation"
+} "Sine"
+
+CCTK_REAL Gaussian_r0 "Gaussian width"
+{
+0.0:* :: "rho = rho0*exp(-r**2/r0**2)"
+} 5.0
+
+
 CCTK_REAL FLRW_pert_amplitude "Amplitude of perturbation"
 {
   *:* :: "Anything"
@@ -72,4 +84,3 @@ USES real GRHydro_rho_central
 
 shares:EOS_Omni
 USES REAL gl_gamma
-
