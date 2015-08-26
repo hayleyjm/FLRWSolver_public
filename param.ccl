@@ -15,27 +15,61 @@ CCTK_REAL FLRW_K "The polytropic constant in P = K rho^Gamma"
   0.0:* :: "P = K rho**gamma -- note this may run into trouble if P = 0"
 } 0.0
 
-BOOLEAN FLRW_perturb "Add density perturbation"
+BOOLEAN FLRW_perturb_density "Add density perturbation"
+{
+} "no"
+
+BOOLEAN FLRW_perturb_metric "Add metric perturbation - g_ij, lapse, K_ij"
+{
+} "no"
+
+BOOLEAN FLRW_test "Initiate test density currently in code"
 {
 } "no"
 
 KEYWORD FLRW_perturb_type "Add perturbation"
 { 
- "Sine" :: "Sine wave density perturbation"
+ "Sine" :: "Sine wave density perturbation - also need to set FLRW_phi_type from here"
  "Tophat" :: "Tophat perturbation"
+ "Gaussian" :: "Gaussian perturbation - has no perturbation in PHI"
 } "Sine"
 
-CCTK_REAL Gaussian_r0 "Gaussian width"
+KEYWORD FLRW_phi_type "Choose potential type"
 {
-0.0:* :: "rho = rho0*exp(-r**2/r0**2)"
-} 5.0
+"Poisson" :: "Solution to Poisson's equation with rho = rho0*(1+A*sin(kx*x))"
+"General" :: "General Sine wave shape phi = B*sin(kx*x) - corresponding density will be solution of Hamiltonian constraint"
+} "General"
 
 
-CCTK_REAL FLRW_pert_amplitude "Amplitude of perturbation"
+CCTK_REAL FLRW_pert_amplitude "Amplitude of perturbation - in Poisson case is A. In General case is B"
 {
   *:* :: "Anything"
 } 0.0
 
+CCTK_REAL FLRW_radius "Radius of tophat/gaussian perturbation"
+{
+  0.0:240 :: "Anything for current grid size of 480"
+} 0.0 
+
+CCTK_REAL FLRW_offset_x "Offset of tophat/gaussian from origin in x-direction"
+{
+  *:* :: "anything"
+} 0.0
+
+CCTK_REAL FLRW_offset_y "Offset of tophat/gaussian from origin in	y-direction"
+{
+  *:* :: "anything"
+} 0.0
+
+CCTK_REAL FLRW_offset_z "Offset of tophat/gaussian from origin in	z-direction"
+{
+  *:* :: "anything"
+} 0.0
+
+CCTK_REAL FLRW_xmax "Maximum x-value of grid"
+{
+  *:* :: "Anything"
+} 240
 
 shares:HydroBase
 
