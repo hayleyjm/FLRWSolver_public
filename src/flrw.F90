@@ -38,7 +38,6 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   offset_z = FLRW_offset_z
   kx = 2.0*pi/box_length
 
-
   do k = 1, cctk_lsh(3)
     do j = 1, cctk_lsh(2)
       do i = 1, cctk_lsh(1)
@@ -47,16 +46,16 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
 
 	 if (CCTK_EQUALS (FLRW_perturb_type, "Sine")) then
 
-	    	if (CCTK_EQUALS (FLRW_phi_type, "General")) then
-	       	   phi = perturb_rho0*sin(kx*x(i,j,k))
-	    	elseif (CCTK_EQUALS (FLRW_phi_type, "Poisson")) then	    
-	       	   phi = -4.*pi*perturb_rho0*sin(kx*x(i,j,k))/kx**2
-	    	endif
+	    if (CCTK_EQUALS (FLRW_phi_type, "General")) then
+	       phi = perturb_rho0*sin(kx*x(i,j,k))
+	    elseif (CCTK_EQUALS (FLRW_phi_type, "Poisson")) then	    
+	       phi = -4.*pi*perturb_rho0*sin(kx*x(i,j,k))/kx**2
+	    endif
 
 	 elseif (CCTK_EQUALS (FLRW_perturb_type, "Tophat")) then
 
 	 	rad = sqrt((x(i,j,k) - offset_x)**2 + (y(i,j,k) - offset_y)**2 + (z(i,j,k) - offset_z)**2)
-	 	
+
 		if (rad <= r0) then
          	   phi = 2.*pi* (rho0 + perturb_rho0)*(rad**2 - 3.*r0**2)/3.
 		else
@@ -134,21 +133,20 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
 
 	if (FLRW_perturb_density) then
 
-	    if (CCTK_EQUALS (FLRW_perturb_type, "Gaussian")) then
-		
-		rad = sqrt((x(i,j,k) - offset_x)**2 + (y(i,j,k) - offset_y)**2 + (z(i,j,k) - offset_z)**2)
+	   if (CCTK_EQUALS (FLRW_perturb_type, "Gaussian")) then	
 
+	      	rad = sqrt((x(i,j,k) - offset_x)**2 + (y(i,j,k) - offset_y)**2 + (z(i,j,k) - offset_z)**2)
 		rho(i,j,k) = rho(i,j,k) + perturb_rho0*exp(-rad**2/r0**2)
 
-	    elseif (CCTK_EQUALS (FLRW_perturb_type, "Sine")) then
-	    	
-		if (CCTK_EQUALS (FLRW_phi_type, "General")) then
-	      	   
-			P = perturb_rho0**2*kx**2
+	   elseif (CCTK_EQUALS (FLRW_perturb_type, "Sine")) then
+    	
+	   	if (CCTK_EQUALS (FLRW_phi_type, "General")) then   
+
+		   	P = perturb_rho0**2*kx**2
 	    	   	Q = perturb_rho0*kx**2
             	   	W = sqrt(2.*pi*rho0/3.)
 
-	    	   	rho(i,j,k) = (6.*(-2.*W + 4.*perturb_rho0*W*sin(kx*x(i,j,k)))**2) / ((-1. + 2.*perturb_rho0*sin(kx*x(i,j,k)))**2 * (1. + 2.*perturb_rho0*sin(kx*x(i,j,k)))) + (2.*(-3.*P*cos(kx*x(i,j,k))**2 + 2.*Q*sin(kx*x(i,j,k)) - 4.*P*sin(kx*x(i,j,k))**2)) / ((-1 + 2.*perturb_rho0*sin(kx*x(i,j,k)))**3)/(16*pi)
+	    	   	rho(i,j,k) = ((6.*(-2.*W + 4.*perturb_rho0*W*sin(kx*x(i,j,k)))**2) / ((-1. + 2.*perturb_rho0*sin(kx*x(i,j,k)))**2 * (1. + 2.*perturb_rho0*sin(kx*x(i,j,k)))) + (2.*(-3.*P*cos(kx*x(i,j,k))**2 + 2.*Q*sin(kx*x(i,j,k)) - 4.*P*sin(kx*x(i,j,k))**2)) / ((-1 + 2.*perturb_rho0*sin(kx*x(i,j,k)))**3)) / (16*pi)
 
 		elseif (CCTK_EQUALS (FLRW_phi_type, "Poisson")) then
 
@@ -172,8 +170,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
 	    if (FLRW_test) then
 
 	       rho(i,j,k) = ((6.*(-2.*W + 4.*perturb_rho0*W*sin(kx*x(i,j,k)))**2) / ((-1. + 2.*perturb_rho0*sin(kx*x(i,j,k)))*\
-*2 * (1. + 2.*perturb_rho0*sin(kx*x(i,j,k)))) + (2.*(-3.*P*cos(kx*x(i,j,k))**2 + 2.*Q*sin(kx*x(i,j,k)) - 4.*P*sin(kx*x(i,j,k))**2)) / \
-((-1 + 2.*perturb_rho0*sin(kx*x(i,j,k)))**3)/(16*pi) - rho0)/(4.0*pi) + rho0
+*2 * (1. + 2.*perturb_rho0*sin(kx*x(i,j,k)))) + (2.*(-3.*P*cos(kx*x(i,j,k))**2 + 2.*Q*sin(kx*x(i,j,k)) - 4.*P*sin(kx*x(i,j,k))**2)) / ((-1 + 2.*perturb_rho0*sin(kx*x(i,j,k)))**3)/(16*pi) - rho0)/(4.0*pi) + rho0
 
 	    endif
 
