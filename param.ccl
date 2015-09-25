@@ -45,7 +45,7 @@ CCTK_REAL FLRW_lapse_value "Value of lapse (alpha) for FLRW *WITHOUT* perturbati
   *:* :: "Anything"
 } 1.0
 
-CCTK_REAL FLRW_pert_amplitude "Amplitude of perturbation - in Poisson case is A. In General case is B"
+CCTK_REAL FLRW_phi_pert_amplitude "Amplitude of perturbation in phi - implicitly sets amplitude of rho perturbation"
 {
   *:* :: "Anything"
 } 0.0
