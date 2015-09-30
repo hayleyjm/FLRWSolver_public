@@ -27,18 +27,24 @@ BOOLEAN FLRW_test "Initiate test density currently in code"
 {
 } "no"
 
+KEYWORD FLRW_perturb_theory_type "Newtonian or Relativistic perturbation theory"
+{
+ "Newtonian" :: "Newtonian Perturbation Theory - implies Phi = B * sin(kx * x) and Kij"
+ "Relativistic" :: "Relativistic Perturbation Theory - implies Phi = B * sin(kx * x) / a and Kij"
+} "Newtonian"
+
+KEYWORD FLRW_density_type "Method of finding density perturbation"
+{
+ "Poisson" :: "Find amplitude of rho = rho0*(1 + A sin(kx*x)) using Poisson's equation"
+ "Hamiltonian" :: "Find density distribution from solution to Hamiltonian constraint"
+} "Poisson"
+
 KEYWORD FLRW_perturb_type "Add perturbation"
 { 
  "Sine" :: "Sine wave density perturbation - also need to set FLRW_phi_type from here"
  "Tophat" :: "Tophat perturbation"
  "Gaussian" :: "Gaussian perturbation - has no perturbation in PHI"
 } "Sine"
-
-KEYWORD FLRW_phi_type "Choose potential type"
-{
-"Poisson" :: "Solution to Poisson's equation with rho = rho0*(1+A*sin(kx*x))"
-"General" :: "General Sine wave shape phi = B*sin(kx*x) - corresponding density will be solution of Hamiltonian constraint"
-} "General"
 
 CCTK_REAL FLRW_lapse_value "Value of lapse (alpha) for FLRW *WITHOUT* perturbation"
 {
