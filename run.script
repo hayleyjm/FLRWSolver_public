@@ -1,0 +1,32 @@
+#!/bin/bash                                                                                                          
+#SBATCH --job-name=flrw
+
+# Select which account to charge resources too (my default is NCIw91 - but other option is pMelb0095)
+#SBATCH --account=Monash020
+
+# Select number of CPU cores
+#SBATCH --ntasks=1
+
+# Select number of cores per task (default is 1)
+# SBATCH --cpus-per-task=1
+
+#SBATCH --mem-per-cpu=2000MB
+
+# Select node count allocated to the job <minnodes[-maxnodes]> (if one number this is min and max)
+# SBATCH --nodes=8
+# SBATCH --nodes=4 --ntasks=2
+
+# Select time to run <days-hours:mins:secs>
+#SBATCH --time=350:00:00
+
+# Specify your email address to be notified of progress (default is submitting user. ALL=BEGIN,FAIL & END)
+#SBATCH --mail-type=ALL
+# SBATCH --mail-user=hayley.macpherson@monash.edu
+
+cd ${PBS_O_WORKDIR:-.}
+./cactus_sim FLRW_filename.par
+
+# SUBMIT JOB : sbatch run.script
+# CHECK JOB STATUS FOR USER : squeue --user=hayley
+# CHECK STATUS OF SPECIFIC JOB : squeue --job=JobID1, JobID2, JobID3
+# CANCEL JOB : scancel JobID
