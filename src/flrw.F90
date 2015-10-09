@@ -15,7 +15,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   DECLARE_CCTK_FUNCTIONS
   DECLARE_CCTK_PARAMETERS
   integer   :: i, j, k
-  real :: a0, kvalue, asq, adot, rho0, r_gauss, r0, perturb_rho0, box_length, phi, rad, kx, perturb_phi, perturb_rho0_rel
+  real :: a0, kvalue, asq, adot, rho0, r_gauss, r0, perturb_rho0, box_length, phi, rad, kx, perturb_phi, perturb_rho0_rel, delphi, delsqphi, phidot
   real, parameter :: pi = 3.14159265358979323846264338327
   real :: P, Q, W, offset_x, offset_y, offset_z, lapse_value
   logical   :: lapse, dtlapse, shift, data, hydro
@@ -37,8 +37,8 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   offset_y = FLRW_offset_y
   offset_z = FLRW_offset_z
   kx = 2.0*pi/box_length
-  perturb_rho0 = -kx**2 * FLRW_phi_pert_amplitude / (4.0 * pi)			!! A * rho0
-  perturb_rho0_rel = perturb_rho0 / a0*asq
+  perturb_rho0 = -kx**2 * perturb_phi / (4.0 * pi)
+  perturb_rho0_rel = - perturb_phi * (kx**2 + 3.0 * adot**2) / (4.0 * pi * asq)
   lapse_value = FLRW_lapse_value	!! only needed for FLRW
 
 
@@ -50,15 +50,12 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
 
 	 if (CCTK_EQUALS (FLRW_perturb_type, "Sine")) then
 
-	    if (CCTK_EQUALS (FLRW_perturb_theory_type, "Relativistic")) then
-
-	       phi = perturb_phi * sin(kx * x(i,j,k)) / a0
-
-	    elseif (CCTK_EQUALS (FLRW_perturb_theory_type, "Newtonian")) then	    
+	    	!! phi same for both newtonian & relativistic theory cases now
 
 	       phi = perturb_phi * sin(kx * x(i,j,k))
-
-	    endif
+               delphi = kx * perturb_phi * cos(kx * x(i,j,k))
+               delsqphi = -kx**2 * phi
+               phidot = 0.0
 
 	 elseif (CCTK_EQUALS (FLRW_perturb_type, "Tophat")) then
 
@@ -78,7 +75,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
 	    if (lapse) then
                if (FLRW_perturb_metric) then
 
-               	  alp(i,j,k) = sqrt(1.0 + 2.0*phi)
+               	  alp(i,j,k) = sqrt(1.0 + 2.0 * phi)
 
                else
 
@@ -96,25 +93,12 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
               gyz(i,j,k) = 0.0
               gzz(i,j,k) = asq*(1.0 - 2.0*phi)
             
-		if (CCTK_EQUALS (FLRW_perturb_theory_type, "Relativistic")) then
-              	   
-		   kxx(i,j,k) = kvalue*(1.0 - phi)/alp(i,j,k)
-              	   kxy(i,j,k) = 0.0
-              	   kxz(i,j,k) = 0.0
-              	   kyy(i,j,k) = kvalue*(1.0 - phi)/alp(i,j,k)
-              	   kyz(i,j,k) = 0.0
-              	   kzz(i,j,k) = kvalue*(1.0 - phi)/alp(i,j,k)
-
-		elseif (CCTK_EQUALS (FLRW_perturb_theory_type, "Newtonian")) then            
-
-                   kxx(i,j,k) = kvalue*(1.0 - 2.0 * phi)/alp(i,j,k)
-                   kxy(i,j,k) = 0.0
-                   kxz(i,j,k) = 0.0
-                   kyy(i,j,k) = kvalue*(1.0 - 2.0 * phi)/alp(i,j,k)
-                   kyz(i,j,k) = 0.0
-                   kzz(i,j,k) = kvalue*(1.0 - 2.0 * phi)/alp(i,j,k)
-
-		endif
+              kxx(i,j,k) = kvalue*(1.0 - 2.0 * phi)/alp(i,j,k)
+              kxy(i,j,k) = 0.0
+              kxz(i,j,k) = 0.0
+              kyy(i,j,k) = kvalue*(1.0 - 2.0 * phi)/alp(i,j,k)
+              kyz(i,j,k) = 0.0
+              kzz(i,j,k) = kvalue*(1.0 - 2.0 * phi)/alp(i,j,k)
 
 	    else
 	      gxx(i,j,k) = asq
@@ -131,16 +115,11 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
               kyz(i,j,k) = 0.0
               kzz(i,j,k) = kvalue
 	    endif
-	 end if
-
+	 endif
 
          ! May also need the derivative of the lapse -- this is specified in ADMBase (somehow).
          if (dtlapse) then
-            if (FLRW_perturb_metric) then
-	       dtalp(i,j,k) = - phi * adot / (a0 * alp(i,j,k))
-            else
-		dtalp(i,j,k) = 0.
-	    endif
+	    dtalp(i,j,k) = 0.0
 	 end if
 
 
@@ -155,7 +134,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
             rho(i,j,k) = rho0
             press(i,j,k) = FLRW_K * rho0 ** FLRW_gamma
             eps(i,j,k) = 0.0
-            vel(i,j,k,1) = 0.0
+            vel(i,j,k,1) = -delphi * adot / (asq*a0 * 4.0 * pi * rho0)
             vel(i,j,k,2) = 0.0
             vel(i,j,k,3) = 0.0
          end if
@@ -170,30 +149,19 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
 		rho(i,j,k) = rho(i,j,k) + perturb_rho0*exp(-rad**2/r0**2)
 
 	   elseif (CCTK_EQUALS (FLRW_perturb_type, "Sine")) then
-    	
-	   	if (CCTK_EQUALS (FLRW_perturb_theory_type, "Relativistic") .and. CCTK_EQUALS (FLRW_density_type, "Hamiltonian")) then
+   
+		if (CCTK_EQUALS (FLRW_density_type, "Hamiltonian")) then		!!set general rho based on phi
 
-		   	P = perturb_phi**2 * kx**2 / asq
-	    	   	Q = perturb_phi * kx**2 / a0
-			W = perturb_phi / a0
+		   	rho(i,j,k) = ((2.0 * (-3.0 * delphi**2 - 2.0 * delsqphi + 4.0 * phi * delsqphi)) / (asq * (-1.0 + 2.0 * phi)**3) + (6.0 * (-adot + 2.0 * phi * adot + a0 * phidot)**2) / (asq * (-1.0 + 2.0 * phi)**2 * alp(i,j,k)**2)) / (16.0 * pi)
 
-	    	   	rho(i,j,k) = ((2.0 * (-3.0 * P * cos(kx*x(i,j,k))**2 + 2.0 * Q * sin(kx*x(i,j,k)) - 4.0 * P * sin(kx*x(i,j,k))**2)) / (asq * (-1.0 + 2.0 * W * sin(kx*x(i,j,k)))**3) + (6.0 * (-adot + W * adot * sin(kx*x(i,j,k)))**2) / (asq * (-1.0 + 2.0 * W * sin(kx*x(i,j,k)))**2 * alp(i,j,k)**2)) / (16.0 * pi)
 
 		elseif (CCTK_EQUALS (FLRW_perturb_theory_type, "Relativistic") .and. CCTK_EQUALS (FLRW_density_type, "Poisson")) then
 
-	            rho(i,j,k) = rho(i,j,k) + perturb_rho0_rel * sin(kx*x(i,j,k))
+	               rho(i,j,k) = rho(i,j,k) + perturb_rho0_rel * sin(kx * x(i,j,k))
 
                 elseif (CCTK_EQUALS (FLRW_perturb_theory_type, "Newtonian") .and. CCTK_EQUALS (FLRW_density_type, "Poisson")) then
 
-                    rho(i,j,k) = rho(i,j,k) + perturb_rho0 * sin(kx*x(i,j,k))
-		
-		elseif (CCTK_EQUALS (FLRW_perturb_theory_type, "Newtonian") .and. CCTK_EQUALS (FLRW_density_type, "Hamiltonian")) then
-
-		       	P = perturb_phi**2 * kx**2
-                        Q = perturb_phi * kx**2
-                        W = sqrt(2.0 * pi * rho0 / 3.0)
-
-		   rho(i,j,k) = (6.0 * (-2.0 * W + 4.0 * perturb_phi * W * sin(kx * x(i,j,k)))**2) / ((-1.0 + 2.0 * perturb_phi * sin(kx*x(i,j,k)))**2 * (1.0 + 2.0 * perturb_phi * sin(kx * x(i,j,k)))) + (2.0 * (-3.0 * P * cos(kx * x(i,j,k))**2 + 2.0 * Q * sin(kx * x(i,j,k)) - 4.0 * P * sin(kx * x(i,j,k))**2)) / ((-1.0 * 2.0 * perturb_phi * sin(kx * x(i,j,k)))**3)
+                       rho(i,j,k) = rho(i,j,k) + perturb_rho0 * sin(kx * x(i,j,k))
 		
 		endif
 
@@ -234,5 +202,55 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   else
      call CCTK_WARN (0, "Unknown value of ADMBase::metric_type -- FLRW only set-up for metric_type = physical")
   end if
+
+
+
+
+!! OLD HAMILTONIAN DENSITIES -- BEFORE I PUT IN GENERAL
+!! DO NOT DELETE JUST YET - UNTIL I AM SURE THE GENERAL ONE WORKS.
+
+!!!             if (CCTK_EQUALS (FLRW_perturb_theory_type, "Relativistic") .and. CCTK_EQUALS (FLRW_d\
+ensity_type, "Hamiltonian")) then
+
+!!!                     print*,' SETTING RELATIVISTIC HAMILTONIAN DENSITY'
+
+!!!                     P = perturb_phi**2 * kx**2 / asq
+!!!                     Q = perturb_phi * kx**2 / a0
+!!!                     W = perturb_phi / a0
+
+!!!                     rho(i,j,k) = ((2.0 * (-3.0 * P * cos(kx*x(i,j,k))**2 + 2.0 * Q * sin(kx*x(i,\
+j,k)) - 4.0 * P * sin(kx*x(i,j,k))**2)) / (asq * (-1.0 + 2.0 * W * sin(kx*x(i,j,k)))**3) + (6.0 * (-\
+adot + W * adot * sin(kx*x(i,j,k)))**2) / (asq * (-1.0 + 2.0 * W * sin(kx*x(i,j,k)))**2 * alp(i,j,k)\
+**2)) / (16.0 * pi)
+
+
+
+
+
+!!!             elseif (CCTK_EQUALS (FLRW_perturb_theory_type, "Newtonian") .and. CCTK_EQUALS (FLRW_\
+density_type, "Hamiltonian")) then
+
+!!!                    print*,'SETTING NEWTONIAN HAMILTONIAN DENSITY'
+
+!!!                     P = perturb_phi**2 * kx**2
+!!!                        Q = perturb_phi * kx**2
+!!!                        W = sqrt(2.0 * pi * rho0 / 3.0)
+
+!!!                rho(i,j,k) = ((6.0 * (-2.0 * W + 4.0 * perturb_phi * W * sin(kx * x(i,j,k)))**2) \
+/ ((-1.0 + 2.0 * perturb_phi * sin(kx*x(i,j,k)))**2 * (1.0 + 2.0 * perturb_phi * sin(kx * x(i,j,k)))\
+) + (2.0 * (-3.0 * P * cos(kx * x(i,j,k))**2 + 2.0 * Q * sin(kx * x(i,j,k)) - 4.0 * P * sin(kx * x(i\
+,j,k))**2)) / ((-1.0 + 2.0 * perturb_phi * sin(kx * x(i,j,k)))**3)) / (16.0 * pi)
+
+
+
+
+
+
+
+
+
+
+
+
 
 end subroutine FLRW_InitialData
