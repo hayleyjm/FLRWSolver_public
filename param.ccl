@@ -15,6 +15,11 @@ CCTK_REAL FLRW_K "The polytropic constant in P = K rho^Gamma"
   0.0:* :: "P = K rho**gamma -- note this may run into trouble if P = 0"
 } 0.0
 
+CCTK_REAL FLRW_phi_phase_offset "The phase offset(eta) of phi=A * sin(kx*x - eta)"
+{
+ *:* :: "Anything"
+} 0.0
+
 BOOLEAN FLRW_perturb_density "Add density perturbation"
 {
 } "no"
@@ -45,6 +50,12 @@ KEYWORD FLRW_perturb_type "Add perturbation"
  "Tophat" :: "Tophat perturbation"
  "Gaussian" :: "Gaussian perturbation - has no perturbation in PHI"
 } "Sine"
+
+KEYWORD FLRW_phi_solution "Choose solution of Phi out of Einstein equations"
+{
+ "Constant" :: "Choose constant mode phi~g(x)"
+ "Decaying" :: "Choose decaying mode phi~f(x)*s^(-5/3)"
+} "Constant"
 
 CCTK_REAL FLRW_lapse_value "Value of lapse (alpha) for FLRW *WITHOUT* perturbation"
 {
