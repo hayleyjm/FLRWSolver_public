@@ -16,15 +16,18 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   DECLARE_CCTK_PARAMETERS
   integer   :: i, j, k
   integer, parameter :: dp = 8
-  real(dp) :: a0, kvalue, asq, adot, rho0, r_gauss, r0, perturb_rho0, box_length, phi, rad, kx, perturb_phi, perturb_rho0_rel, delphi, delsqphi, phidot
+  real(dp) :: a0, kvalue, asq, adot, rho0, r_gauss, r0, perturb_rho0, box_length_x, box_length_y, box_length_z, phi, rad, kx, perturb_phi, perturb_rho0_rel, delphi, delsqphi, phidot
   real(dp), parameter :: pi = 3.14159265358979323846264338327
-  real(dp) :: P, Q, W, offset_x, offset_y, offset_z, lapse_value, phi_offset, amp, perturb_v0
-  logical   :: lapse, dtlapse, shift, data, hydro
+  real(dp) :: P, Q, W, offset_x, offset_y, offset_z, lapse_value, phi_offset, amp, perturb_v0, ky, kz, f, df
+  logical   :: lapse, dtlapse, shift, data, hydro, perturb_x, perturb_y, perturb_z
   lapse = CCTK_EQUALS (initial_lapse, "flrw")
   dtlapse = CCTK_EQUALS (initial_dtlapse, "flrw")
   shift = CCTK_EQUALS (initial_shift, "flrw")
   data  = CCTK_EQUALS (initial_data,  "flrw")
   hydro = CCTK_EQUALS (initial_hydro, "flrw")
+  perturb_x = CCTK_EQUALS (FLRW_perturb_direction, "x")
+  perturb_y = CCTK_EQUALS (FLRW_perturb_direction, "y")
+  perturb_z = CCTK_EQUALS (FLRW_perturb_direction, "z")
 
   rho0 = FLRW_init_rho
   amp = FLRW_phi_pert_amplitude
@@ -35,26 +38,27 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   asq = a0*a0
   adot = sqrt((8.0_dp * pi)*rho0*asq/3.0_dp)
   kvalue = -adot * a0
-  box_length = 2.0_dp * FLRW_xmax
+  box_length_x = 2.0_dp * FLRW_xmax
+  box_length_y = 2.0_dp * FLRW_xmax !! these are all equal for now, will need to introduce FLRW_y/zmax if we choose uneqal box
+  box_length_z = 2.0_dp * FLRW_xmax
   offset_x = FLRW_offset_x
   offset_y = FLRW_offset_y
   offset_z = FLRW_offset_z
-  kx = 2.0_dp*pi/box_length
- !! perturb_rho0 = -kx**2 * perturb_phi / (4.0_dp * pi)
+  kx = 2.0_dp*pi/box_length_x
+  ky = 2.0_dp*pi/box_length_y
+  kz = 2.0_dp*pi/box_length_z
   lapse_value = FLRW_lapse_value	!! only needed for FLRW
 
+! set density, velocity amplitudes
   if (CCTK_EQUALS (FLRW_phi_solution, "Constant")) then !constant(phi) mode
       
-  !!   perturb_rho0_rel = - perturb_phi * (kx**2 + 3.0_dp * adot**2) / (4.0_dp * pi * asq)
-     perturb_rho0 = - rho0 * (kx**2 * amp / (4.0_dp * pi * asq) + 2.0_dp * amp * rho0)
-     perturb_v0 = - 1._dp / (asq * sqrt(6._dp * pi * rho0)) !! original velocity
-!!     perturb_v0 = -10._dp * sqrt(6._dp) / (24._dp * asq * sqrt(pi * rho0))  !! velocity from mom constraint with covD(K_j^i)
+     perturb_rho0 = - (kx**2 / (4.0_dp * pi * rho0 * asq) + 2.0_dp)
+     perturb_v0 = - 1._dp / (asq * sqrt(6._dp * pi * rho0))
 
   elseif (CCTK_EQUALS (FLRW_phi_solution, "Decaying")) then !decaying mode
-! decaying soln needs to be checked before running!!!
   
-!!     perturb_rho0_rel = perturb_phi * (3.0_dp * kx**2 / (20._dp * pi) - 9._dp * rho0 / 5._dp)
-     perturb_rho0 = perturb_phi * (3.0_dp * kx**2 / (20.0_dp * pi * rho0 * a0**2) - 9.0_dp / 5.0_dp)
+     perturb_rho0 = perturb_phi * (3.0_dp * kx**2 / (20.0_dp * pi * rho0 * asq) - 9.0_dp / 5.0_dp)
+     perturb_v0 = - 3._dp * sqrt(3._dp / 8._dp * pi * rho0) / (5._dp * asq)
  
   endif
 
@@ -62,39 +66,39 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
     do j = 1, cctk_lsh(2)
       do i = 1, cctk_lsh(1)
 
-	 !! set phi depending on perturbation type
+         ! set f(or g) for perturbations
+         if (perturb_x) then
+            f = perturb_phi * sin(kx * x(i,j,k) - phi_offset)
+            df = perturb_phi * kx * cos(kx * x(i,j,k) - phi_offset)
+         elseif (perturb_y) then
+            f = perturb_phi * sin(ky* y(i,j,k) - phi_offset)
+            df = perturb_phi * ky * cos(ky * y(i,j,k) - phi_offset)
+         elseif (perturb_x) then
+            f = perturb_phi * sin(kz* z(i,j,k) - phi_offset)
+            df = perturb_phi * kz * cos(kz * z(i,j,k) - phi_offset)
+         endif
 
+	 !! set phi depending on perturbation type
 	 if (CCTK_EQUALS (FLRW_perturb_type, "Sine")) then
 
                if (CCTK_EQUALS (FLRW_phi_solution, "Constant")) then !constant(phi) solution
-               
-                  phi = perturb_phi * sin(kx * x(i,j,k) - phi_offset)
-                  delphi = kx * perturb_phi * cos(kx * x(i,j,k) - phi_offset)
+
+                  phi = f
+                  delphi = df
                   delsqphi = -kx**2 * phi
                   phidot = 0._dp
                
                elseif (CCTK_EQUALS (FLRW_phi_solution, "Decaying")) then !decaying solution
                
-                  phi = -3._dp / 5._dp * perturb_phi * sin(kx * x(i,j,k) - phi_offset)
-                  delphi = -3._dp / 5._dp * kx * perturb_phi * cos(kx*x(i,j,k) - phi_offset)
+                  phi = -3._dp / 5._dp * f
+                  delphi = -3._dp / 5._dp * df
                   delsqphi = -kx**2 * phi
-                  phidot = sqrt(6._dp * pi * rho0) * perturb_phi * sin(kx * x(i,j,k) - phi_offset)
+                  phidot = sqrt(6._dp * pi * rho0) * f
                
                endif
-               
-	 elseif (CCTK_EQUALS (FLRW_perturb_type, "Tophat")) then
-
-	 	rad = sqrt((x(i,j,k) - offset_x)**2 + (y(i,j,k) - offset_y)**2 + (z(i,j,k) - offset_z)**2)
-
-		if (rad <= r0) then
-         	   phi = 2.0 * pi * (rho0 + perturb_rho0) * (rad**2 - 3.0 * r0**2) / 3.0
-		else
-		   phi = -4.0 * pi * r0**2 * rho0 / 3.0
-		endif
 	endif
         
 	 !! set up metric, extrinsic curvature, lapse and shift
-
 	 if (data) then
 
 	    if (lapse) then
@@ -161,18 +165,18 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
             eps(i,j,k) = 0.0
             if (FLRW_perturb_density) then
 
-               if (CCTK_EQUALS (FLRW_phi_solution, "Constant")) then ! constant(phi) mode
-
-                  vel(i,j,k,1) = perturb_v0 * delphi
+               if (perturb_x) then
+                  vel(i,j,k,1) = perturb_v0 * df
                   vel(i,j,k,2) = 0.0
                   vel(i,j,k,3) = 0.0
-
-               elseif (CCTK_EQUALS (FLRW_phi_solution, "Decaying")) then !decaying mode
-                  ! decaying soln needs to be checked before running !!!
-                  vel(i,j,k,1) = - 3._dp * delphi * sqrt(3._dp / (32._dp * pi * rho0)) / (a0**2 * 5._dp)
-                  vel(i,j,k,2) = 0.0
+               elseif (perturb_y) then
+                  vel(i,j,k,1) = 0.0
+                  vel(i,j,k,2) = perturb_v0 * df
                   vel(i,j,k,3) = 0.0
-
+               elseif (perturb_z) then
+                  vel(i,j,k,1) = 0.0
+                  vel(i,j,k,2) = 0.0
+                  vel(i,j,k,3) = perturb_v0 * df
                endif
 
             else
@@ -186,57 +190,11 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
 
 	if (FLRW_perturb_density) then
 
-	   if (CCTK_EQUALS (FLRW_perturb_type, "Gaussian")) then	
-
-	      	rad = sqrt((x(i,j,k) - offset_x)**2 + (y(i,j,k) - offset_y)**2 + (z(i,j,k) - offset_z)**2)
-		rho(i,j,k) = rho(i,j,k) + perturb_rho0*exp(-rad**2/r0**2)
-
-	   elseif (CCTK_EQUALS (FLRW_perturb_type, "Sine")) then
-   
-                    rho(i,j,k) = rho(i,j,k) + perturb_rho0 * sin(kx * x(i,j,k) - phi_offset)
-                    
-
-!                if (CCTK_EQUALS (FLRW_density_type, "Hamiltonian")) then     !!set general rho based on phi
-
-!		   	rho(i,j,k) = ((2.0 * (-3.0 * delphi**2 - 2.0 * delsqphi + 4.0 * phi * delsqphi)) / (asq * (-1.0 + 2.0 * phi)**3) + (6.0 * (-adot + 2.0 * phi * adot + a0 * phidot)**2) / (asq * (-1.0 + 2.0 * phi)**2 * alp(i,j,k)**2)) / (16.0 * pi)
-
-
-!		elseif (CCTK_EQUALS (FLRW_perturb_theory_type, "Relativistic") .and. CCTK_EQUALS (FLRW_density_type, "Poisson")) then
-
-!	               rho(i,j,k) = rho(i,j,k) + perturb_rho0_rel * sin(kx * x(i,j,k) - phi_offset)
-
- !               elseif (CCTK_EQUALS (FLRW_perturb_theory_type, "Newtonian") .and. CCTK_EQUALS (FLRW_density_type, "Poisson")) then
-
-  !                     rho(i,j,k) = rho(i,j,k) + perturb_rho0 * sin(kx * x(i,j,k) - phi_offset)
-		
-!		endif
-
-                    ! tophat doesnt work
-	    elseif (CCTK_EQUALS (FLRW_perturb_type, "Tophat")) then
-
-	    	if (rad < r0) then
-		   rho(i,j,k) = rho(i,j,k) + perturb_rho0
-		else
-		   rho(i,j,k) = rho(i,j,k)
-		endif   
-
-	    endif
-
-
-
-
-	    ! COPY TEST DENSITY HERE - SO AS TO NOT DISTURB OTHER DENSITIES
-	    !! current tests: density/4pi and different gauge alpha (which will make no difference)
-
-	    if (FLRW_test) then
-
-!!	       rho(i,j,k) = ((6.*(-2.*W + 4.*perturb_rho0*W*sin(kx*x(i,j,k)))**2) / ((-1. + 2.*perturb_rho0*sin(kx*x(i,j,k)))*\
-*2 * (1. + 2.*perturb_rho0*sin(kx*x(i,j,k)))) + (2.*(-3.*P*cos(kx*x(i,j,k))**2 + 2.*Q*sin(kx*x(i,j,k)) - 4.*P*sin(kx*x(i,j,k))**2)) / ((-1 + 2.*perturb_rho0*sin(kx*x(i,j,k)))**3)/(16*pi) - rho0)/(4.0*pi) + rho0
-
-     	       alp(i,j,k) = a0 * sqrt(1 + 2.0 * phi)
-
-	    endif
-
+	   if (CCTK_EQUALS (FLRW_perturb_type, "Sine")) then
+               
+              rho(i,j,k) = rho(i,j,k) * ( 1._dp + perturb_rho0 * f)
+           
+           endif
 
 	endif
 

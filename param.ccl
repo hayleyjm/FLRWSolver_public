@@ -57,6 +57,13 @@ KEYWORD FLRW_phi_solution "Choose solution of Phi out of Einstein equations"
  "Decaying" :: "Choose decaying mode phi~f(x)*s^(-5/3)"
 } "Constant"
 
+KEYWORD FLRW_perturb_direction "Choose which direction to perturb (1D perturbation ONLY)"
+{
+"x" :: "perturb x-direction only"
+"y" :: "perturb y-direction only"
+"z" :: "perturb z-direction only"
+} "x"
+
 CCTK_REAL FLRW_lapse_value "Value of lapse (alpha) for FLRW *WITHOUT* perturbation"
 {
   *:* :: "Anything"
