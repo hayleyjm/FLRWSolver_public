@@ -57,7 +57,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
 
   elseif (CCTK_EQUALS (FLRW_phi_solution, "Decaying")) then !decaying mode
   
-     perturb_rho0 = perturb_phi * (3.0_dp * kx**2 / (20.0_dp * pi * rho0 * asq) - 9.0_dp / 5.0_dp)
+     perturb_rho0 = (3.0_dp * kx**2 / (20.0_dp * pi * rho0 * asq) - 9.0_dp / 5.0_dp)
      perturb_v0 = - 3._dp * sqrt(3._dp / 8._dp * pi * rho0) / (5._dp * asq)
  
   endif
@@ -73,7 +73,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
          elseif (perturb_y) then
             f = perturb_phi * sin(ky* y(i,j,k) - phi_offset)
             df = perturb_phi * ky * cos(ky * y(i,j,k) - phi_offset)
-         elseif (perturb_x) then
+         elseif (perturb_z) then
             f = perturb_phi * sin(kz* z(i,j,k) - phi_offset)
             df = perturb_phi * kz * cos(kz * z(i,j,k) - phi_offset)
          endif
