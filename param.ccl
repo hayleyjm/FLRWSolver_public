@@ -32,6 +32,18 @@ BOOLEAN FLRW_test "Initiate test density currently in code"
 {
 } "no"
 
+BOOLEAN FLRW_negative_curv "Switch to negative curvature **TEST**"
+{
+} "no"
+
+BOOLEAN FLRW_negative_metric "Switch to negative metric ** test **"
+{
+} "no"
+
+BOOLEAN FLRW_test_ics "Testing IC's derived from starting redshift of 127, box size of 500 h^-1 Mpc ***TEST***"
+{
+} "no"
+
 KEYWORD FLRW_perturb_theory_type "Newtonian or Relativistic perturbation theory"
 {
  "Newtonian" :: "Newtonian Perturbation Theory - implies Phi = B * sin(kx * x) and Kij"
@@ -62,6 +74,7 @@ KEYWORD FLRW_perturb_direction "Choose which direction to perturb (1D perturbati
 "x" :: "perturb x-direction only"
 "y" :: "perturb y-direction only"
 "z" :: "perturb z-direction only"
+"all" :: perturb all dimensions
 } "x"
 
 CCTK_REAL FLRW_lapse_value "Value of lapse (alpha) for FLRW *WITHOUT* perturbation"
@@ -97,7 +110,12 @@ CCTK_REAL FLRW_offset_z "Offset of tophat/gaussian from origin in	z-direction"
 CCTK_REAL FLRW_xmax "Maximum x-value of grid"
 {
   *:* :: "Anything"
-} 240
+} 240.
+
+CCTK_REAL FLRW_initial_redshift "Redshift value to begin simulation from"
+{
+ 0:* :: "Must be positive"
+} 0.0
 
 shares:HydroBase
 
