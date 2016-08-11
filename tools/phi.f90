@@ -1,5 +1,4 @@
 ! to reconstruct phi as a function of x
-!! note: very old code. use calc_deltas.f90 instead
 program phi
   implicit none
 

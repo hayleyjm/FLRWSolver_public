@@ -1,6 +1,3 @@
-!! program to compute ONLY delta_vel, DOES NOT convert lapse time. this is implemented also in delta_rhovel.f90 along with calculating delta_rho PLUS converting lapse time so exact solns comparison. use that instead
-!! REQUIRES: --> velocity_*
-!! NOTE: NOT AUTOMATED FOR RES, INTERVAL OF FILES OR HEADERS !!!
 program deltavel
   implicit none
 

@@ -1,5 +1,3 @@
-!! program to calculate evolution of the lapse and compare to expected evolution as set in ML_BSSN using harmonicF and harmonicN
-!! REQUIRES: --> lapse.max
 program lapse_evolve
   implicit none
 
@@ -27,7 +25,7 @@ program lapse_evolve
 
 !open file for writing
   open (unit=15,file='lapse_evolution.dat',status='replace')
-  write(15,*) 'time       s        tnew         lapse         lapse_exact'
+  write(15,*) 'time       s        tnew         lapse         lapse_exact (exp(t))'
 
   do i=1,n
      nt = nt + 1
