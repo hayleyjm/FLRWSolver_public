@@ -68,6 +68,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   if (CCTK_EQUALS (FLRW_phi_solution, "Constant")) then !constant(phi) mode
       
      perturb_rho0 = - (kx**2 / (4.0_dp * pi * rho0 * asq) + 2.0_dp)
+!     perturb_rho0 = - (kx**2 / (4.0_dp * pi * rho0 * asq))
      perturb_v0 = - 1._dp / (asq * sqrt(6._dp * pi * rho0))
 
   elseif (CCTK_EQUALS (FLRW_phi_solution, "Decaying")) then !decaying mode
