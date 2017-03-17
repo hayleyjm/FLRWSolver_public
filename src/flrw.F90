@@ -16,10 +16,34 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   DECLARE_CCTK_PARAMETERS
   integer   :: i, j, k
   integer, parameter :: dp = 8
-  real(dp) :: a0, kvalue, asq, adot, rho0, r_gauss, r0, perturb_rho0, box_length_x, box_length_y, box_length_z, phi, rad, kx, perturb_phi, perturb_rho0_rel, delphi, delsqphi, phidot
+  real(dp) :: a0, asq, adot, kvalue, z0
+  real(dp) :: rho0, rhostar, perturb_rho0, perturb_v0
+  real(dp) :: box_length_x, box_length_y, box_length_z, box_length, wavelength
+  real(dp) :: perturb_phi, phidot, phi_offset, amp
   real(dp), parameter :: pi = 3.14159265358979323846264338327
-  real(dp) :: P, Q, W, offset_x, offset_y, offset_z, lapse_value, phi_offset, amp, perturb_v0, ky, kz, f, df, H0, z0, df1, df2, df3
-  logical   :: lapse, dtlapse, shift, data, hydro, perturb_x, perturb_y, perturb_z, perturb_all
+  real(dp) :: f, df1, df2, df3
+  real(dp) :: kx, ky, kz, modk, kval
+  real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)) :: phi, delta
+  real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
+  logical   :: lapse, dtlapse, shift, data, hydro, perturb_x, perturb_y, perturb_z, perturb_all, cmb_like, single_mode
+  integer :: dr_unit, dv_unit1, dv_unit2, dv_unit3, p_unit
+  integer :: res
+  character(len=40) :: deltafile, vel1file, vel2file, vel3file, phifile
+
+  !!
+  !!
+  print*,'your cctk_lsh are:'
+  print*, cctk_lsh(1), cctk_lsh(2), cctk_lsh(3)
+  print*,'your cctk_gsh are:'
+  print*, cctk_gsh(1), cctk_gsh(2), cctk_gsh(3)
+  print*,'cctkGH is:', cctkGH
+  
+  !!
+  !!
+
+  !
+  ! set logicals
+  !
   lapse = CCTK_EQUALS (initial_lapse, "flrw")
   dtlapse = CCTK_EQUALS (initial_dtlapse, "flrw")
   shift = CCTK_EQUALS (initial_shift, "flrw")
@@ -29,237 +53,205 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   perturb_y = CCTK_EQUALS (FLRW_perturb_direction, "y")
   perturb_z = CCTK_EQUALS (FLRW_perturb_direction, "z")
   perturb_all = CCTK_EQUALS (FLRW_perturb_direction, "all")
+  single_mode = CCTK_EQUALS (FLRW_perturb_type, "single_mode")
+  cmb_like = CCTK_EQUALS (FLRW_perturb_type, "CMB_like")
 
-  z0 = FLRW_initial_redshift
-
-! testing initial conds for a, rho, calculated from "real" length scale etc
-!  if (FLRW_test_ics) then
-!     H0 = 5._dp / 30._dp ! hubble parameter in code units
-!     a0 = 1._dp / (1._dp + z0) ! scale factor found from initial redshift of z=127 (as in Milennium)
-!     rho0 = 3._dp * H0**2 / (8._dp * pi * a0**3) ! rho = rhoc * a**-3
-!  else ! regular IC's
+  !
+  ! set parameters
+  !
+  !z0 = FLRW_initial_redshift
+  !a0 =1._dp / (1._dp + z0)     !! want to include redshift in future. for now cannot simulate other then a0=1
+  a0 = 1._dp
   rho0 = FLRW_init_rho
-  a0 =1._dp / (1._dp + z0)
-!  endif
-
-  amp = FLRW_phi_pert_amplitude
-  perturb_phi = amp * rho0
-  r0 = FLRW_radius
-  phi_offset = FLRW_phi_phase_offset
   asq = a0*a0
-  adot = sqrt((8.0_dp * pi)*rho0*asq/3.0_dp)
+  rhostar = rho0 * asq*a0   !! Conserved FLRW density
+  adot = sqrt((8._dp * pi)*rho0*asq/3._dp) !! from Friedmann eqns
   kvalue = -adot * a0
-  box_length_x = 2.0_dp * FLRW_xmax
-  box_length_y = 2.0_dp * FLRW_xmax !! these are all equal for now, will need to introduce FLRW_y/zmax if we choose uneqal box
-  box_length_z = 2.0_dp * FLRW_xmax
-  offset_x = FLRW_offset_x
-  offset_y = FLRW_offset_y
-  offset_z = FLRW_offset_z
-  kx = 2.0_dp*pi/box_length_x
-  ky = 2.0_dp*pi/box_length_y
-  kz = 2.0_dp*pi/box_length_z
-  lapse_value = FLRW_lapse_value	!! only needed for FLRW
+  res = int(FLRW_resolution)
+!  box_length_x = 2.0_dp * FLRW_xmax
+!  box_length_y = 2.0_dp * FLRW_xmax !! using FLRW keywords which I want to remove if CoordBase ones work (they dont..)
+!  box_length_z = 2.0_dp * FLRW_xmax
+  if (single_mode .and. FLRW_perturb) then
 
-!############################################### TEST PRINT STATEMENT
-  print*,'SETTING UP FLRW - YOUR PRINT STATEMENT WORKS!'
-! ##################################################################
+     !
+     ! set parameters only required for single mode
+     !
+     amp = phi_perturb_amplitude
+     perturb_phi = amp * rho0
+     phi_offset = phi_phase_offset
 
-! set density, velocity amplitudes
-  if (CCTK_EQUALS (FLRW_phi_solution, "Constant")) then !constant(phi) mode
-      
-     perturb_rho0 = - (kx**2 / (4.0_dp * pi * rho0 * asq) + 2.0_dp)
-!     perturb_rho0 = - (kx**2 / (4.0_dp * pi * rho0 * asq))
-     perturb_v0 = - 1._dp / (asq * sqrt(6._dp * pi * rho0))
+!     box_length_x = (xmax - xmin)
+!     box_length_y = (ymax - ymin)  !! CoordBase keywords
+!     box_length_z = (zmax - zmin)
+     wavelength = single_perturb_wavelength
+     kx = 2.0_dp*pi/wavelength
+     ky = 2.0_dp*pi/wavelength
+     kz = 2.0_dp*pi/wavelength
+     modk = sqrt(kx**2 + ky**2 + kz**2)
 
-  elseif (CCTK_EQUALS (FLRW_phi_solution, "Decaying")) then !decaying mode
-  
-     perturb_rho0 = (3.0_dp * kx**2 / (20.0_dp * pi * rho0 * asq) - 9.0_dp / 5.0_dp)
-     perturb_v0 = - 3._dp * sqrt(3._dp / 8._dp * pi * rho0) / (5._dp * asq)
- 
+     ! set density, velocity amplitudes
+     if (perturb_x) then
+        kval = kx
+     elseif (perturb_y) then
+        kval = ky
+     elseif (perturb_z) then
+        kval = kz
+     elseif (perturb_all) then
+        kval = modk
+     endif
+!     perturb_rho0 = kval**2 / (4._dp * pi * rho0 * asq) - 2._dp
+
+     perturb_rho0 = - kx**2 / (4._dp * pi * rho0 * asq) - 2._dp  !! testing
+     perturb_v0 = - sqrt(a0 / ( 6._dp * pi * rhostar ))        
+
+     delta_vel = 0._dp
+     delta = 0._dp      ! initialise perturbations to zero
+     phi = 0._dp
+     
+  elseif (cmb_like .and. FLRW_perturb) then
+
+     ! define filenames to read from, based on resolution
+     ! !! assumes uniform grid !!
+     write(deltafile,'(a,i3.3,a)')'ics_files/ics_files',res,'/delta.dat'
+     write(vel1file,'(a,i3.3,a)')'ics_files/ics_files',res,'/vel1.dat'
+     write(vel2file,'(a,i3.3,a)')'ics_files/ics_files',res,'/vel2.dat'
+     write(vel3file,'(a,i3.3,a)')'ics_files/ics_files',res,'/vel3.dat'
+     write(phifile,'(a,i3.3,a)')'ics_files/ics_files',res,'/phi.dat'
+
+     ! open files to read phi, delta, vel perturbs from files
+     open(newunit=dr_unit,file=deltafile,status='old')  ! delta rho file
+     open(newunit=dv_unit1,file=vel1file,status='old')  ! delta vel file [1]
+     open(newunit=dv_unit2,file=vel2file,status='old')  ! delta vel file [2]
+     open(newunit=dv_unit3,file=vel3file,status='old')  ! delta vel file [3] 
+     open(newunit=p_unit,file=phifile,status='old')   ! phi file
+
+     do k = 1, cctk_lsh(3)
+        do j = 1, cctk_lsh(2) ! loop over ROW no. (i is COLUMN no.) (i,j,k) --> (column, row, z)
+           ! read perturbations from CMB-like generated data files
+           read(dr_unit,*) delta(:,j,k)
+           read(dv_unit1,*) delta_vel(:,j,k,1)
+           read(dv_unit2,*) delta_vel(:,j,k,2)
+           read(dv_unit3,*) delta_vel(:,j,k,3)
+           read(p_unit,*), phi(:,j,k)
+        enddo
+     enddo
+
   endif
 
   do k = 1, cctk_lsh(3)
-    do j = 1, cctk_lsh(2)
-      do i = 1, cctk_lsh(1)
+     do j = 1, cctk_lsh(2)
+        do i = 1, cctk_lsh(1)
 
-         ! set f(or g) for perturbations
-         if (perturb_x) then
-            f = perturb_phi * sin(kx * x(i,j,k) - phi_offset)
-            df1 = perturb_phi * kx * cos(kx * x(i,j,k) - phi_offset)
-         elseif (perturb_y) then
-            f = perturb_phi * sin(ky* y(i,j,k) - phi_offset)
-            df2 = perturb_phi * ky * cos(ky * y(i,j,k) - phi_offset) ! for all these cases df only has one component
-         elseif (perturb_z) then
-            f = perturb_phi * sin(kz* z(i,j,k) - phi_offset)
-            df3 = perturb_phi * kz * cos(kz * z(i,j,k) - phi_offset)
-         elseif (perturb_all) then
-            f = perturb_phi * (sin(kx* x(i,j,k) - phi_offset) + sin(ky* y(i,j,k) - phi_offset) + sin(kz* z(i,j,k) - phi_offset))
-            df1 = perturb_phi * kx * cos(kx * x(i,j,k) - phi_offset)
-            df2 = perturb_phi * ky * cos(ky * y(i,j,k) - phi_offset) ! df is now a vector, this is only used in velocity IC
-            df3 = perturb_phi * kz * cos(kz * z(i,j,k) - phi_offset)
-         endif
-
-	 !! set phi depending on perturbation type
-	 if (CCTK_EQUALS (FLRW_perturb_type, "Sine")) then
-
-               if (CCTK_EQUALS (FLRW_phi_solution, "Constant")) then !constant(phi) solution
-
-                  phi = f
-!                  delphi = df ! don't need these right now, use df anyway in velocity
- !                 delsqphi = -kx**2 * phi
-                  phidot = 0._dp
-               
-               elseif (CCTK_EQUALS (FLRW_phi_solution, "Decaying")) then !decaying solution
-               
-                  phi = -3._dp / 5._dp * f
-!                  delphi = -3._dp / 5._dp * df ! don't use these, use df instead
-!                  delsqphi = -kx**2 * phi
-                  phidot = sqrt(6._dp * pi * rho0) * f
-               
-               endif
-	endif
-        
-	 !! set up metric, extrinsic curvature, lapse and shift
-	 if (data) then
-
-	    if (lapse) then
-               if (FLRW_perturb_metric) then
-
-               	  alp(i,j,k) = sqrt(1.0_dp + 2.0_dp * phi)
-
-               else
-
-		  alp(i,j,k) = lapse_value
-
-               endif
-            end if
-
-	   
-	    if (FLRW_perturb_metric) then
-
-             if (FLRW_negative_metric) then
-                gxx(i,j,k) = -asq*(1.0_dp - 2.0_dp*phi)
-                gxy(i,j,k) = 0.0
-                gxz(i,j,k) = 0.0
-                gyy(i,j,k) = -asq*(1.0_dp - 2.0_dp*phi)
-                gyz(i,j,k) = 0.0
-                gzz(i,j,k) = -asq*(1.0_dp - 2.0_dp*phi)
-             else
-                gxx(i,j,k) = asq*(1.0_dp - 2.0_dp*phi)
-                gxy(i,j,k) = 0.0
-                gxz(i,j,k) = 0.0
-                gyy(i,j,k) = asq*(1.0_dp - 2.0_dp*phi)
-                gyz(i,j,k) = 0.0
-                gzz(i,j,k) = asq*(1.0_dp - 2.0_dp*phi)
-             endif
-
-              if (FLRW_negative_curv) then
-                 kxx(i,j,k) = -kvalue*(1.0_dp - 2.0_dp * phi - phidot * a0 / adot) / alp(i,j,k)
-                 kxy(i,j,k) = 0.0
-                 kxz(i,j,k) = 0.0
-                 kyy(i,j,k) = -kvalue*(1.0_dp - 2.0_dp * phi - phidot * a0 / adot) / alp(i,j,k)
-                 kyz(i,j,k) = 0.0
-                 kzz(i,j,k) = -kvalue*(1.0_dp - 2.0_dp * phi - phidot * a0 / adot) / alp(i,j,k)
-              else
-                 kxx(i,j,k) = kvalue*(1.0_dp - 2.0_dp * phi - phidot * a0 / adot) / alp(i,j,k)
-                 kxy(i,j,k) = 0.0
-                 kxz(i,j,k) = 0.0
-                 kyy(i,j,k) = kvalue*(1.0_dp - 2.0_dp * phi - phidot * a0 / adot) / alp(i,j,k)
-                 kyz(i,j,k) = 0.0
-                 kzz(i,j,k) = kvalue*(1.0_dp - 2.0_dp * phi - phidot * a0 / adot) / alp(i,j,k)
+           if (single_mode .and. FLRW_perturb) then
+              ! set single mode perturbation in phi and d(phi)/dx^i -- used for delta and delta_vel
+              if (perturb_x) then
+                 f = perturb_phi * sin(kx * x(i,j,k) - phi_offset)
+                 df1 = perturb_phi * kx * cos(kx * x(i,j,k) - phi_offset)
+                 delta_vel(i,j,k,1) = perturb_v0 * df1
+              elseif (perturb_y) then
+                 f = perturb_phi * sin(ky * y(i,j,k) - phi_offset)
+                 df2 = perturb_phi * ky * cos(ky * y(i,j,k) - phi_offset) ! for all these cases df only has one component
+                 delta_vel(i,j,k,2) = perturb_v0 * df2
+              elseif (perturb_z) then
+                 f = perturb_phi * sin(kz * z(i,j,k) - phi_offset)
+                 df3 = perturb_phi * kz * cos(kz * z(i,j,k) - phi_offset)
+                 delta_vel(i,j,k,3) = perturb_v0 * df3
+              elseif (perturb_all) then
+                 f = perturb_phi * (sin(kx * x(i,j,k) - phi_offset) + sin(ky * y(i,j,k) - phi_offset) + sin(kz * z(i,j,k) - phi_offset))
+                 df1 = perturb_phi * kx * cos(kx * x(i,j,k) - phi_offset)
+                 df2 = perturb_phi * ky * cos(ky * y(i,j,k) - phi_offset) ! df is now a vector, this is only used in velocity IC
+                 df3 = perturb_phi * kz * cos(kz * z(i,j,k) - phi_offset)
+                 delta_vel(i,j,k,1) = perturb_v0 * df1
+                 delta_vel(i,j,k,2) = perturb_v0 * df2
+                 delta_vel(i,j,k,3) = perturb_v0 * df3
               endif
+              phi(i,j,k) = f
+              phidot = 0._dp     !  d(phi)/dt
+              delta(i,j,k) = perturb_rho0 * f              
+           endif
+       
+           !! set up metric, extrinsic curvature, lapse and shift
+           if (data) then
 
-	    else
-
-              if (FLRW_negative_metric) then
-                 gxx(i,j,k) = -asq
-                 gxy(i,j,k) = 0.0
-                 gxz(i,j,k) = 0.0
-                 gyy(i,j,k) = -asq
-                 gyz(i,j,k) = 0.0
-                 gzz(i,j,k) = -asq
+              if (lapse) then
+                 !if (FLRW_perturb_metric) then
+                 if (FLRW_perturb) then
+                    alp(i,j,k) = sqrt(1._dp + 2._dp * phi(i,j,k))
+                 else
+                    alp(i,j,k) = FLRW_lapse_value
+                 endif
+              endif
+	   
+              !if (FLRW_perturb_metric) then        
+              if (FLRW_perturb) then
+                 gxx(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
+                 gxy(i,j,k) = 0._dp
+                 gxz(i,j,k) = 0._dp
+                 gyy(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
+                 gyz(i,j,k) = 0._dp
+                 gzz(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
+                 
+                 kxx(i,j,k) = kvalue * (1._dp - 2._dp * phi(i,j,k) - phidot * a0 / adot) / alp(i,j,k)
+                 kxy(i,j,k) = 0._dp
+                 kxz(i,j,k) = 0._dp
+                 kyy(i,j,k) = kvalue * (1._dp - 2._dp * phi(i,j,k) - phidot * a0 / adot) / alp(i,j,k)
+                 kyz(i,j,k) = 0._dp
+                 kzz(i,j,k) = kvalue * (1._dp - 2._dp * phi(i,j,k) - phidot * a0 / adot) / alp(i,j,k)                 
               else
                  gxx(i,j,k) = asq
-                 gxy(i,j,k) = 0.0
-                 gxz(i,j,k) = 0.0
+                 gxy(i,j,k) = 0._dp
+                 gxz(i,j,k) = 0._dp
                  gyy(i,j,k) = asq
-                 gyz(i,j,k) = 0.0
+                 gyz(i,j,k) = 0._dp
                  gzz(i,j,k) = asq
+                 
+                 kxx(i,j,k) = kvalue
+                 kxy(i,j,k) = 0._dp
+                 kxz(i,j,k) = 0._dp
+                 kyy(i,j,k) = kvalue
+                 kyz(i,j,k) = 0._dp
+                 kzz(i,j,k) = kvalue
               endif
 
-              kxx(i,j,k) = kvalue
-              kxy(i,j,k) = 0.0
-              kxz(i,j,k) = 0.0
-              kyy(i,j,k) = kvalue
-              kyz(i,j,k) = 0.0
-              kzz(i,j,k) = kvalue
-	    endif
-	 endif
+              ! May also need the derivative of the lapse -- evolution of this is specified in ADMBase.
+              if (dtlapse) then
+                 dtalp(i,j,k) = 0._dp
+              end if              
 
-         ! May also need the derivative of the lapse -- this is specified in ADMBase (somehow).
-         if (dtlapse) then
-	    dtalp(i,j,k) = 0.0
-	 end if
-
-
-         if (shift) then
-            betax(i,j,k) = 0.0
-            betay(i,j,k) = 0.0
-            betaz(i,j,k) = 0.0
-         end if
+              if (shift) then
+                 betax(i,j,k) = 0._dp
+                 betay(i,j,k) = 0._dp
+                 betaz(i,j,k) = 0._dp
+              end if
          
-         ! set up  matter variables
-         if (hydro) then
-            rho(i,j,k) = rho0
-            press(i,j,k) = FLRW_K * rho0 ** FLRW_gamma
-            eps(i,j,k) = 0.0
-            if (FLRW_perturb_density) then
+              ! set up  matter variables
+              if (hydro) then
+                 ! initialise matter to homogeneous values
+                 rho(i,j,k) = rho0
+                 !           press(i,j,k) = FLRW_K * rho0 ** FLRW_gamma   !! previously. removing these FLRW keywords
+                 press(i,j,k) = 0._dp
+                 eps(i,j,k) = 0._dp
+                 vel(i,j,k,:) = 0._dp
 
-               if (perturb_x) then
-                  vel(i,j,k,1) = perturb_v0 * df1
-                  vel(i,j,k,2) = 0.0
-                  vel(i,j,k,3) = 0.0
-               elseif (perturb_y) then
-                  vel(i,j,k,1) = 0.0
-                  vel(i,j,k,2) = perturb_v0 * df2
-                  vel(i,j,k,3) = 0.0
-               elseif (perturb_z) then
-                  vel(i,j,k,1) = 0.0
-                  vel(i,j,k,2) = 0.0
-                  vel(i,j,k,3) = perturb_v0 * df3
-               elseif (perturb_all) then
-                  vel(i,j,k,1) = perturb_v0 * df1
-                  vel(i,j,k,2) = perturb_v0 * df2
-                  vel(i,j,k,3) = perturb_v0 * df3
-               endif
+!                 if (FLRW_perturb_density) then
+                 if (FLRW_perturb) then
 
-            else
-               vel(i,j,k,1) = 0.0
-               vel(i,j,k,2) = 0.0
-               vel(i,j,k,3) = 0.0
-            end if
-         end if
-         
-	 !! set density depending on perturbation
+                    vel(i,j,k,:) = delta_vel(i,j,k,:)
+                    rho(i,j,k) = rho(i,j,k) * ( 1._dp + delta(i,j,k) )
 
-	if (FLRW_perturb_density) then
+                 endif
 
-	   if (CCTK_EQUALS (FLRW_perturb_type, "Sine")) then
-               
-              rho(i,j,k) = rho(i,j,k) * ( 1._dp + perturb_rho0 * f)
-           
+              endif
+
            endif
-
-	endif
-
-        end do
-     end do
-  end do
-
+        enddo
+     enddo
+  enddo
+  
   if (CCTK_EQUALS (metric_type, "physical")) then
      ! do nothing
   else
      call CCTK_WARN (0, "Unknown value of ADMBase::metric_type -- FLRW only set-up for metric_type = physical")
   end if
-
+  
 end subroutine FLRW_InitialData
