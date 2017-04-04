@@ -70,7 +70,7 @@ CCTK_REAL phi_perturb_amplitude "Amplitude of perturbation in phi (relative to r
   0.0:* :: "Must be positive"
 } 0.0
 
-CCTK_REAL FLRW_xmax "Maximum x-value of grid ** TO REMOVE **"
+CCTK_REAL FLRW_xmax "Maximum x-value of grid - assumed grid spans [-FLRW_xmax:FLRW_xmax] in each dimension"
 {
   *:* :: "Anything"
 } 240.
