@@ -23,16 +23,20 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   real(dp), parameter :: pi = 3.14159265358979323846264338327
   real(dp) :: f, df1, df2, df3
   real(dp) :: kx, ky, kz, modk, kval
+  real(dp) :: xmin, xmax
 
-  real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)) :: phi, delta
-  real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
   real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: phi_gs, delta_gs
   real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3),3) :: delta_vel_gs
+  real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)) :: phi, delta
+  real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
 
   logical   :: lapse, dtlapse, shift, data, hydro, perturb_x, perturb_y, perturb_z, perturb_all, cmb_like, single_mode
   integer :: dr_unit, dv_unit1, dv_unit2, dv_unit3, p_unit
-  integer :: res, il, jl, kl, iu, ju, ku
+  integer :: res, il,jl,kl, iu,ju,ku  ! resolution, indices of upper/lower bounds of local grid within global grid
   character(len=40) :: deltafile, vel1file, vel2file, vel3file, phifile
+  
+  !! test print CoordBase variables - didnt work. put inherits:: Coordbase into interface.ccl, didnt like that...
+!  print*,'your xmax is',xmax,'your xmin is',xmin
 
   !
   ! set logicals
@@ -63,10 +67,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   res = int(FLRW_resolution)
 
   if (single_mode .and. FLRW_perturb) then
-
-     !
      ! set parameters only required for single mode
-     !
      amp = phi_perturb_amplitude
      perturb_phi = amp * rho0
      phi_offset = phi_phase_offset
@@ -88,56 +89,61 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
         kval = modk
      endif
 !     perturb_rho0 = kval**2 / (4._dp * pi * rho0 * asq) - 2._dp
-     perturb_rho0 = - kx**2 / (4._dp * pi * rho0 * asq) - 2._dp  !! testing - why kx only here?
+     perturb_rho0 = - kx**2 / (4._dp * pi * rho0 * asq) - 2._dp  !! testing - this works. use kx rather than modk!
      perturb_v0 = - sqrt(a0 / ( 6._dp * pi * rhostar ))        
 
      delta_vel = 0._dp
      delta = 0._dp      ! initialise perturbations to zero
-     phi = 0._dp
-     
-  elseif (cmb_like .and. FLRW_perturb) then
-
-     ! define filenames to read from, based on resolution
-     ! !! assumes uniform grid !!
-     write(deltafile,'(a,i3.3,a)')'ics_files/ics_files',res,'/delta.dat'
-     write(vel1file,'(a,i3.3,a)')'ics_files/ics_files',res,'/vel1.dat'
-     write(vel2file,'(a,i3.3,a)')'ics_files/ics_files',res,'/vel2.dat'
-     write(vel3file,'(a,i3.3,a)')'ics_files/ics_files',res,'/vel3.dat'
-     write(phifile,'(a,i3.3,a)')'ics_files/ics_files',res,'/phi.dat'
-
-     ! open files to read phi, delta, vel perturbs from files
-     open(newunit=dr_unit,file=deltafile,status='old')  ! delta rho file
-     open(newunit=dv_unit1,file=vel1file,status='old')  ! delta vel file [1]
-     open(newunit=dv_unit2,file=vel2file,status='old')  ! delta vel file [2]
-     open(newunit=dv_unit3,file=vel3file,status='old')  ! delta vel file [3] 
-     open(newunit=p_unit,file=phifile,status='old')   ! phi file
-
-     do k = 1, cctk_gsh(3)
-        do j = 1, cctk_gsh(2) ! loop over ROW no. (i is COLUMN no.) (i,j,k) --> (column, row, z)
-           ! read perturbations from CMB-like generated data files
-           read(dr_unit,*) delta_gs(:,j,k)
-           read(dv_unit1,*) delta_vel_gs(:,j,k,1)
-           read(dv_unit2,*) delta_vel_gs(:,j,k,2)
-           read(dv_unit3,*) delta_vel_gs(:,j,k,3)
-           read(p_unit,*), phi_gs(:,j,k)
-        enddo
-     enddo
-
-     ! find indices of lower and upper bounds of location of local grid within global grid
-     il = cctk_lbnd(1)
-     jl = cctk_lbnd(2)
-     kl = cctk_lbnd(3)
-     
-     iu = cctk_ubnd(1)
-     ju = cctk_ubnd(2)
-     ku = cctk_ubnd(3)
-
-     ! put partial global grid into local grid
-     delta = delta_gs(il:iu, jl:ju, kl:ku)
-     phi = phi_gs(il:iu, jl:ju, kl:ku)
-     delta_vel = delta_vel_gs(il:iu, jl:ju, kl:ku, :)
-
+     phi = 0._dp   
   endif
+
+  if (FLRW_perturb .and. cmb_like) then
+        print*,'cmb_like and FLRW_perturb set to yes.'
+
+        ! define filenames to read from, based on resolution
+        ! !! assumes uniform grid !!
+        write(deltafile,'(a,i3.3,a)')'ics_files/ics_files',res,'/delta.dat'
+        write(vel1file,'(a,i3.3,a)')'ics_files/ics_files',res,'/vel1.dat'
+        write(vel2file,'(a,i3.3,a)')'ics_files/ics_files',res,'/vel2.dat'
+        write(vel3file,'(a,i3.3,a)')'ics_files/ics_files',res,'/vel3.dat'
+        write(phifile,'(a,i3.3,a)')'ics_files/ics_files',res,'/phi.dat'
+
+        ! open files to read phi, delta, vel perturbs from files
+        open(newunit=dr_unit,file=deltafile,status='old')  ! delta rho file
+        open(newunit=dv_unit1,file=vel1file,status='old')  ! delta vel file [1]
+        open(newunit=dv_unit2,file=vel2file,status='old')  ! delta vel file [2]
+        open(newunit=dv_unit3,file=vel3file,status='old')  ! delta vel file [3] 
+        open(newunit=p_unit,file=phifile,status='old')     ! phi file
+
+        print*,'opened IC files'
+
+        do k = 1, cctk_gsh(3)
+           do j = 1, cctk_gsh(2) ! loop over ROW no. (i is COLUMN no.) (i,j,k) --> (column, row, z)
+              ! read perturbations from CMB-like generated data files to GLOBAL sized arrays
+              read(dr_unit,*) delta_gs(:,j,k)
+              read(dv_unit1,*) delta_vel_gs(:,j,k,1)
+              read(dv_unit2,*) delta_vel_gs(:,j,k,2)
+              read(dv_unit3,*) delta_vel_gs(:,j,k,3)
+              read(p_unit,*), phi_gs(:,j,k)
+           enddo
+        enddo
+       
+        ! indices for lower bound of local grid within global grid
+        il = cctk_lbnd(1) + 1
+        jl = cctk_lbnd(2) + 1  ! these indices start at 0
+        kl = cctk_lbnd(3) + 1
+        ! indices for upper bound of local grid within global grid
+        iu = cctk_ubnd(1) + 1
+        ju = cctk_ubnd(2) + 1
+        ku = cctk_ubnd(3) + 1
+
+        ! extract local part of global grid 
+        delta = delta_gs(il:iu, jl:ju, kl:ku)
+        delta_vel = delta_vel_gs(il:iu, jl:ju, kl:ku, :)
+        phi = phi_gs(il:iu, jl:ju, kl:ku)
+       
+     endif
+
 
   do k = 1, cctk_lsh(3)
      do j = 1, cctk_lsh(2)
@@ -175,15 +181,13 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
            if (data) then
 
               if (lapse) then
-                 !if (FLRW_perturb_metric) then
                  if (FLRW_perturb) then
                     alp(i,j,k) = sqrt(1._dp + 2._dp * phi(i,j,k))
                  else
                     alp(i,j,k) = FLRW_lapse_value
                  endif
               endif
-                 
-              !if (FLRW_perturb_metric) then        
+	           
               if (FLRW_perturb) then
                  gxx(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
                  gxy(i,j,k) = 0._dp
@@ -229,12 +233,11 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
               if (hydro) then
                  ! initialise matter to homogeneous values
                  rho(i,j,k) = rho0
-                 !           press(i,j,k) = FLRW_K * rho0 ** FLRW_gamma   !! previously. removing these FLRW keywords
+                 ! press(i,j,k) = FLRW_K * rho0 ** FLRW_gamma   !! previously. removing these FLRW keywords
                  press(i,j,k) = 0._dp
                  eps(i,j,k) = 0._dp
                  vel(i,j,k,:) = 0._dp
 
-!                 if (FLRW_perturb_density) then
                  if (FLRW_perturb) then
 
                     vel(i,j,k,:) = delta_vel(i,j,k,:)
