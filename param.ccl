@@ -37,6 +37,7 @@ KEYWORD describe_ics "Description of initial conditions being used - this determ
  "/500Mpc_half" :: "500 Mpc physical box size, with half sampling of P(k), i.e. kmax = nyquist/2"
  "/1Gpc_full" :: "1 Gpc physical box size, with full sampling of P(k) for this size + resolution"
  "/1Gpc_half" :: "1 Gpc physical box size, with half sampling of P(k), i.e. kmax = nyquist/2"
+ "/100Mpc_full_z200" :: "100 Mpc physical box size, with full sampling of P(k) and IC's generated at z=200"
 } "/100Mpc_half"
 
 KEYWORD FLRW_perturb_direction "Choose which direction to perturb (only valid if FLRW_perturb_type = 'single_mode')"
@@ -103,7 +104,7 @@ EXTENDS KEYWORD initial_lapse
 
 EXTENDS KEYWORD initial_dtlapse
 {
-  "flrw" :: FLRW initial dtlapse
+  "flrw" :: "FLRW initial dtlapse"
 }
 
 EXTENDS KEYWORD initial_shift
