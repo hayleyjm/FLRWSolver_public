@@ -10,24 +10,10 @@ CCTK_REAL phi_phase_offset "The phase offset(eta) of phi=A * sin(kx*x - eta) for
  *:* :: "Anything"
 } 0.0
 
-BOOLEAN FLRW_perturb "Add perturbation to matter and metric"
+KEYWORD FLRW_perturb "Add perturbation to matter and metric"
 {
-} "no"
-
-BOOLEAN FLRW_perturb_density "Add density perturbation ** TO REMOVE **"
-{
-} "no"
-
-BOOLEAN FLRW_perturb_metric "Add metric perturbation - g_ij, lapse, K_ij ** TO REMOVE **"
-{
-} "no"
-
-BOOLEAN FLRW_test "Initiate test density currently in code ** TO REMOVE **"
-{
-} "no"
-
-BOOLEAN FLRW_test_ics "Testing IC's derived from starting redshift of 127, box size of 500 h^-1 Mpc ***TO REMOVE***"
-{
+ "yes" :: "Add perturbation to FLRW spacetime"
+ "no" :: "Do not add perturbation, will run FLRW spacetime"
 } "no"
 
 KEYWORD FLRW_perturb_type "Add perturbation"
@@ -36,13 +22,24 @@ KEYWORD FLRW_perturb_type "Add perturbation"
  "CMB_like" :: "CMB-like perturbation. Generated from CAMB power spectrum of density at the CMB. Require files output from Python script"
 } "CMB_like"
 
-KEYWORD FLRW_phi_solution "Choose solution of Phi out of Einstein equations ** TO REMOVE **"
+KEYWORD FLRW_ICs_dir "Directory containing initial conditions files for the simulation"
 {
- "Constant" :: "Choose constant mode phi~g(x)"
- "Decaying" :: "Choose decaying mode phi~f(x)*s^(-5/3)"
-} "Constant"
+ "initial_conditions/" :: "For Pawsey's Magnus, softlink to /group/pawsey0202/software/initial_conditions/"
+} "initial_conditions/"
 
-KEYWORD FLRW_perturb_direction "Choose which direction to perturb (1D perturbation ONLY)"
+KEYWORD describe_ics "Description of initial conditions being used - this determines where ICs are taken from ** to add 10/26 Gpc **"
+{
+ "/100Mpc_half" :: "100 Mpc physical box size, with half sampling of P(k), i.e. kmax = nyquist/2"
+ "/100Mpc_full" :: "100 Mpc physical box size, with full sampling of P(k) for this size + resolution"
+ "/250Mpc_full" :: "250 Mpc physical box size, with full sampling of P(k) for this size + resolution"
+ "/250Mpc_half" :: "250 Mpc physical box size, with half sampling of P(k), i.e. kmax = nyquist/2"
+ "/500Mpc_full" :: "500 Mpc physical box size, with full sampling of P(k) for this size + resolution"
+ "/500Mpc_half" :: "500 Mpc physical box size, with half sampling of P(k), i.e. kmax = nyquist/2"
+ "/1Gpc_full" :: "1 Gpc physical box size, with full sampling of P(k) for this size + resolution"
+ "/1Gpc_half" :: "1 Gpc physical box size, with half sampling of P(k), i.e. kmax = nyquist/2"
+} "/100Mpc_half"
+
+KEYWORD FLRW_perturb_direction "Choose which direction to perturb (only valid if FLRW_perturb_type = 'single_mode')"
 {
 "x" :: "perturb x-direction only"
 "y" :: "perturb y-direction only"
@@ -50,7 +47,7 @@ KEYWORD FLRW_perturb_direction "Choose which direction to perturb (1D perturbati
 "all" :: "perturb all dimensions"
 } "all"
 
-CCTK_REAL FLRW_resolution "Resolution of box used - only used for CMB_like perturbations"
+CCTK_REAL FLRW_resolution "Resolution of box used (only used if FLRW_perturb_type = 'CMB_like')"
 {
  0.0:* :: "Must be positive."
 } 32.0
@@ -60,7 +57,7 @@ CCTK_REAL single_perturb_wavelength "Wavelength of single mode perturbation"
  0.0:* :: "Must be positive and smaller than or equal to box length."
 } 1.0
 
-CCTK_REAL FLRW_lapse_value "Value of lapse (alpha) for FLRW *WITHOUT* perturbation"
+CCTK_REAL FLRW_lapse_value "Value of background initial lapse (alpha)"
 {
   *:* :: "Anything"
 } 1.0
@@ -70,15 +67,10 @@ CCTK_REAL phi_perturb_amplitude "Amplitude of perturbation in phi (relative to r
   0.0:* :: "Must be positive"
 } 0.0
 
-CCTK_REAL FLRW_xmax "Maximum x-value of grid - assumed grid spans [-FLRW_xmax:FLRW_xmax] in each dimension"
-{
-  *:* :: "Anything"
-} 240.
-
-CCTK_REAL FLRW_initial_redshift "Redshift value to begin simulation from ** TO REMOVE **"
-{
- 0:* :: "Must be positive"
-} 0.0
+# CCTK_REAL FLRW_xmax "Maximum x-value of grid - assumed grid spans [-FLRW_xmax:FLRW_xmax] in each dimension"
+# {
+#   *:* :: "Anything"
+# } 240.
 
 # This below didn't work to use xmax in flrw.f90, dont know why
 # shares:CoordBase
