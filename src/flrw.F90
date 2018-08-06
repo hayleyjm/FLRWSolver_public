@@ -24,19 +24,20 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   real(dp) :: f, df1, df2, df3
   real(dp) :: kx, ky, kz, modk, kval
   real(dp) :: xmin, xmax
+  real(dp) :: d2chi(3,3)
 
-  real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: phi_gs, delta_gs
+  real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: phi_gs, delta_gs, chi_gs, rc_gs
   real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3),3) :: delta_vel_gs
-  real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)) :: phi, delta
+  real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)) :: phi, delta, chi, rc
   real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
 
   logical   :: lapse, dtlapse, shift, data, hydro, perturb_x, perturb_y, perturb_z, perturb_all,&
        cmb_like, single_mode, perturb
-  integer :: dr_unit, dv_unit1, dv_unit2, dv_unit3, p_unit
+  integer :: dr_unit, dv_unit1, dv_unit2, dv_unit3, p_unit, chi_unit, rc_unit
   integer :: res,il,jl,kl,iu,ju,ku
-  character(len=100) :: deltafile, vel1file, vel2file, vel3file, phifile
+  character(len=100) :: deltafile, vel1file, vel2file, vel3file, phifile, chifile, rcfile
   character(len=100) :: dir, ics_dir, ics_type
-  integer :: ics_dir_len, ics_type_len
+  integer :: ics_dir_len, ics_type_len, ip1,im1,jp1,jm1,kp1,km1
 
   !
   ! set logicals
@@ -52,17 +53,23 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   perturb_all = CCTK_EQUALS (FLRW_perturb_direction, "all")
   single_mode = CCTK_EQUALS (FLRW_perturb_type, "single_mode")
   cmb_like = CCTK_EQUALS (FLRW_perturb_type, "CMB_like")
+  synch_comov = CCTK_EQUALS (FLRW_perturb_type, "synch_comoving")
   perturb = CCTK_EQUALS (FLRW_perturb, "yes")
-
+  
+  !framedrag = CCTK_EQUALS (do_framedrag_test, "yes") !! must have FLRW_perturb_type = "single_mode" for this
+  !framedrag = CCTK_EQUALS (FLRW_perturb_type, "frame_drag_test") !! run comparison test for frame dragging potential
+  
   !
   ! set parameters
   !
   a0 = 1._dp
   rho0 = FLRW_init_rho
   asq = a0*a0
-  rhostar = rho0 * asq*a0   !! Conserved FLRW density
-  adot = sqrt((8._dp * pi)*rho0*asq/3._dp) !! from Friedmann eqns
-  kvalue = -adot * a0
+  rhostar = rho0 * a0**3                     !! Conserved FLRW density
+  adot = sqrt((8._dp * pi)*rho0*asq/3._dp)   !! from Friedmann eqns
+  hub = adot / a0
+  hubdot = -12._dp * pi * rho0 * asq / 3._dp !! H' from Friedmann eqns
+  kvalue = -adot * a0                        !! check if this is really just -a' (will make no diff)
   res = int(FLRW_resolution)
 
   if (perturb .and. single_mode) then
@@ -132,31 +139,83 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
            read(p_unit,*) phi_gs(:,j,k)
         enddo
      enddo
+
+  endif
+     
+  if (perturb .and. synch_comov) then
+     !
+     ! convert CCTK_STRING "describe_ics" + "FLRW_ICs_dir" to Fortran string
+     !
+     call CCTK_FortranString(ics_type_len,describe_ics,ics_type)
+     call CCTK_FortranString(ics_dir_len,FLRW_ICs_dir,ics_dir)
+     write(dir,'(a,i3.3,a)')trim(ics_dir),res,trim(ics_type)
+     !print*,trim(dir)
      
      !
-     ! indices for lower bound of local (processor) grid within global grid
+     ! filenames to read ICs from, based on FLRW_ICs_dir + describe_ics parameters + res
      !
-     il = cctk_lbnd(1) + 1
-     jl = cctk_lbnd(2) + 1  ! indices output from cctk_lbnd start at 0, need to +1
-     kl = cctk_lbnd(3) + 1
+     write(deltafile,'(a,a)')trim(dir),'/delta.dat'
+     write(chifile,'(a,a)')trim(dir),'/chi.dat'
+     write(rcfile,'(a,a)')trim(dir),'/rc.dat'
+
      !
-     ! indices for upper bound of local grid within global grid
+     ! open files to read phi, delta, vel perturbs from files
      !
-     iu = cctk_ubnd(1) + 1
-     ju = cctk_ubnd(2) + 1
-     ku = cctk_ubnd(3) + 1
-     !
-     ! extract local part of global grid 
-     !
+     open(newunit=dr_unit,file=deltafile,status='old')  ! delta rho file
+     open(newunit=chi_unit,file=chifile,status='old')   ! chi file file [1]
+     open(newunit=rc_unit,file=rcfile,status='old')     ! R_c file [2]
+
+     print*,'opened IC files'
+
+     do k = 1, cctk_gsh(3)
+        do j = 1, cctk_gsh(2) 
+           ! loop over ROW no. (i is COLUMN no.) (i,j,k) --> (column, row, z)
+
+           !
+           ! read perturbations from 3D files to global sized (gs) arrays
+           !
+           read(dr_unit,*) delta_gs(:,j,k)
+           read(chi_unit,*) chi_gs(:,j,k,1)
+           read(rc_unit,*) rc_gs(:,j,k,2)
+        enddo
+     enddo
+  endif
+
+  !
+  ! indices for lower bound of local (processor) grid within global grid
+  !
+  il = cctk_lbnd(1) + 1
+  jl = cctk_lbnd(2) + 1  ! indices output from cctk_lbnd start at 0, need to +1
+  kl = cctk_lbnd(3) + 1
+  !
+  ! indices for upper bound of local grid within global grid
+  !
+  iu = cctk_ubnd(1) + 1
+  ju = cctk_ubnd(2) + 1
+  ku = cctk_ubnd(3) + 1
+  !
+  ! extract local part of global grid 
+  !
+  if (perturb .and. cmb_like) then
      delta = delta_gs(il:iu, jl:ju, kl:ku)
      delta_vel = delta_vel_gs(il:iu, jl:ju, kl:ku, :)
      phi = phi_gs(il:iu, jl:ju, kl:ku)
-       
+  elseif (perturb .and. synch_comov) then
+     delta = delta_gs(il:iu, jl:ju, kl:ku)
+     chi = chi_gs(il:iu, jl:ju, kl:ku)
+     rc = rc_gs(il:iu, jl:ju, kl:ku)
   endif
 
+  !
+  ! spatial loop
+  !
   do k = 1, cctk_lsh(3)
      do j = 1, cctk_lsh(2)
         do i = 1, cctk_lsh(1)
+
+           call apply_periodic(i,ip1,im1,nx)
+           call apply_periodic(j,jp1,jm1,nx)
+           call apply_periodic(k,kp1,km1,nx)
 
            if (perturb .and. single_mode) then
               !
@@ -188,34 +247,71 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
               phidot = 0._dp     !  d(phi)/dt
               delta(i,j,k) = perturb_rho0 * f              
            endif
-
+           !
+           ! take 2nd derivs of \chi for g_ij and K_ij
+           ! ** these should be symmetric (check) **
+           !
+           if (synch_comov) then
+              d2chi(1,1) = deriv2(chi(ip1,j,k),chi(i,j,k),chi(im1,j,k),dx)
+              d2chi(1,2) = deriv2_mix(chi(i,j,k),chi(ip1,jp1,k),chi(im1,jm1,k),chi(ip1,j,k),&
+                   chi(im1,j,k),chi(i,jp1,k),chi(i,jm1,k),dx,dy)
+              d2chi(1,3) = deriv2_mix(chi(i,j,k),chi(ip1,j,kp1),chi(im1,j,km1),chi(ip1,j,k),&
+                   chi(im1,j,k),chi(i,j,kp1),chi(i,j,km1),dx,dz)
+              d2chi(2,2) = deriv2(chi(i,jp1,k),chi(i,j,k),chi(i,jm1,k),dy)
+              d2chi(2,3) = deriv2_mix(chi(i,j,k),chi(i,jp1,kp1),chi(i,jm1,km1),chi(i,jp1,k),&
+                   chi(i,jm1,k),chi(i,j,kp1),chi(i,j,km1),dy,dz)
+              d2chi(3,3) = deriv2(chi(i,j,kp1),chi(i,j,k),chi(i,j,km1),dz)
+           endif  
            !
            ! set up metric, extrinsic curvature, lapse and shift
            !
            if (data) then
 
               if (lapse) then
-                 if (perturb) then
+                 if (perturb .and. synch_comov .eqv. .False.) then
                     alp(i,j,k) = sqrt(1._dp + 2._dp * phi(i,j,k))
                  else
                     alp(i,j,k) = FLRW_lapse_value
                  endif
               endif
-	           
+
               if (perturb) then
-                 gxx(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
-                 gxy(i,j,k) = 0._dp
-                 gxz(i,j,k) = 0._dp
-                 gyy(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
-                 gyz(i,j,k) = 0._dp
-                 gzz(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
-                 
-                 kxx(i,j,k) = kvalue * (1._dp - 2._dp * phi(i,j,k) - phidot * a0 / adot) / alp(i,j,k)
-                 kxy(i,j,k) = 0._dp
-                 kxz(i,j,k) = 0._dp
-                 kyy(i,j,k) = kvalue * (1._dp - 2._dp * phi(i,j,k) - phidot * a0 / adot) / alp(i,j,k)
-                 kyz(i,j,k) = 0._dp
-                 kzz(i,j,k) = kvalue * (1._dp - 2._dp * phi(i,j,k) - phidot * a0 / adot) / alp(i,j,k)                 
+                 if (synch_comov) then
+                    ! g_ij = [1 - 2 R_c] \delta_ij + \partial_i \partial_j \chi
+                    gxx(i,j,k) = asq * (1._dp - 2._dp * rc(i,j,k) + d2chi(1,1))
+                    gxy(i,j,k) = asq * d2chi(1,2)
+                    gxz(i,j,k) = asq * d2chi(1,3)
+                    gyy(i,j,k) = asq * (1._dp - 2._dp * rc(i,j,k) + d2chi(2,2))
+                    gyz(i,j,k) = asq * d2chi(2,3)
+                    gzz(i,j,k) = asq * (1._dp - 2._dp * rc(i,j,k) + d2chi(3,3))
+
+                    ! K_ij = -a' \delta_ij + H'/H \partial_i \partial_j \chi
+                    kxx(i,j,k) = -adot + (hubdot * d2chi(1,1) / hub )
+                    kxy(i,j,k) = (hubdot * d2chi(1,2) / hub )
+                    kxz(i,j,k) = (hubdot * d2chi(1,3) / hub )
+                    kyy(i,j,k) = -adot + (hubdot * d2chi(2,2) / hub )
+                    kyz(i,j,k) = (hubdot * d2chi(2,3) / hub )
+                    kzz(i,j,k) = -adot + (hubdot * d2chi(3,3) / hub )
+                 else
+                    ! single mode or cmb-like in Longitudinal Gauge
+                    gxx(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
+                    gxy(i,j,k) = 0._dp
+                    gxz(i,j,k) = 0._dp
+                    gyy(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
+                    gyz(i,j,k) = 0._dp
+                    gzz(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
+
+                    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    !!!!!!!!! check K_ij b/g is -a*a' in conformal gauge... might just be -a'
+                    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    
+                    kxx(i,j,k) = kvalue * (1._dp - 2._dp * phi(i,j,k) - phidot * a0 / adot) / alp(i,j,k)
+                    kxy(i,j,k) = 0._dp
+                    kxz(i,j,k) = 0._dp
+                    kyy(i,j,k) = kvalue * (1._dp - 2._dp * phi(i,j,k) - phidot * a0 / adot) / alp(i,j,k)
+                    kyz(i,j,k) = 0._dp
+                    kzz(i,j,k) = kvalue * (1._dp - 2._dp * phi(i,j,k) - phidot * a0 / adot) / alp(i,j,k)
+                 endif
               else
                  gxx(i,j,k) = asq
                  gxy(i,j,k) = 0._dp
@@ -255,8 +351,10 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
                  eps(i,j,k) = 0._dp
                  vel(i,j,k,:) = 0._dp
                  if (perturb) then
-                    vel(i,j,k,:) = delta_vel(i,j,k,:)
                     rho(i,j,k) = rho(i,j,k) * ( 1._dp + delta(i,j,k) )
+                    if (synch_comov .eqv. .False.) then
+                       vel(i,j,k,:) = delta_vel(i,j,k,:)
+                    endif
                  endif
               endif
 
@@ -272,3 +370,61 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   end if
   
 end subroutine FLRW_InitialData
+
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! some functions to do some handy things !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!
+! function to return the 2nd order approx of partial 2nd deriv one variable e.g. d2/dx2(f)
+! 
+real(c_double) function deriv2(fp1,f,fm1,h)
+  real(c_double) :: fp1, f, fm1  !! values of the function at i+1,i,i-1 (or j, k)
+  real(c_double) :: h !! the spacing in whatever dimension we're in
+
+  deriv2 = (fp1 - 2. * f + fm1) / h**2
+
+end function deriv2
+
+!
+! a function to return the secon *mixed* derivative, e.g. d2/dxdy(f) (general to any denom mix)
+!
+real(c_double) function deriv2_mix(f,f_xp1yp1,f_xm1ym1,f_xp1,f_xm1,f_yp1,f_ym1,dx,dy)
+  real(c_double), intent(in) :: dx, dy ! grid spacing in the two dimensions
+  real(c_double), intent(in) :: f, f_xp1yp1, f_xm1ym1 ! f(x,y), f(x+dx,y+dy), f(x-dx,y-dy)
+  real(c_double), intent(in) :: f_xp1, f_xm1, f_yp1, f_ym1 ! f(x+dx,y), f(x-dx,y), f(x,y+dy), f(x,y-dy)
+
+  real(c_double) :: num, denom, d2fdx2, d2fdy2
+
+  denom = 2. * dx * dy ! denominator
+
+  d2fdx2 = deriv2(f_xp1,f,f_xm1,dx) ! second deriv w.r.t x
+  d2fdy2 = deriv2(f_yp1,f,f_ym1,dy) ! second deriv w.r.t y
+
+  num = f_xp1yp1 + f_xm1ym1 - 2. * f - dx*dx*d2fdx2 - dy*dy*d2fdy2
+
+  deriv2_mix = num / denom  
+end function deriv2_mix
+
+
+subroutine apply_periodic(j,jp1,jm1,nx)
+  integer, intent(in) :: j, nx
+  integer, intent(inout) :: jp1, jm1
+  integer :: stp
+
+  ! set (j+1), (j-1) depending on j value, implementing periodic BC's
+  ! now dependent on "step" value
+  if (j==1) then
+     jp1 = j + 1
+     jm1 = nx
+  elseif (j==nx) then
+     jp1 = 1
+     jm1 = j - 1
+  else
+     jp1 = j + 1
+     jm1 = j - 1
+  endif
+
+end subroutine apply_periodic

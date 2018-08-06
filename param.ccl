@@ -20,6 +20,7 @@ KEYWORD FLRW_perturb_type "Add perturbation"
 { 
  "single_mode" :: "Single mode perturbation (sine wave). Set FLRW_perturb_direction to choose dimensions of perturbation and single_perturb_wavelength."
  "CMB_like" :: "CMB-like perturbation. Generated from CAMB power spectrum of density at the CMB. Require files output from Python script"
+ "synch_comoving" :: "Add linear perturbations calculated in the synchronous, comoving gauge. Requires files output from Python script"
 } "CMB_like"
 
 KEYWORD FLRW_ICs_dir "Directory containing initial conditions files for the simulation"
