@@ -18,12 +18,12 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   integer, parameter :: dp = 8
   real(dp) :: a0, asq, adot, kvalue, z0
   real(dp) :: rho0, rhostar, perturb_rho0, perturb_v0
-  real(dp) :: box_length_x, box_length_y, box_length_z, box_length, wavelength
+  real(dp) :: box_length, wavelength
   real(dp) :: perturb_phi, phidot, phi_offset, amp
   real(dp), parameter :: pi = 4.*atan(1.)
-  real(dp) :: f, df1, df2, df3
+  real(dp) :: f, df1, df2, df3, dx, dy, dz
   real(dp) :: kx, ky, kz, modk, kval
-  real(dp) :: xmin, xmax
+  real(dp) :: hub, hubdot
   real(dp) :: d2chi(3,3)
 
   real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: phi_gs, delta_gs, chi_gs, rc_gs
@@ -32,7 +32,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
 
   logical   :: lapse, dtlapse, shift, data, hydro, perturb_x, perturb_y, perturb_z, perturb_all,&
-       cmb_like, single_mode, perturb
+       cmb_like, single_mode, perturb, synch_comov, framedrag
   integer :: dr_unit, dv_unit1, dv_unit2, dv_unit3, p_unit, chi_unit, rc_unit
   integer :: res,il,jl,kl,iu,ju,ku
   character(len=100) :: deltafile, vel1file, vel2file, vel3file, phifile, chifile, rcfile
@@ -56,7 +56,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   synch_comov = CCTK_EQUALS (FLRW_perturb_type, "synch_comoving")
   perturb = CCTK_EQUALS (FLRW_perturb, "yes")
   
-  !framedrag = CCTK_EQUALS (do_framedrag_test, "yes") !! must have FLRW_perturb_type = "single_mode" for this
+  framedrag = CCTK_EQUALS (do_framedrag_test, "yes") !! must have FLRW_perturb_type = "single_mode" for this
   !framedrag = CCTK_EQUALS (FLRW_perturb_type, "frame_drag_test") !! run comparison test for frame dragging potential
   
   !
@@ -71,6 +71,9 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   hubdot = -12._dp * pi * rho0 * asq / 3._dp !! H' from Friedmann eqns
   kvalue = -adot * a0                        !! check if this is really just -a' (will make no diff)
   res = int(FLRW_resolution)
+  box_length = FLRW_boxlength
+  dx = box_length / res                      !! assume xmin=0. and dx=dy=dz
+  dy = dx; dz = dx
 
   if (perturb .and. single_mode) then
      !
@@ -159,7 +162,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
      write(rcfile,'(a,a)')trim(dir),'/rc.dat'
 
      !
-     ! open files to read phi, delta, vel perturbs from files
+     ! open files to read delta, chi, rc perturbs from files
      !
      open(newunit=dr_unit,file=deltafile,status='old')  ! delta rho file
      open(newunit=chi_unit,file=chifile,status='old')   ! chi file file [1]
@@ -175,8 +178,8 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
            ! read perturbations from 3D files to global sized (gs) arrays
            !
            read(dr_unit,*) delta_gs(:,j,k)
-           read(chi_unit,*) chi_gs(:,j,k,1)
-           read(rc_unit,*) rc_gs(:,j,k,2)
+           read(chi_unit,*) chi_gs(:,j,k)
+           read(rc_unit,*) rc_gs(:,j,k)
         enddo
      enddo
   endif
@@ -194,7 +197,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   ju = cctk_ubnd(2) + 1
   ku = cctk_ubnd(3) + 1
   !
-  ! extract local part of global grid 
+  ! extract local part of global grid i.e. part this processor is using
   !
   if (perturb .and. cmb_like) then
      delta = delta_gs(il:iu, jl:ju, kl:ku)
@@ -213,9 +216,9 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
      do j = 1, cctk_lsh(2)
         do i = 1, cctk_lsh(1)
 
-           call apply_periodic(i,ip1,im1,nx)
-           call apply_periodic(j,jp1,jm1,nx)
-           call apply_periodic(k,kp1,km1,nx)
+           call apply_periodic(i,ip1,im1,res)
+           call apply_periodic(j,jp1,jm1,res)
+           call apply_periodic(k,kp1,km1,res)
 
            if (perturb .and. single_mode) then
               !
@@ -252,16 +255,30 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
            ! ** these should be symmetric (check) **
            !
            if (synch_comov) then
-              d2chi(1,1) = deriv2(chi(ip1,j,k),chi(i,j,k),chi(im1,j,k),dx)
-              d2chi(1,2) = deriv2_mix(chi(i,j,k),chi(ip1,jp1,k),chi(im1,jm1,k),chi(ip1,j,k),&
-                   chi(im1,j,k),chi(i,jp1,k),chi(i,jm1,k),dx,dy)
-              d2chi(1,3) = deriv2_mix(chi(i,j,k),chi(ip1,j,kp1),chi(im1,j,km1),chi(ip1,j,k),&
-                   chi(im1,j,k),chi(i,j,kp1),chi(i,j,km1),dx,dz)
-              d2chi(2,2) = deriv2(chi(i,jp1,k),chi(i,j,k),chi(i,jm1,k),dy)
-              d2chi(2,3) = deriv2_mix(chi(i,j,k),chi(i,jp1,kp1),chi(i,jm1,km1),chi(i,jp1,k),&
-                   chi(i,jm1,k),chi(i,j,kp1),chi(i,j,km1),dy,dz)
-              d2chi(3,3) = deriv2(chi(i,j,kp1),chi(i,j,k),chi(i,j,km1),dz)
-           endif  
+	      call calc_deriv2(chi(ip1,j,k),chi(i,j,k),chi(im1,j,k),dx,d2chi(1,1))
+              !! d2chi(1,1) = deriv2(chi(ip1,j,k),chi(i,j,k),chi(im1,j,k),dx)
+	      
+	      call calc_deriv2_mix(chi(i,j,k),chi(ip1,jp1,k),chi(im1,jm1,k),chi(ip1,j,k),&
+                   chi(im1,j,k),chi(i,jp1,k),chi(i,jm1,k),dx,dy,d2chi(1,2))
+              !! d2chi(1,2) = deriv2_mix(chi(i,j,k),chi(ip1,jp1,k),chi(im1,jm1,k),chi(ip1,j,k),&
+              !!     chi(im1,j,k),chi(i,jp1,k),chi(i,jm1,k),dx,dy)
+	      
+	      call calc_deriv2_mix(chi(i,j,k),chi(ip1,j,kp1),chi(im1,j,km1),chi(ip1,j,k),&
+                   chi(im1,j,k),chi(i,j,kp1),chi(i,j,km1),dx,dz,d2chi(1,3))
+              !! d2chi(1,3) = deriv2_mix(chi(i,j,k),chi(ip1,j,kp1),chi(im1,j,km1),chi(ip1,j,k),&
+              !!     chi(im1,j,k),chi(i,j,kp1),chi(i,j,km1),dx,dz)
+              
+	      call calc_deriv2(chi(i,jp1,k),chi(i,j,k),chi(i,jm1,k),dy,d2chi(2,2))
+	      !! d2chi(2,2) = deriv2(chi(i,jp1,k),chi(i,j,k),chi(i,jm1,k),dy)
+              
+	      call calc_deriv2_mix(chi(i,j,k),chi(i,jp1,kp1),chi(i,jm1,km1),chi(i,jp1,k),&
+                   chi(i,jm1,k),chi(i,j,kp1),chi(i,j,km1),dy,dz,d2chi(2,3))
+	      !! d2chi(2,3) = deriv2_mix(chi(i,j,k),chi(i,jp1,kp1),chi(i,jm1,km1),chi(i,jp1,k),&
+              !!     chi(i,jm1,k),chi(i,j,kp1),chi(i,j,km1),dy,dz)
+              
+	      call calc_deriv2(chi(i,j,kp1),chi(i,j,k),chi(i,j,km1),dz,d2chi(3,3))
+	      !! d2chi(3,3) = deriv2(chi(i,j,kp1),chi(i,j,k),chi(i,j,km1),dz)
+           endif
            !
            ! set up metric, extrinsic curvature, lapse and shift
            !
@@ -378,39 +395,48 @@ end subroutine FLRW_InitialData
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !
-! function to return the 2nd order approx of partial 2nd deriv one variable e.g. d2/dx2(f)
-! 
-real(c_double) function deriv2(fp1,f,fm1,h)
-  real(c_double) :: fp1, f, fm1  !! values of the function at i+1,i,i-1 (or j, k)
-  real(c_double) :: h !! the spacing in whatever dimension we're in
+! subroutine to return the 2nd order approx of partial 2nd deriv one variable e.g. d2/dx2(f)
+! ( having this as a function didn't compile for some reason )
+!
+subroutine calc_deriv2(fp1,f,fm1,h,deriv2)
+  integer, parameter :: dp = 8
+  real(dp), intent(in) :: fp1, f, fm1  !! values of the function at i+1,i,i-1 (or j, k)
+  real(dp), intent(in) :: h            !! the spacing in whatever dimension we're in
+  real(dp), intent(out) :: deriv2      !! the second deriv approx
 
   deriv2 = (fp1 - 2. * f + fm1) / h**2
 
-end function deriv2
+end subroutine calc_deriv2
 
 !
-! a function to return the secon *mixed* derivative, e.g. d2/dxdy(f) (general to any denom mix)
+! subrouitne to return the secon *mixed* derivative, e.g. d2/dxdy(f) (general to any denom mix)
+! ( compiling this as a function, calls from FLRW_InitialData didn't work either )
 !
-real(c_double) function deriv2_mix(f,f_xp1yp1,f_xm1ym1,f_xp1,f_xm1,f_yp1,f_ym1,dx,dy)
-  real(c_double), intent(in) :: dx, dy ! grid spacing in the two dimensions
-  real(c_double), intent(in) :: f, f_xp1yp1, f_xm1ym1 ! f(x,y), f(x+dx,y+dy), f(x-dx,y-dy)
-  real(c_double), intent(in) :: f_xp1, f_xm1, f_yp1, f_ym1 ! f(x+dx,y), f(x-dx,y), f(x,y+dy), f(x,y-dy)
+subroutine calc_deriv2_mix(f,f_xp1yp1,f_xm1ym1,f_xp1,f_xm1,f_yp1,f_ym1,dx,dy,deriv2_mix)
+  integer, parameter :: dp = 8
+  real(dp), intent(in) :: dx, dy ! grid spacing in the two dimensions
+  real(dp), intent(in) :: f, f_xp1yp1, f_xm1ym1 ! f(x,y), f(x+dx,y+dy), f(x-dx,y-dy)
+  real(dp), intent(in) :: f_xp1, f_xm1, f_yp1, f_ym1 ! f(x+dx,y), f(x-dx,y), f(x,y+dy), f(x,y-dy)
+  real(dp), intent(out) :: deriv2_mix
 
-  real(c_double) :: num, denom, d2fdx2, d2fdy2
+  real(dp) :: num, denom, d2fdx2, d2fdy2
 
   denom = 2. * dx * dy ! denominator
 
-  d2fdx2 = deriv2(f_xp1,f,f_xm1,dx) ! second deriv w.r.t x
-  d2fdy2 = deriv2(f_yp1,f,f_ym1,dy) ! second deriv w.r.t y
+  call calc_deriv2(f_xp1,f,f_xm1,dx,d2fdx2) ! second deriv w.r.t x
+  !! d2fdx2 = deriv2(f_xp1,f,f_xm1,dx) ! second deriv w.r.t x
+  call calc_deriv2(f_yp1,f,f_ym1,dy,d2fdy2) ! second deriv w.r.t y
+  !! d2fdy2 = deriv2(f_yp1,f,f_ym1,dy) ! second deriv w.r.t y
 
   num = f_xp1yp1 + f_xm1ym1 - 2. * f - dx*dx*d2fdx2 - dy*dy*d2fdy2
 
   deriv2_mix = num / denom  
-end function deriv2_mix
+
+end subroutine calc_deriv2_mix
 
 
-subroutine apply_periodic(j,jp1,jm1,nx)
-  integer, intent(in) :: j, nx
+subroutine apply_periodic(j,jp1,jm1,n)
+  integer, intent(in) :: j, n ! n is size of local grid for whichever direction we're doing
   integer, intent(inout) :: jp1, jm1
   integer :: stp
 
@@ -418,8 +444,8 @@ subroutine apply_periodic(j,jp1,jm1,nx)
   ! now dependent on "step" value
   if (j==1) then
      jp1 = j + 1
-     jm1 = nx
-  elseif (j==nx) then
+     jm1 = n
+  elseif (j==n) then
      jp1 = 1
      jm1 = j - 1
   else
