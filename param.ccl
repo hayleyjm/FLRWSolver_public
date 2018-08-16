@@ -49,6 +49,12 @@ KEYWORD FLRW_perturb_direction "Choose which direction to perturb (only valid if
 "all" :: "perturb all dimensions"
 } "all"
 
+KEYWORD do_framedrag_test "Do test of two opposite streaming flows to test framedragging - Adamek & Giblin+ comparisons"
+{
+"yes" :: do the test (need to set perturb_type = single_mode too)
+"no"  :: don't do the test
+} "no"
+
 CCTK_REAL FLRW_resolution "Resolution of box used (only used if FLRW_perturb_type = 'CMB_like')"
 {
  0.0:* :: "Must be positive."

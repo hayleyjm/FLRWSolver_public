@@ -24,7 +24,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   real(dp) :: f, df1, df2, df3
   real(dp) :: kx, ky, kz, modk, kval
   real(dp) :: xmin, xmax
-  real(dp) :: d2chi(3,3)
+  real(dp) :: d2chi(3,3),L
 
   real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: phi_gs, delta_gs, chi_gs, rc_gs
   real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3),3) :: delta_vel_gs
@@ -32,7 +32,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
 
   logical   :: lapse, dtlapse, shift, data, hydro, perturb_x, perturb_y, perturb_z, perturb_all,&
-       cmb_like, single_mode, perturb
+       cmb_like, single_mode, perturb, framedrag
   integer :: dr_unit, dv_unit1, dv_unit2, dv_unit3, p_unit, chi_unit, rc_unit
   integer :: res,il,jl,kl,iu,ju,ku
   character(len=100) :: deltafile, vel1file, vel2file, vel3file, phifile, chifile, rcfile
@@ -56,7 +56,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   synch_comov = CCTK_EQUALS (FLRW_perturb_type, "synch_comoving")
   perturb = CCTK_EQUALS (FLRW_perturb, "yes")
   
-  !framedrag = CCTK_EQUALS (do_framedrag_test, "yes") !! must have FLRW_perturb_type = "single_mode" for this
+  framedrag = CCTK_EQUALS (do_framedrag_test, "yes") !! must have FLRW_perturb_type = "single_mode" for this
   !framedrag = CCTK_EQUALS (FLRW_perturb_type, "frame_drag_test") !! run comparison test for frame dragging potential
   
   !
@@ -86,6 +86,10 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
      kz = 2.0_dp*pi/wavelength
      modk = sqrt(kx**2 + ky**2 + kz**2)
 
+     if (framedrag) then
+        b = amp
+        L = wavelength
+     endif
      !
      ! set density, velocity amplitudes
      !
@@ -222,30 +226,37 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
               ! set single mode perturbation in phi and d(phi)/dx^i
               ! use this for delta and delta_vel
               !
-              if (perturb_x) then
-                 f = perturb_phi * sin(kx * x(i,j,k) - phi_offset)
-                 df1 = perturb_phi * kx * cos(kx * x(i,j,k) - phi_offset)
-                 delta_vel(i,j,k,1) = perturb_v0 * df1
-              elseif (perturb_y) then
-                 f = perturb_phi * sin(ky * y(i,j,k) - phi_offset)
-                 df2 = perturb_phi * ky * cos(ky * y(i,j,k) - phi_offset)
-                 delta_vel(i,j,k,2) = perturb_v0 * df2
-              elseif (perturb_z) then
-                 f = perturb_phi * sin(kz * z(i,j,k) - phi_offset)
-                 df3 = perturb_phi * kz * cos(kz * z(i,j,k) - phi_offset)
-                 delta_vel(i,j,k,3) = perturb_v0 * df3
-              elseif (perturb_all) then
-                 f = perturb_phi * (sin(kx * x(i,j,k) - phi_offset) + sin(ky * y(i,j,k) - phi_offset) + sin(kz * z(i,j,k) - phi_offset))
-                 df1 = perturb_phi * kx * cos(kx * x(i,j,k) - phi_offset)
-                 df2 = perturb_phi * ky * cos(ky * y(i,j,k) - phi_offset)
-                 df3 = perturb_phi * kz * cos(kz * z(i,j,k) - phi_offset)
-                 delta_vel(i,j,k,1) = perturb_v0 * df1
-                 delta_vel(i,j,k,2) = perturb_v0 * df2
-                 delta_vel(i,j,k,3) = perturb_v0 * df3
+              if (framedrag) then
+                 ! set grad vector \Delta_i H_j, density, and vel perturb
+                 gradH = (b / (hub * wavelength)) * cos(ky * y(i,j,k))
+                 !delta(i,j,k) =       !!!!!!!!!!!!!!!!!! these are done in rho and vel below
+                 !delta_vel(i,j,k,1) = !!!!!!!!!!!!!!!!!!
+              else
+                 if (perturb_x) then
+                    f = perturb_phi * sin(kx * x(i,j,k) - phi_offset)
+                    df1 = perturb_phi * kx * cos(kx * x(i,j,k) - phi_offset)
+                    delta_vel(i,j,k,1) = perturb_v0 * df1
+                 elseif (perturb_y) then
+                    f = perturb_phi * sin(ky * y(i,j,k) - phi_offset)
+                    df2 = perturb_phi * ky * cos(ky * y(i,j,k) - phi_offset)
+                    delta_vel(i,j,k,2) = perturb_v0 * df2
+                 elseif (perturb_z) then
+                    f = perturb_phi * sin(kz * z(i,j,k) - phi_offset)
+                    df3 = perturb_phi * kz * cos(kz * z(i,j,k) - phi_offset)
+                    delta_vel(i,j,k,3) = perturb_v0 * df3
+                 elseif (perturb_all) then
+                    f = perturb_phi * (sin(kx * x(i,j,k) - phi_offset) + sin(ky * y(i,j,k) - phi_offset) + sin(kz * z(i,j,k) - phi_offset))
+                    df1 = perturb_phi * kx * cos(kx * x(i,j,k) - phi_offset)
+                    df2 = perturb_phi * ky * cos(ky * y(i,j,k) - phi_offset)
+                    df3 = perturb_phi * kz * cos(kz * z(i,j,k) - phi_offset)
+                    delta_vel(i,j,k,1) = perturb_v0 * df1
+                    delta_vel(i,j,k,2) = perturb_v0 * df2
+                    delta_vel(i,j,k,3) = perturb_v0 * df3
+                 endif
+                 phi(i,j,k) = f
+                 phidot = 0._dp     !  d(phi)/dt
+                 delta(i,j,k) = perturb_rho0 * f
               endif
-              phi(i,j,k) = f
-              phidot = 0._dp     !  d(phi)/dt
-              delta(i,j,k) = perturb_rho0 * f              
            endif
            !
            ! take 2nd derivs of \chi for g_ij and K_ij
@@ -268,7 +279,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
            if (data) then
 
               if (lapse) then
-                 if (perturb .and. synch_comov .eqv. .False.) then
+                 if (perturb .and. synch_comov .eqv. .False. .and. framedrag .eqv. .False.) then
                     alp(i,j,k) = sqrt(1._dp + 2._dp * phi(i,j,k))
                  else
                     alp(i,j,k) = FLRW_lapse_value
@@ -292,6 +303,25 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
                     kyy(i,j,k) = -adot + (hubdot * d2chi(2,2) / hub )
                     kyz(i,j,k) = (hubdot * d2chi(2,3) / hub )
                     kzz(i,j,k) = -adot + (hubdot * d2chi(3,3) / hub )
+                    
+                 elseif (single_mode .and. framedrag) then
+                    ! do frame-dragging potential setup - phi=psi=0, only grad vector in gamma_ij
+                    ! g_ij = a^2 \delta_ij + \Delta_i H_j + \Delta_j H_i
+                    ! second term only non-zero when \Delta_y H_x
+                    gxx(i,j,k) = asq 
+                    gxy(i,j,k) = asq + gradH
+                    gxz(i,j,k) = 0._dp
+                    gyy(i,j,k) = asq
+                    gyz(i,j,k) = 0._dp
+                    gzz(i,j,k) = asq
+
+                    ! K_ij = -a' \delta_ij + H'/H \partial_i \partial_j \chi
+                    kxx(i,j,k) = -adot
+                    kxy(i,j,k) = -gradH * hub / (4._dp * a0) ! K_xy = -b Cos[] / 4 L a
+                    kxz(i,j,k) = 0._dp
+                    kyy(i,j,k) = -adot
+                    kyz(i,j,k) = 0._dp
+                    kzz(i,j,k) = -adot
                  else
                     ! single mode or cmb-like in Longitudinal Gauge
                     gxx(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
@@ -346,11 +376,26 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
                  !
                  ! initialise matter to homogeneous values
                  !
-                 rho(i,j,k) = rho0
+                 if (perturb .and. framedrag) then
+                    ! set density, velocity from framedrag test (Mathematica)
+                    L = wavelength
+                    ! this rho0 (rest-frame) from Mathematica nb // FortranForm + vars re-named
+                    rho(i,j,k) = (-18. * b**2 * L**4 * pi * a0**9 * hub**6 * sin(ky*y(i,j,k))**2)/&
+                         ((-(b**2 * cos(ky*y(i,j,k))**2) + L**2 * a0**4 * hub**2)**3 * &
+                         ((-32. * b**2 * cos(ky*y*i,j,k))**2)/a0 + 12. * L**2 * a0**3 * hub**4 * adot**2 - &
+                         b**2 * a0 * cos(ky*y(i,j,k))**2 * hdot**2)) + &
+                         ((-32. * b**2 * cos(ky*y(i,j,k))**2)/a0 + 12. * L**2 * a0**3 * hub**4 * adot**2 - &
+                         b**2 * a0 * cos(ky*y(i,j,k))**2 * hdot**2) / &
+                         (32. * pi * a0**3 * hub**2 * (-(b**2 * cos(ky*y(i,j,k))**2) + L**2 * a0**4 * hub**2))
+                    !
+                    vel(i,j,k,1) = 2._dp * b * pi * sin(ky*y(i,j,k)) / (L**2 * adot**3) !! this is up to b^3 accurate - exact form is super ugly...
+                 else
+                    rho(i,j,k) = rho0
+                 endif
                  press(i,j,k) = 0._dp ! pressure will be overwritten to P=poly_k*rho**poly_gamma in EOS_Omni
                  eps(i,j,k) = 0._dp
                  vel(i,j,k,:) = 0._dp
-                 if (perturb) then
+                 if (perturb .and. framedrag .eqv. .False.) then
                     rho(i,j,k) = rho(i,j,k) * ( 1._dp + delta(i,j,k) )
                     if (synch_comov .eqv. .False.) then
                        vel(i,j,k,:) = delta_vel(i,j,k,:)
