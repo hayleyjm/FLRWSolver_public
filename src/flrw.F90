@@ -69,10 +69,10 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   adot = sqrt((8._dp * pi)*rho0*asq/3._dp)   !! from Friedmann eqns
   hub = adot / a0
   hubdot = -12._dp * pi * rho0 * asq / 3._dp !! H' from Friedmann eqns
-  kvalue = -adot * a0                        !! check if this is really just -a' (will make no diff)
+  kvalue = -adot                             !! check if this is really just -a' (will make no diff)
   res = int(FLRW_resolution)
   box_length = FLRW_boxlength
-  dx = box_length / res                      !! assume xmin=0. and dx=dy=dz
+  dx = box_length / float(res)                      !! assume xmin=0. and dx=dy=dz
   dy = dx; dz = dx
 
   if (perturb .and. single_mode) then
@@ -146,6 +146,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   endif
      
   if (perturb .and. synch_comov) then
+     print*, 'reading in synch_comoving initial data...'
      !
      ! convert CCTK_STRING "describe_ics" + "FLRW_ICs_dir" to Fortran string
      !
@@ -183,6 +184,8 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
         enddo
      enddo
   endif
+  
+  print*, 'done reading data.'
 
   !
   ! indices for lower bound of local (processor) grid within global grid
@@ -256,29 +259,16 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
            !
            if (synch_comov) then
 	      call calc_deriv2(chi(ip1,j,k),chi(i,j,k),chi(im1,j,k),dx,d2chi(1,1))
-              !! d2chi(1,1) = deriv2(chi(ip1,j,k),chi(i,j,k),chi(im1,j,k),dx)
-	      
 	      call calc_deriv2_mix(chi(i,j,k),chi(ip1,jp1,k),chi(im1,jm1,k),chi(ip1,j,k),&
-                   chi(im1,j,k),chi(i,jp1,k),chi(i,jm1,k),dx,dy,d2chi(1,2))
-              !! d2chi(1,2) = deriv2_mix(chi(i,j,k),chi(ip1,jp1,k),chi(im1,jm1,k),chi(ip1,j,k),&
-              !!     chi(im1,j,k),chi(i,jp1,k),chi(i,jm1,k),dx,dy)
-	      
+                   chi(im1,j,k),chi(i,jp1,k),chi(i,jm1,k),dx,dy,d2chi(1,2))  
 	      call calc_deriv2_mix(chi(i,j,k),chi(ip1,j,kp1),chi(im1,j,km1),chi(ip1,j,k),&
-                   chi(im1,j,k),chi(i,j,kp1),chi(i,j,km1),dx,dz,d2chi(1,3))
-              !! d2chi(1,3) = deriv2_mix(chi(i,j,k),chi(ip1,j,kp1),chi(im1,j,km1),chi(ip1,j,k),&
-              !!     chi(im1,j,k),chi(i,j,kp1),chi(i,j,km1),dx,dz)
-              
+                   chi(im1,j,k),chi(i,j,kp1),chi(i,j,km1),dx,dz,d2chi(1,3))              
 	      call calc_deriv2(chi(i,jp1,k),chi(i,j,k),chi(i,jm1,k),dy,d2chi(2,2))
-	      !! d2chi(2,2) = deriv2(chi(i,jp1,k),chi(i,j,k),chi(i,jm1,k),dy)
-              
 	      call calc_deriv2_mix(chi(i,j,k),chi(i,jp1,kp1),chi(i,jm1,km1),chi(i,jp1,k),&
-                   chi(i,jm1,k),chi(i,j,kp1),chi(i,j,km1),dy,dz,d2chi(2,3))
-	      !! d2chi(2,3) = deriv2_mix(chi(i,j,k),chi(i,jp1,kp1),chi(i,jm1,km1),chi(i,jp1,k),&
-              !!     chi(i,jm1,k),chi(i,j,kp1),chi(i,j,km1),dy,dz)
-              
+                   chi(i,jm1,k),chi(i,j,kp1),chi(i,j,km1),dy,dz,d2chi(2,3))              
 	      call calc_deriv2(chi(i,j,kp1),chi(i,j,k),chi(i,j,km1),dz,d2chi(3,3))
-	      !! d2chi(3,3) = deriv2(chi(i,j,kp1),chi(i,j,k),chi(i,j,km1),dz)
            endif
+      
            !
            ! set up metric, extrinsic curvature, lapse and shift
            !
@@ -317,10 +307,6 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
                     gyy(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
                     gyz(i,j,k) = 0._dp
                     gzz(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
-
-                    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    !!!!!!!!! check K_ij b/g is -a*a' in conformal gauge... might just be -a'
-                    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     
                     kxx(i,j,k) = kvalue * (1._dp - 2._dp * phi(i,j,k) - phidot * a0 / adot) / alp(i,j,k)
                     kxy(i,j,k) = 0._dp
@@ -379,6 +365,8 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
         enddo
      enddo
   enddo
+
+    
   
   if (CCTK_EQUALS (metric_type, "physical")) then
      ! do nothing
@@ -402,7 +390,7 @@ subroutine calc_deriv2(fp1,f,fm1,h,deriv2)
   integer, parameter :: dp = 8
   real(dp), intent(in) :: fp1, f, fm1  !! values of the function at i+1,i,i-1 (or j, k)
   real(dp), intent(in) :: h            !! the spacing in whatever dimension we're in
-  real(dp), intent(out) :: deriv2      !! the second deriv approx
+  real(dp), intent(inout) :: deriv2      !! the second deriv approx
 
   deriv2 = (fp1 - 2. * f + fm1) / h**2
 
@@ -417,7 +405,7 @@ subroutine calc_deriv2_mix(f,f_xp1yp1,f_xm1ym1,f_xp1,f_xm1,f_yp1,f_ym1,dx,dy,der
   real(dp), intent(in) :: dx, dy ! grid spacing in the two dimensions
   real(dp), intent(in) :: f, f_xp1yp1, f_xm1ym1 ! f(x,y), f(x+dx,y+dy), f(x-dx,y-dy)
   real(dp), intent(in) :: f_xp1, f_xm1, f_yp1, f_ym1 ! f(x+dx,y), f(x-dx,y), f(x,y+dy), f(x,y-dy)
-  real(dp), intent(out) :: deriv2_mix
+  real(dp), intent(inout) :: deriv2_mix
 
   real(dp) :: num, denom, d2fdx2, d2fdy2
 
