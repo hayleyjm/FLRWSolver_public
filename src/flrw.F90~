@@ -23,8 +23,13 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   real(dp), parameter :: pi = 4.*atan(1.)
   real(dp) :: f, df1, df2, df3, dx, dy, dz
   real(dp) :: kx, ky, kz, modk, kval
+<<<<<<< HEAD
+  real(dp) :: xmin, xmax
+  real(dp) :: d2chi(3,3),L
+=======
   real(dp) :: hub, hubdot
   real(dp) :: d2chi(3,3)
+>>>>>>> 38832c6ae2dbc595e06c06b9a4d1234f949f93d1
 
   real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: phi_gs, delta_gs, chi_gs, rc_gs
   real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3),3) :: delta_vel_gs
@@ -32,7 +37,11 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
 
   logical   :: lapse, dtlapse, shift, data, hydro, perturb_x, perturb_y, perturb_z, perturb_all,&
+<<<<<<< HEAD
+       cmb_like, single_mode, perturb, framedrag
+=======
        cmb_like, single_mode, perturb, synch_comov, framedrag
+>>>>>>> 38832c6ae2dbc595e06c06b9a4d1234f949f93d1
   integer :: dr_unit, dv_unit1, dv_unit2, dv_unit3, p_unit, chi_unit, rc_unit
   integer :: res,il,jl,kl,iu,ju,ku
   character(len=100) :: deltafile, vel1file, vel2file, vel3file, phifile, chifile, rcfile
