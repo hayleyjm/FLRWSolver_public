@@ -23,12 +23,6 @@ KEYWORD FLRW_perturb_type "Add perturbation"
  "synch_comoving" :: "Add linear perturbations calculated in the synchronous, comoving gauge. Requires files output from Python script"
 } "CMB_like"
 
-KEYWORD do_framedrag_test "Do the opposite stream framedrag (vector mode B_i) test from Adamek & Mertens+ idea"
-{
- "yes" :: "do the test - you must also set single_mode perturb!"
- "no" :: "do not do the test. do something else."
-} "no"
-
 KEYWORD FLRW_ICs_dir "Directory containing initial conditions files for the simulation"
 {
  "initial_conditions/" :: "For Pawsey's Magnus, softlink to /group/pawsey0202/software/initial_conditions/"
@@ -55,21 +49,10 @@ KEYWORD FLRW_perturb_direction "Choose which direction to perturb (only valid if
 "all" :: "perturb all dimensions"
 } "all"
 
-KEYWORD do_framedrag_test "Do test of two opposite streaming flows to test framedragging - Adamek & Giblin+ comparisons"
-{
-"yes" :: do the test (need to set perturb_type = single_mode too)
-"no"  :: don't do the test
-} "no"
-
 CCTK_REAL FLRW_resolution "Resolution of box used (only used if FLRW_perturb_type = 'CMB_like')"
 {
  0.0:* :: "Must be positive."
 } 32.0
-
-CCTK_REAL FLRW_boxlength "Size of box used in Mpc - need for synch_comoving derivatives"
-{
- 0.0:* :: "Must be positive."
-} 0.0
 
 CCTK_REAL single_perturb_wavelength "Wavelength of single mode perturbation"
 {
