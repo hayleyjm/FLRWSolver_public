@@ -55,12 +55,6 @@ KEYWORD FLRW_perturb_direction "Choose which direction to perturb (only valid if
 "all" :: "perturb all dimensions"
 } "all"
 
-KEYWORD do_framedrag_test "Do test of two opposite streaming flows to test framedragging - Adamek & Giblin+ comparisons"
-{
-"yes" :: do the test (need to set perturb_type = single_mode too)
-"no"  :: don't do the test
-} "no"
-
 CCTK_REAL FLRW_resolution "Resolution of box used (only used if FLRW_perturb_type = 'CMB_like')"
 {
  0.0:* :: "Must be positive."
@@ -94,12 +88,12 @@ CCTK_REAL phi_perturb_amplitude "Amplitude of perturbation in phi (relative to r
 # This below didn't work to use xmax in flrw.f90, dont know why
 # shares:CoordBase
 
-# USES real xmin
-# USES real ymin
-# USES real zmin
-# USES real xmax
-# USES real ymax
-# USES real zmax
+# USES CCTK_REAL xmin
+# USES CCTK_REAL ymin
+# USES CCTK_REAL zmin
+# USES CCTK_REAL xmax
+# USES CCTK_REAL ymax
+# USES CCTK_REAL zmax
 
 shares:HydroBase
 

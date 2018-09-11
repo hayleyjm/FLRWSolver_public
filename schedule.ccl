@@ -5,5 +5,10 @@ schedule FLRW_InitialData IN HydroBase_Initial
 	LANG: Fortran
 } "Sets up the initial data for FLRW"
 
+## the schedule.ccl sets up WHERE and WHEN to make the calls to the functions in this thorn.
+## ours in simple since we only call our flrw.f90 initially - to setup
+## e.g. for an evolution subroutine, we would want to call at some stage in the MoL evolution.
+## see Helvi's repositories for her scalar field evolution.
 
+## what we could do: is split each initial data (flrw, single_mode, cmb, gauge etc) into separate subroutines - and in here we'd have if (CCTK_EQUALS initial_data "flrw") then schedule flrw.f90, similarly for other initial data. this is a MUCH nicer way to do it 
 

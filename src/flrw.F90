@@ -23,19 +23,23 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   real(dp), parameter :: pi = 4.*atan(1.)
   real(dp) :: f, df1, df2, df3, dx, dy, dz
   real(dp) :: kx, ky, kz, modk, kval
-  real(dp) :: hub, hubdot
+  real(dp) :: hub, hubdot, b, L, gradH
   real(dp) :: d2chi(3,3)
 
   real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: phi_gs, delta_gs, chi_gs, rc_gs
+  real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: dxdxchi_gs,dxdychi_gs,dxdzchi_gs,dydychi_gs,dydzchi_gs,dzdzchi_gs
   real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3),3) :: delta_vel_gs
   real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)) :: phi, delta, chi, rc
+  real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)) :: dxdxchi,dxdychi,dxdzchi,dydychi,dydzchi,dzdzchi
   real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
 
   logical   :: lapse, dtlapse, shift, data, hydro, perturb_x, perturb_y, perturb_z, perturb_all,&
        cmb_like, single_mode, perturb, synch_comov, framedrag
   integer :: dr_unit, dv_unit1, dv_unit2, dv_unit3, p_unit, chi_unit, rc_unit
+  integer :: xx_unit, xy_unit, xz_unit, yy_unit, yz_unit, zz_unit
   integer :: res,il,jl,kl,iu,ju,ku
   character(len=100) :: deltafile, vel1file, vel2file, vel3file, phifile, chifile, rcfile
+  character(len=100) :: dxdxchifile,dxdychifile,dxdzchifile,dydychifile,dydzchifile,dzdzchifile
   character(len=100) :: dir, ics_dir, ics_type
   integer :: ics_dir_len, ics_type_len, ip1,im1,jp1,jm1,kp1,km1
 
@@ -58,6 +62,8 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   
   framedrag = CCTK_EQUALS (do_framedrag_test, "yes") !! must have FLRW_perturb_type = "single_mode" for this
   !framedrag = CCTK_EQUALS (FLRW_perturb_type, "frame_drag_test") !! run comparison test for frame dragging potential
+
+  print*,'sin(10.) = ',sin(10.)
   
   !
   ! set parameters
@@ -66,28 +72,32 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   rho0 = FLRW_init_rho
   asq = a0*a0
   rhostar = rho0 * a0**3                     !! Conserved FLRW density
-  adot = sqrt((8._dp * pi)*rho0*asq/3._dp)   !! from Friedmann eqns
-  hub = adot / a0
-  hubdot = -12._dp * pi * rho0 * asq / 3._dp !! H' from Friedmann eqns
-  kvalue = -adot                             !! check if this is really just -a' (will make no diff)
+  hub = sqrt((8._dp * pi)*rho0*asq/3._dp)    !! this is H (conformal) from Friedmann eqns
+  adot = hub * a0                            !! a' from H
+  hubdot = -4._dp * pi * rho0 * asq / 3._dp  !! H' from Friedmann eqns
+  kvalue = -adot                             !! factor outside K_ij for conformal time
   res = int(FLRW_resolution)
   box_length = FLRW_boxlength
   dx = box_length / float(res)                      !! assume xmin=0. and dx=dy=dz
   dy = dx; dz = dx
 
-  if (perturb .and. single_mode) then
+  if (perturb) then
      !
      ! set parameters only required for single mode
      !
-     amp = phi_perturb_amplitude
-     perturb_phi = amp * rho0
-     phi_offset = phi_phase_offset
+     if (single_mode) then
+     	amp = phi_perturb_amplitude
+     	perturb_phi = amp * rho0	
+     	phi_offset = phi_phase_offset
+     endif
 
-     wavelength = single_perturb_wavelength
-     kx = 2.0_dp*pi/wavelength
-     ky = 2.0_dp*pi/wavelength
-     kz = 2.0_dp*pi/wavelength
-     modk = sqrt(kx**2 + ky**2 + kz**2)
+     if (single_mode .or. synch_comov) then
+     	wavelength = box_length
+     	kx = 2.0_dp*pi/wavelength
+     	ky = 2.0_dp*pi/wavelength
+     	kz = 2.0_dp*pi/wavelength
+     	modk = sqrt(kx**2 + ky**2 + kz**2)
+     endif
 
      if (framedrag) then
         b = amp
@@ -96,8 +106,10 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
      !
      ! set density, velocity amplitudes
      !
-     perturb_rho0 = - kx**2 / (4._dp * pi * rho0 * asq) - 2._dp
-     perturb_v0 = - sqrt(a0 / ( 6._dp * pi * rhostar ))        
+     if (single_mode) then
+     	perturb_rho0 = - kx**2 / (4._dp * pi * rho0 * asq) - 2._dp
+     	perturb_v0 = - sqrt(a0 / ( 6._dp * pi * rhostar ))        
+     endif
 
      delta_vel = 0._dp
      delta = 0._dp      ! initialise perturbations to zero
@@ -166,12 +178,25 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
      write(chifile,'(a,a)')trim(dir),'/chi.dat'
      write(rcfile,'(a,a)')trim(dir),'/rc.dat'
 
+     write(dxdxchifile,'(a,a)')trim(dir),'/dxdxchi.dat'
+     write(dxdychifile,'(a,a)')trim(dir),'/dxdychi.dat'
+     write(dxdzchifile,'(a,a)')trim(dir),'/dxdzchi.dat'
+     write(dydychifile,'(a,a)')trim(dir),'/dydychi.dat'
+     write(dydzchifile,'(a,a)')trim(dir),'/dydzchi.dat'
+     write(dzdzchifile,'(a,a)')trim(dir),'/dzdzchi.dat'
+
      !
      ! open files to read delta, chi, rc perturbs from files
      !
      open(newunit=dr_unit,file=deltafile,status='old')  ! delta rho file
      open(newunit=chi_unit,file=chifile,status='old')   ! chi file file [1]
      open(newunit=rc_unit,file=rcfile,status='old')     ! R_c file [2]
+     open(newunit=xx_unit,file=dxdxchifile,status='old')! d2dx2(chi) file
+     open(newunit=xy_unit,file=dxdychifile,status='old')! d2dxdy(chi) file
+     open(newunit=xz_unit,file=dxdzchifile,status='old')! d2dxdx(chi) file
+     open(newunit=yy_unit,file=dydychifile,status='old')! d2dy2(chi) file
+     open(newunit=yz_unit,file=dydzchifile,status='old')! d2dydz(chi) file
+     open(newunit=zz_unit,file=dzdzchifile,status='old')! d2dz2(chi) file
 
      print*,'opened IC files'
 
@@ -185,6 +210,12 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
            read(dr_unit,*) delta_gs(:,j,k)
            read(chi_unit,*) chi_gs(:,j,k)
            read(rc_unit,*) rc_gs(:,j,k)
+	   read(xx_unit,*) dxdxchi_gs(:,j,k)
+           read(xy_unit,*) dxdychi_gs(:,j,k)
+           read(xz_unit,*) dxdzchi_gs(:,j,k)
+           read(yy_unit,*) dydychi_gs(:,j,k)
+           read(yz_unit,*) dydzchi_gs(:,j,k)
+           read(zz_unit,*) dzdzchi_gs(:,j,k)
         enddo
      enddo
   endif
@@ -214,7 +245,14 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
      delta = delta_gs(il:iu, jl:ju, kl:ku)
      chi = chi_gs(il:iu, jl:ju, kl:ku)
      rc = rc_gs(il:iu, jl:ju, kl:ku)
+     dxdxchi = dxdxchi_gs(il:iu, jl:ju, kl:ku)
+     dxdychi = dxdychi_gs(il:iu, jl:ju, kl:ku)
+     dxdzchi = dxdzchi_gs(il:iu, jl:ju, kl:ku)
+     dydychi = dydychi_gs(il:iu, jl:ju, kl:ku)
+     dydzchi = dydzchi_gs(il:iu, jl:ju, kl:ku)
+     dzdzchi = dzdzchi_gs(il:iu, jl:ju, kl:ku)
   endif
+
 
   !
   ! spatial loop
@@ -233,10 +271,8 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
               ! use this for delta and delta_vel
               !
               if (framedrag) then
-                 ! set grad vector \Delta_i H_j, density, and vel perturb
+                 ! set grad vector \Delta_i H_j
                  gradH = (b / (hub * wavelength)) * cos(ky * y(i,j,k))
-                 !delta(i,j,k) =       !!!!!!!!!!!!!!!!!! these are done in rho and vel below
-                 !delta_vel(i,j,k,1) = !!!!!!!!!!!!!!!!!!
               else
                  if (perturb_x) then
                     f = perturb_phi * sin(kx * x(i,j,k) - phi_offset)
@@ -268,17 +304,30 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
            ! take 2nd derivs of \chi for g_ij and K_ij
            ! ** these should be symmetric (check) **
            !
-           if (synch_comov) then
-	      call calc_deriv2(chi(ip1,j,k),chi(i,j,k),chi(im1,j,k),dx,d2chi(1,1))
-	      call calc_deriv2_mix(chi(i,j,k),chi(ip1,jp1,k),chi(im1,jm1,k),chi(ip1,j,k),&
-                   chi(im1,j,k),chi(i,jp1,k),chi(i,jm1,k),dx,dy,d2chi(1,2))  
-	      call calc_deriv2_mix(chi(i,j,k),chi(ip1,j,kp1),chi(im1,j,km1),chi(ip1,j,k),&
-                   chi(im1,j,k),chi(i,j,kp1),chi(i,j,km1),dx,dz,d2chi(1,3))              
-	      call calc_deriv2(chi(i,jp1,k),chi(i,j,k),chi(i,jm1,k),dy,d2chi(2,2))
-	      call calc_deriv2_mix(chi(i,j,k),chi(i,jp1,kp1),chi(i,jm1,km1),chi(i,jp1,k),&
-                   chi(i,jm1,k),chi(i,j,kp1),chi(i,j,km1),dy,dz,d2chi(2,3))              
-	      call calc_deriv2(chi(i,j,kp1),chi(i,j,k),chi(i,j,km1),dz,d2chi(3,3))
-           endif
+           !if (perturb .and. synch_comov) then
+	   !! derivs are done in python script now - read into files!!
+
+	      !! FOR NOW - we are testing a single mode. see if this changes anything:
+	      !! ** NOTE: AMP OF DENSITY DELTA_0=1.E-5 IS HARD-CODED HERE. DON'T DO THIS **
+	      !d2chi(1,1) = -2._dp * 1.e-5 * sin(kx * x(i,j,k))
+	      !d2chi(2,2) = -2._dp * 1.e-5 * sin(ky * y(i,j,k))
+	      !d2chi(3,3) = -2._dp * 1.e-5 * sin(kz * z(i,j,k))
+	      !! all others are zero for this single mode
+	      !d2chi(1,2) = 0._dp
+	      !d2chi(2,3) = 0._dp
+	      !d2chi(1,3) = 0._dp
+	      !!!
+
+	      !call calc_deriv2(chi(ip1,j,k),chi(i,j,k),chi(im1,j,k),dx,d2chi(1,1))
+	      !call calc_deriv2_mix(chi(i,j,k),chi(ip1,jp1,k),chi(im1,jm1,k),chi(ip1,j,k),&
+              !     chi(im1,j,k),chi(i,jp1,k),chi(i,jm1,k),dx,dy,d2chi(1,2))  
+	      !call calc_deriv2_mix(chi(i,j,k),chi(ip1,j,kp1),chi(im1,j,km1),chi(ip1,j,k),&
+              !     chi(im1,j,k),chi(i,j,kp1),chi(i,j,km1),dx,dz,d2chi(1,3))              
+	      !call calc_deriv2(chi(i,jp1,k),chi(i,j,k),chi(i,jm1,k),dy,d2chi(2,2))
+	      !call calc_deriv2_mix(chi(i,j,k),chi(i,jp1,kp1),chi(i,jm1,km1),chi(i,jp1,k),&
+              !     chi(i,jm1,k),chi(i,j,kp1),chi(i,j,km1),dy,dz,d2chi(2,3))              
+	      !call calc_deriv2(chi(i,j,kp1),chi(i,j,k),chi(i,j,km1),dz,d2chi(3,3))
+           !endif
       
            !
            ! set up metric, extrinsic curvature, lapse and shift
@@ -296,20 +345,20 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
               if (perturb) then
                  if (synch_comov) then
                     ! g_ij = [1 - 2 R_c] \delta_ij + \partial_i \partial_j \chi
-                    gxx(i,j,k) = asq * (1._dp - 2._dp * rc(i,j,k) + d2chi(1,1))
-                    gxy(i,j,k) = asq * d2chi(1,2)
-                    gxz(i,j,k) = asq * d2chi(1,3)
-                    gyy(i,j,k) = asq * (1._dp - 2._dp * rc(i,j,k) + d2chi(2,2))
-                    gyz(i,j,k) = asq * d2chi(2,3)
-                    gzz(i,j,k) = asq * (1._dp - 2._dp * rc(i,j,k) + d2chi(3,3))
+                    gxx(i,j,k) = asq * (1._dp - 2._dp * rc(i,j,k) + dxdxchi(i,j,k))
+                    gxy(i,j,k) = asq * dxdychi(i,j,k)
+                    gxz(i,j,k) = asq * dxdzchi(i,j,k)
+                    gyy(i,j,k) = asq * (1._dp - 2._dp * rc(i,j,k) + dydychi(i,j,k))
+                    gyz(i,j,k) = asq * dydzchi(i,j,k)
+                    gzz(i,j,k) = asq * (1._dp - 2._dp * rc(i,j,k) + dzdzchi(i,j,k))
 
-                    ! K_ij = -a' \delta_ij + H'/H \partial_i \partial_j \chi
-                    kxx(i,j,k) = -adot + (hubdot * d2chi(1,1) / hub )
-                    kxy(i,j,k) = (hubdot * d2chi(1,2) / hub )
-                    kxz(i,j,k) = (hubdot * d2chi(1,3) / hub )
-                    kyy(i,j,k) = -adot + (hubdot * d2chi(2,2) / hub )
-                    kyz(i,j,k) = (hubdot * d2chi(2,3) / hub )
-                    kzz(i,j,k) = -adot + (hubdot * d2chi(3,3) / hub )
+                    ! K_ij = -a' [1 - 2 R_c] \delta_ij + ( a H'/H - a' ) \partial_i \partial_j \chi
+                    kxx(i,j,k) = -adot * gxx(i,j,k) + dxdxchi(i,j,k) * (a0 * hubdot / hub)
+		    kxy(i,j,k) = -adot * gxy(i,j,k) + dxdychi(i,j,k) * (a0 * hubdot / hub)
+		    kxz(i,j,k) = -adot * gxz(i,j,k) + dxdzchi(i,j,k) * (a0 * hubdot / hub)
+		    kyy(i,j,k) = -adot * gyy(i,j,k) + dydychi(i,j,k) * (a0 * hubdot / hub)
+		    kyz(i,j,k) = -adot * gyz(i,j,k) + dydzchi(i,j,k) * (a0 * hubdot / hub)
+		    kzz(i,j,k) = -adot * gzz(i,j,k) + dzdzchi(i,j,k) * (a0 * hubdot / hub)
                     
                  elseif (single_mode .and. framedrag) then
                     ! do frame-dragging potential setup - phi=psi=0, only grad vector in gamma_ij
@@ -379,25 +428,26 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
                  !
                  ! initialise matter to homogeneous values
                  !
+		 press(i,j,k) = 0._dp ! pressure will be overwritten to P=poly_k*rho**poly_gamma in EOS_Omni
+                 eps(i,j,k) = 0._dp
+                 vel(i,j,k,:) = 0._dp
                  if (perturb .and. framedrag) then
                     ! set density, velocity from framedrag test (Mathematica)
                     L = wavelength
                     ! this rho0 (rest-frame) from Mathematica nb // FortranForm + vars re-named
                     rho(i,j,k) = (-18. * b**2 * L**4 * pi * a0**9 * hub**6 * sin(ky*y(i,j,k))**2)/&
                          ((-(b**2 * cos(ky*y(i,j,k))**2) + L**2 * a0**4 * hub**2)**3 * &
-                         ((-32. * b**2 * cos(ky*y*i,j,k))**2)/a0 + 12. * L**2 * a0**3 * hub**4 * adot**2 - &
-                         b**2 * a0 * cos(ky*y(i,j,k))**2 * hdot**2)) + &
                          ((-32. * b**2 * cos(ky*y(i,j,k))**2)/a0 + 12. * L**2 * a0**3 * hub**4 * adot**2 - &
-                         b**2 * a0 * cos(ky*y(i,j,k))**2 * hdot**2) / &
+                         b**2 * a0 * cos(ky*y(i,j,k))**2 * hubdot**2)) + &
+                         ((-32. * b**2 * cos(ky*y(i,j,k))**2)/a0 + 12. * L**2 * a0**3 * hub**4 * adot**2 - &
+                         b**2 * a0 * cos(ky*y(i,j,k))**2 * hubdot**2) / &
                          (32. * pi * a0**3 * hub**2 * (-(b**2 * cos(ky*y(i,j,k))**2) + L**2 * a0**4 * hub**2))
                     !
-                    vel(i,j,k,1) = 2._dp * b * pi * sin(ky*y(i,j,k)) / (L**2 * adot**3) !! this is up to b^3 accurate - exact form is super ugly...
-                 else
+                    vel(i,j,k,1) = -2._dp * b * pi * sin(ky*y(i,j,k)) / (L**2 * adot**3 * hub) !! this is up to b^3 accurate - exact form is super ugly...
+                 else 
                     rho(i,j,k) = rho0
                  endif
-                 press(i,j,k) = 0._dp ! pressure will be overwritten to P=poly_k*rho**poly_gamma in EOS_Omni
-                 eps(i,j,k) = 0._dp
-                 vel(i,j,k,:) = 0._dp
+		 !
                  if (perturb .and. framedrag .eqv. .False.) then
                     rho(i,j,k) = rho(i,j,k) * ( 1._dp + delta(i,j,k) )
                     if (synch_comov .eqv. .False.) then
@@ -406,11 +456,32 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
                  endif
               endif
 
+	      !if (i==10 .and. j==11 .and. k==12) then
+	      if (x(i,j,k)==500. .and. y(i,j,k)==500. .and. z(i,j,k)==500.) then
+	      	 print*, 'i,j,k = ', i,j,k
+		 !!print*, 'gradH = ', gradH
+		 print*, 'delta = ',delta(i,j,k)
+		 print*, '-- kx,ky,kz = ',kx,ky,kz
+		 print*, '-- sin(kx * x(i,j,k)) = ',sin(kx * x(i,j,k))
+		 print*, '-- sin(ky * y(i,j,k)) = ',sin(ky * y(i,j,k))
+		 print*, '-- sin(kz * z(i,j,k)) = ',sin(kz * z(i,j,k))
+		 print*, 'x(i,j,k),y(i,j,k),z(i,j,k) = ',x(i,j,k),y(i,j,k),z(i,j,k)
+		 print*, '-2._dp * 1.e-5 = ',-2._dp * 1.e-5
+		 print*, 'Rc = ',rc(i,j,k)
+		 PRINT*, 'chi = ',chi(i,j,k)
+		 print*, 'rho = ', rho(i,j,k)
+		 !!		 print*, 'vel(:) = ', vel(i,j,k,:)
+		 !!print*, 'b,pi,ky,y(i,j,k),sin(ky*y(i,j,k)),(L**2 * adot**3) = ',b,pi,ky,y(i,j,k),sin(ky*y(i,j,k)),(L**2 * adot**3)
+		 print*, ' gxx = ', gxx(i,j,k)
+		 !!print*, ' gxy = ', gxy(i,j,k)
+		 print*, ' kxx = ', kxx(i,j,k)
+		 !!print*, ' kxy = ', kxy(i,j,k)
+	      endif
+
            endif
         enddo
      enddo
   enddo
-
     
   
   if (CCTK_EQUALS (metric_type, "physical")) then

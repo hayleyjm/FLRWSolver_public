@@ -1,6 +1,12 @@
 # Interface definition for thorn FLRWSolver
 
+## H: implements: tells Cactus the name of the thorn
 implements: FLRWSolver
+
+## H: inherits: tells Cactus we want to pull information from these thorns, and we can send information back
+## e.g. HydroBase - we have access to rho,vel,press,vel, etc. and can send values back to HydroBase
+## i think we get the vars stored in the interface.ccl file for these thorns.
+## e.g. we CANNOT see xmin,xmax etc in CoordBase since these are PRIVATE (by default) params in param.ccl
 inherits: ADMBase, HydroBase, Constants, StaticConformal, EOS_Omni, CoordBase
 
 #USES INCLUDE: EOS_Base.inc
