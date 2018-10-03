@@ -26,7 +26,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   real(dp) :: hub, hubdot, b, L, gradH
   real(dp) :: d2chi(3,3)
   real(dp) :: cosky,cosky2,sinky,sinky2
-  real(dp) :: rho0denom1t1,rho0denom1t2,rho0denom1,rho0num1,rho0denom2,rho0num2
+  real(dp) :: rho0denom,rho0num
 
   real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: phi_gs, delta_gs, chi_gs, rc_gs
   real(dp), dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: dxdxchi_gs,dxdychi_gs,dxdzchi_gs,dydychi_gs,dydzchi_gs,dzdzchi_gs
@@ -337,20 +337,17 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
                     
                  elseif (single_mode .and. framedrag) then
                     ! do frame-dragging potential setup - phi=psi=0, only grad vector in gamma_ij
-                    ! g_ij = a^2 \delta_ij + \Delta_i H_j + \Delta_j H_i
-                    ! second term only non-zero when \Delta_y H_x
                     gxx(i,j,k) = asq 
                     gxy(i,j,k) = gradH
                     gxz(i,j,k) = 0._dp
-                    gyy(i,j,k) = asq
+                    gyy(i,j,k) = asq + gradH**2
                     gyz(i,j,k) = 0._dp
                     gzz(i,j,k) = asq
 
-                    ! K_ij = -a' \delta_ij + H'/H \partial_i \partial_j \chi
                     kxx(i,j,k) = -adot
-                    kxy(i,j,k) = -gradH * hub / (4._dp * a0) ! K_xy = -b Cos[] / 4 L a = -gamma_xy * H / 4 a
+                    kxy(i,j,k) = -b * cosky / (4. * L)
                     kxz(i,j,k) = 0._dp
-                    kyy(i,j,k) = -adot
+                    kyy(i,j,k) = -adot + b**2 * cosky2 / (2. * H * L**2)
                     kyz(i,j,k) = 0._dp
                     kzz(i,j,k) = -adot
                  else
@@ -407,34 +404,17 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
                  eps(i,j,k) = 0._dp
                  vel(i,j,k,:) = 0._dp
                  if (perturb .and. framedrag) then
-                    ! set density, velocity from framedrag test (Mathematica)
+                    ! set density, velocity from framedrag test (Mathematica/draft paper)
 
                     ! denominator and numerator in first term in notes
-                    rho0denom1t1 = (-b**2 * cosky2 + L**2 * adot**2)**3
-                    rho0denom1t2 = -32._dp*b**2 * cosky2 + 12._dp*L**2 * adot**6 - b**2 * cosky2 * hubdot**2
-                    rho0denom1 = rho0denom1t1 * rho0denom1t2
-                    rho1num1 = -18._dp*b**2 * L**4 * pi * sinky2 * adot**6
-                    ! denominator and numerator in second term in notes
-                    rho0denom2 = 32._dp*pi * adot**2 * (-b**2 * cosky2 + L**2 * adot**2)
-                    rho0num2 = -32._dp*b**2 * cosky2 + 12._dp * L**2 * adot**6 - b**2 * cosky2 * hubdot**2
-                    rho(i,j,k) = rho0num1/rho0denom1 + rho0num2/rho0denom2
-
-                    vel1denomt1 = (-b*cosky + L*adot) * (b*cosky + L*adot)
-                    vel1denomt2 = 12._dp*L**2 * adot**6 + 4._dp*b**2 * cosky2 * adot**2 * hubdot - b**2 * cosky2 * hubdot**2
-                    vel(i,j,k,1) = 24._dp*b * L**2 * pi * sinky * adot**4 / (vel1denomt1 * vel1denomt2)
+                    ! rho0 directly from eq.8 in draft (3.Oct.2018)
+                    rho0denom = 128. * pi * L**2 * (16. * hub**2 * L**2 - 3. * b**2 * cosky2)
+                    rho0num = (16. * hub**2 * L**2 - 3. * b**2 * cosky2)**2 - 64. * pi**2 * b**2 * sinky2
+                    rho(i,j,k) = 3. * rho0num / rho0denom
+                    ! vel is v^i = u^i / (alp u^t) from mathematica with same u^x as draft (3.Oct.2018)
+                    vel(i,j,k,1) = - 8. * pi * b * sinky / (3. * b**2 * cosky2 - 16. * L**2 * hub**2)
                     vel(i,j,k,2) = 0._dp
                     vel(i,j,k,3) = 0._dp
-                    
-                    ! this rho0 (rest-frame) from Mathematica nb // FortranForm + vars re-named
-                    !!rho(i,j,k) = (-18. * b**2 * L**4 * pi * a0**9 * hub**6 * sin(ky*y(i,j,k))**2)/&
-                    !!     ((-(b**2 * cos(ky*y(i,j,k))**2) + L**2 * a0**4 * hub**2)**3 * &
-                    !!     ((-32. * b**2 * cos(ky*y(i,j,k))**2)/a0 + 12. * L**2 * a0**3 * hub**4 * adot**2 - &
-                    !!     b**2 * a0 * cos(ky*y(i,j,k))**2 * hubdot**2)) + &
-                    !!     ((-32. * b**2 * cos(ky*y(i,j,k))**2)/a0 + 12. * L**2 * a0**3 * hub**4 * adot**2 - &
-                    !!     b**2 * a0 * cos(ky*y(i,j,k))**2 * hubdot**2) / &
-                    !!     (32. * pi * a0**3 * hub**2 * (-(b**2 * cos(ky*y(i,j,k))**2) + L**2 * a0**4 * hub**2))
-                    !
-                    !!vel(i,j,k,1) = -2._dp * b * pi * sin(ky*y(i,j,k)) / (L**2 * adot**3 * hub) !! this is up to b^3 accurate - exact form is super ugly...
                  else 
                     rho(i,j,k) = rho0
                  endif
