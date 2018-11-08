@@ -36,7 +36,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   real(dp), dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
 
   logical   :: lapse, dtlapse, shift, data, hydro, perturb_x, perturb_y, perturb_z, perturb_all,&
-       cmb_like, single_mode, perturb, synch_comov, framedrag
+       cmb_like, single_mode, perturb, synch_comov, framedrag, printy
   integer :: dr_unit, dv_unit1, dv_unit2, dv_unit3, p_unit, chi_unit, rc_unit
   integer :: xx_unit, xy_unit, xz_unit, yy_unit, yz_unit, zz_unit
   integer :: res,il,jl,kl,iu,ju,ku
@@ -60,49 +60,68 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   single_mode = CCTK_EQUALS (FLRW_perturb_type, "single_mode")
   cmb_like = CCTK_EQUALS (FLRW_perturb_type, "CMB_like")
   synch_comov = CCTK_EQUALS (FLRW_perturb_type, "synch_comoving")
-  perturb = CCTK_EQUALS (FLRW_perturb, "yes")
-  
+  perturb = CCTK_EQUALS (FLRW_perturb, "yes")  
   framedrag = CCTK_EQUALS (do_framedrag_test, "yes") !! must have FLRW_perturb_type = "single_mode" for this
-  !framedrag = CCTK_EQUALS (FLRW_perturb_type, "frame_drag_test") !! run comparison test for frame dragging potential
-  
+  if (framedrag) then
+       if (single_mode .eqv. .False.) then
+       	  print*, 'WARNING!!! You must set FLRW_perturb_type = "single_mode" to run the framedrag test. RESET THESE and THEN RUN AGAIN!!!!'
+       endif
+  endif
   !
   ! set parameters
   !
   a0 = 1._dp
-  rho0 = FLRW_init_rho
   asq = a0*a0
-  rhostar = rho0 * a0**3                     !! Conserved FLRW density
-  hub = sqrt((8._dp * pi)*rho0*asq/3._dp)    !! this is H (conformal) from Friedmann eqns
-  adot = hub * a0                            !! a' from H
-  hubdot = -4._dp * pi * rho0 * asq / 3._dp  !! H' from Friedmann eqns
-  kvalue = -adot                             !! factor outside K_ij for conformal time
   res = int(FLRW_resolution)
   box_length = FLRW_boxlength
-  dx = box_length / float(res)                      !! assume xmin=0. and dx=dy=dz
+  dx = box_length / float(res)  !! assume xmin=0. and dx=dy=dz
   dy = dx; dz = dx
+  !
+  if (framedrag) then
+     !
+     ! set hubble, rho0 from chosen HL and FLRW_boxlength
+     !
+     print*, ' setting FRAMEDRAG hubble and rho_init '
+     hub = framedrag_HL / box_length
+     rho0 = 3._dp * hub**2 / (8._dp * pi * asq)
+  else
+     !
+     ! set hubble from chosen FLRW_init_rho
+     !
+     print*, ' setting hubble and rho_init '
+     rho0 = FLRW_init_rho
+     hub = sqrt(8._dp * pi * rho0 * asq / 3._dp)    !! this is H (conformal) from Friedmann eqns
+  endif
+  hubdot = -hub**2 / 2._dp    !! can show this for conformal time (H=2/eta)
+  rhostar = rho0 * a0**3      !! Conserved FLRW density
+  adot = hub * a0             !! a' from H
+  kvalue = -adot              !! factor outside K_ij for conformal time
 
   if (perturb) then
      !
      ! set parameters only required for single mode
      !
      if (single_mode) then
-     	amp = phi_perturb_amplitude
-     	perturb_phi = amp * rho0	
-     	phi_offset = phi_phase_offset
+     	if (framedrag) then
+	    ! we just keep these names to make things simple
+	    print*, ' setting FRAMEDRAG amplitudes and box_length params '
+	    b = phi_perturb_amplitude
+	    L = box_length
+	else
+	    print*, ' setting perturbation amplitude and offset params '
+	    amp = phi_perturb_amplitude
+     	    perturb_phi = amp * rho0	
+     	    phi_offset = phi_phase_offset
+        endif
      endif
 
      if (single_mode .or. synch_comov) then
+     	print*, ' setting wavelength of perturbation and wavenumbers, modk '
      	wavelength = box_length
-     	kx = 2.0_dp*pi/wavelength
-     	ky = 2.0_dp*pi/wavelength
-     	kz = 2.0_dp*pi/wavelength
+     	kx = 2._dp*pi/wavelength
+     	ky = 2._dp*pi/wavelength
+     	kz = 2._dp*pi/wavelength
      	modk = sqrt(kx**2 + ky**2 + kz**2)
-     endif
-
-     if (framedrag) then
-        ! we just keep these names to make things simple
-        b = phi_perturb_amplitude
-        L = box_length
      endif
      !
      ! set density, velocity amplitudes
@@ -118,6 +137,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   endif
 
   if (perturb .and. cmb_like) then
+     print*, ' reading in CMB_LIKE initial data ...'
      !
      ! convert CCTK_STRING "describe_ics" + "FLRW_ICs_dir" to Fortran string
      !
@@ -257,10 +277,8 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   do k = 1, cctk_lsh(3)
      do j = 1, cctk_lsh(2)
         do i = 1, cctk_lsh(1)
-
-           call apply_periodic(i,ip1,im1,res)
-           call apply_periodic(j,jp1,jm1,res)
-           call apply_periodic(k,kp1,km1,res)
+	   printy = .False.
+	   if (i==1 .and. j==1 .and. k==1) printy = .True.
 
            if (perturb .and. single_mode) then
               !
@@ -268,6 +286,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
               ! use this for delta and delta_vel
               !
               if (framedrag) then
+	      	 if (printy) print*, ' starting framedrag setup! '
                  ! store these cos we use them a bit in rho,vel etc
                  cosky = cos(ky * y(i,j,k))
                  cosky2 = cosky * cosky
@@ -275,7 +294,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
                  sinky2 = sinky * sinky
                  ! set grad vector \Delta_i H_j
                  ! this is the component of spatial metric \gamma_xy = \gamma_yx
-                 gradH = (b / (hub * L)) * cosky
+                 gradH = b * cosky / (hub * L)
               else
                  if (perturb_x) then
                     f = perturb_phi * sin(kx * x(i,j,k) - phi_offset)
@@ -310,15 +329,18 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
            if (data) then
 
               if (lapse) then
-                 if (perturb .and. synch_comov .eqv. .False. .and. framedrag .eqv. .False.) then
-                    alp(i,j,k) = sqrt(1._dp + 2._dp * phi(i,j,k))
-                 else
-                    alp(i,j,k) = FLRW_lapse_value
+	      	 alp(i,j,k) = FLRW_lapse_value
+                 if (perturb) then
+		    if (synch_comov .eqv. .False. .and. framedrag .eqv. .False.) then
+		       if (printy) print*, ' perturbing lapse! '
+                       alp(i,j,k) = sqrt(1._dp + 2._dp * phi(i,j,k))
+		    endif
                  endif
               endif
 
               if (perturb) then
                  if (synch_comov) then
+		    if (printy) print*, ' setting up synch_comov metric, ext. curvature ... '
                     ! g_ij = [1 - 2 R_c] \delta_ij + \partial_i \partial_j \chi
                     gxx(i,j,k) = asq * (1._dp - 2._dp * rc(i,j,k) + dxdxchi(i,j,k))
                     gxy(i,j,k) = asq * dxdychi(i,j,k)
@@ -336,6 +358,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
 		    kzz(i,j,k) = -adot * gzz(i,j,k) + dzdzchi(i,j,k) * (a0 * hubdot / hub)
                     
                  elseif (single_mode .and. framedrag) then
+		    if (printy) print*, ' setting up FRAMEDRAG metric, ext. curvature ... '
                     ! do frame-dragging potential setup - phi=psi=0, only grad vector in gamma_ij
                     gxx(i,j,k) = asq 
                     gxy(i,j,k) = gradH
@@ -345,12 +368,13 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
                     gzz(i,j,k) = asq
 
                     kxx(i,j,k) = -adot
-                    kxy(i,j,k) = -b * cosky / (4. * L)
+                    kxy(i,j,k) = -b * cosky / (4._dp * L)
                     kxz(i,j,k) = 0._dp
-                    kyy(i,j,k) = -adot + b**2 * cosky2 / (2. * H * L**2)
+                    kyy(i,j,k) = -adot + b**2 * cosky2 / (2._dp * hub * L**2)
                     kyz(i,j,k) = 0._dp
                     kzz(i,j,k) = -adot
                  else
+		    if (printy) print*, ' setting up longitudinal gauge ICs ... '
                     ! single mode or cmb-like in Longitudinal Gauge
                     gxx(i,j,k) = asq * (1._dp - 2._dp * phi(i,j,k))
                     gxy(i,j,k) = 0._dp
@@ -367,6 +391,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
                     kzz(i,j,k) = kvalue * (1._dp - 2._dp * phi(i,j,k) - phidot * a0 / adot) / alp(i,j,k)
                  endif
               else
+		if (printy) print*, ' setting up UNPERTURBED metric ... '
                  gxx(i,j,k) = asq
                  gxy(i,j,k) = 0._dp
                  gxz(i,j,k) = 0._dp
@@ -403,28 +428,36 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
 		 press(i,j,k) = 0._dp ! pressure will be overwritten to P=poly_k*rho**poly_gamma in EOS_Omni
                  eps(i,j,k) = 0._dp
                  vel(i,j,k,:) = 0._dp
-                 if (perturb .and. framedrag) then
-                    ! set density, velocity from framedrag test (Mathematica/draft paper)
-
-                    ! denominator and numerator in first term in notes
-                    ! rho0 directly from eq.8 in draft (3.Oct.2018)
-                    rho0denom = 128. * pi * L**2 * (16. * hub**2 * L**2 - 3. * b**2 * cosky2)
-                    rho0num = (16. * hub**2 * L**2 - 3. * b**2 * cosky2)**2 - 64. * pi**2 * b**2 * sinky2
-                    rho(i,j,k) = 3. * rho0num / rho0denom
-                    ! vel is v^i = u^i / (alp u^t) from mathematica with same u^x as draft (3.Oct.2018)
-                    vel(i,j,k,1) = - 8. * pi * b * sinky / (3. * b**2 * cosky2 - 16. * L**2 * hub**2)
-                    vel(i,j,k,2) = 0._dp
-                    vel(i,j,k,3) = 0._dp
+                 if (perturb) then
+		    if (framedrag) then
+		        if (printy) print*, ' setting FRAMEDRAG density, velocity ...'
+                        ! set density, velocity from framedrag test (Mathematica/draft paper)
+		        !
+                        ! denominator and numerator in first term in notes
+                        ! rho0 directly from eq.8 in draft (3.Oct.2018)
+                        rho0denom = 128._dp * pi * L**2 * (16._dp * hub**2 * L**2 - 3._dp * b**2 * cosky2)
+                        rho0num = (16._dp * hub**2 * L**2 - 3._dp * b**2 * cosky2)**2 - 64._dp * pi**2 * b**2 * sinky2
+                        rho(i,j,k) = 3._dp * rho0num / rho0denom
+			!
+                        ! vel is v^i = u^i / (alp u^t) from mathematica with same u^x as draft (3.Oct.2018)
+                        vel(i,j,k,1) = 8._dp * pi * b * sinky / (3._dp * b**2 * cosky2 - 16._dp * L**2 * hub**2)
+			vel(i,j,k,2) = 0._dp
+			vel(i,j,k,3) = 0._dp
+		    else
+			if (printy) print*, ' setting rho = rho_i (1+delta) ... '
+			rho(i,j,k) = rho(i,j,k) * ( 1._dp + delta(i,j,k) )
+		    endif
+		    if (framedrag .eqv. .False.) then
+		       if (synch_comov .eqv. .False.) then
+		           if (printy) print*, 'setting longitudinal vel=delta_vel!'
+		           vel(i,j,k,:) = delta_vel(i,j,k,:)
+		       endif
+		    endif
                  else 
+		    if (printy) print*, ' setting HOMOGENEOUS rho ... '
                     rho(i,j,k) = rho0
                  endif
 		 !
-                 if (perturb .and. framedrag .eqv. .False.) then
-                    rho(i,j,k) = rho(i,j,k) * ( 1._dp + delta(i,j,k) )
-                    if (synch_comov .eqv. .False.) then
-                       vel(i,j,k,:) = delta_vel(i,j,k,:)
-                    endif
-                 endif
               endif
               
            endif
