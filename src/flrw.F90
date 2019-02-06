@@ -97,6 +97,8 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
   adot = hub * a0             !! a' from H
   kvalue = -adot              !! factor outside K_ij for conformal time
 
+  print*, 'rho0 = ',rho0
+
   if (perturb) then
      !
      ! set parameters only required for single mode
@@ -331,12 +333,15 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
               if (lapse) then
 	      	 alp(i,j,k) = FLRW_lapse_value
                  if (perturb) then
-		    if (synch_comov .eqv. .False. .and. framedrag .eqv. .False.) then
-		       if (printy) print*, ' perturbing lapse! '
-                       alp(i,j,k) = sqrt(1._dp + 2._dp * phi(i,j,k))
-		    endif
-                 endif
-              endif
+		    !if (synch_comov .eqv. .False. .and. framedrag .eqv. .False.) then
+		    if (synch_comov .eqv. .False.) then
+                        if (framedrag .eqv. .False.) then
+                           if (printy) print*, ' perturbing lapse! '
+                           alp(i,j,k) = sqrt(1._dp + 2._dp * phi(i,j,k))
+                        endif
+                     endif
+                  endif
+               endif
 
               if (perturb) then
                  if (synch_comov) then
@@ -445,7 +450,7 @@ subroutine FLRW_InitialData (CCTK_ARGUMENTS)
 			vel(i,j,k,3) = 0._dp
 		    else
 			if (printy) print*, ' setting rho = rho_i (1+delta) ... '
-			rho(i,j,k) = rho(i,j,k) * ( 1._dp + delta(i,j,k) )
+			rho(i,j,k) = rho0 * ( 1._dp + delta(i,j,k) )
 		    endif
 		    if (framedrag .eqv. .False.) then
 		       if (synch_comov .eqv. .False.) then

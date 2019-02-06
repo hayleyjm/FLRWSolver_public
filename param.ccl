@@ -31,7 +31,7 @@ KEYWORD do_framedrag_test "Do the opposite stream framedrag (vector mode B_i) te
 
 CCTK_REAL framedrag_HL "set the value for H*L (initial Hubble param times box length), given FLRW_boxlength this sets the init_rho - OVERRIDING FLRW_init_rho!"
 {
- 0.02:5 :: "Range for framedrag test - in theory can be anything else too"
+ 0.0:* :: "must be positive"
 } 0.02
 
 KEYWORD FLRW_ICs_dir "Directory containing initial conditions files for the simulation"
