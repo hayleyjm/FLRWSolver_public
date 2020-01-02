@@ -1,58 +1,73 @@
+#
 # Parameter definitions for thorn FLRWSolver
+#
 
-CCTK_REAL FLRW_init_rho "FLRW Initial Density"
+
+# -----------------------------------------------
+# Parameters relating to the background spacetime
+# -----------------------------------------------
+
+CCTK_REAL FLRW_boxlength "Size of box used in comoving Mpc"
+{
+ 0.0:* :: "Must be positive."
+} 0.0
+
+
+CCTK_REAL FLRW_init_rho "FLRW Initial Density -- used in all cases except framedrag_test"
 {
   0.0:* :: "Must be positive"
 } 0.0
 
-CCTK_REAL phi_phase_offset "The phase offset(eta) of phi=A * sin(kx*x - eta) for single mode perturbation"
+
+CCTK_REAL FLRW_lapse_value "Value of background initial lapse (alpha) -- for perturbations this becomes alp=FLRW_lapse_value*sqrt(1 + 2 Phi)"
 {
- *:* :: "Anything"
-} 0.0
+  *:* :: "Anything"
+} 1.0
 
-KEYWORD FLRW_perturb "Add perturbation to matter and metric"
-{
- "yes" :: "Add perturbation to FLRW spacetime"
- "no" :: "Do not add perturbation, will run FLRW spacetime"
-} "no"
-
-KEYWORD FLRW_perturb_type "Add perturbation"
-{ 
- "single_mode" :: "Single mode perturbation (sine wave). Set FLRW_perturb_direction to choose dimensions of perturbation and single_perturb_wavelength."
- "CMB_like" :: "CMB-like perturbation. Generated from CAMB power spectrum of density at the CMB. Require files output from Python script"
- "synch_comoving" :: "Add linear perturbations calculated in the synchronous, comoving gauge. Requires files output from Python script"
-} "CMB_like"
-
-KEYWORD do_framedrag_test "Do the opposite stream framedrag (vector mode B_i) test from Adamek & Mertens+ idea"
-{
- "yes" :: "do the test - you must also set single_mode perturb!"
- "no" :: "do not do the test. do something else."
-} "no"
-
-CCTK_REAL framedrag_HL "set the value for H*L (initial Hubble param times box length), given FLRW_boxlength this sets the init_rho - OVERRIDING FLRW_init_rho!"
+CCTK_REAL framedrag_HL "set the value for H*L (initial Hubble param times box length), given FLRW_boxlength this sets the init_rho for framedrag_test"
 {
  0.0:* :: "must be positive"
 } 0.02
 
-KEYWORD FLRW_ICs_dir "Directory containing initial conditions files for the simulation"
-{
- "initial_conditions/" :: "For Pawsey's Magnus, softlink to /group/pawsey0202/software/initial_conditions/"
-} "initial_conditions/"
 
-KEYWORD describe_ics "Description of initial conditions being used - this determines where ICs are taken from ** to add 10/26 Gpc **"
-{
- "/100Mpc_half" :: "100 Mpc physical box size, with half sampling of P(k), i.e. kmax = nyquist/2"
- "/100Mpc_full" :: "100 Mpc physical box size, with full sampling of P(k) for this size + resolution"
- "/250Mpc_full" :: "250 Mpc physical box size, with full sampling of P(k) for this size + resolution"
- "/250Mpc_half" :: "250 Mpc physical box size, with half sampling of P(k), i.e. kmax = nyquist/2"
- "/500Mpc_full" :: "500 Mpc physical box size, with full sampling of P(k) for this size + resolution"
- "/500Mpc_half" :: "500 Mpc physical box size, with half sampling of P(k), i.e. kmax = nyquist/2"
- "/1Gpc_full" :: "1 Gpc physical box size, with full sampling of P(k) for this size + resolution"
- "/1Gpc_half" :: "1 Gpc physical box size, with half sampling of P(k), i.e. kmax = nyquist/2"
- "/100Mpc_full_z200" :: "100 Mpc physical box size, with full sampling of P(k) and IC's generated at z=200"
-} "/100Mpc_half"
+# ------------------------------------------------
+# Parameters relating to the perturbation (if any)
+# ------------------------------------------------
 
-KEYWORD FLRW_perturb_direction "Choose which direction to perturb (only valid if FLRW_perturb_type = 'single_mode')"
+KEYWORD FLRW_perturb "Add perturbation to matter and metric"
+{
+ "yes" :: "Add perturbation to FLRW spacetime"
+  "no" :: "Do not add perturbation, will run FLRW spacetime"
+} "no"
+
+
+KEYWORD FLRW_perturb_type "Add perturbation of the following type"
+{ 
+ "single_mode" :: "Single mode perturbation (sine wave in density). Set FLRW_perturb_direction to choose dimensions of perturbation and single_perturb_wavelength."
+ "powerspectrum" :: "A power spectrum of perturbations. Generated from CAMB power spectrum of density at the CMB. Require files output from Python script (to be incorporated in future)"
+ "synch_comoving" :: "Add linear perturbations calculated in the synchronous, comoving gauge. Requires files output from Python script"
+ "framedrag_test" :: "Do the opposite stream framedrag (vector mode B_i) test from Adamek,Barerra-Hinjosa,Macpherson,Mertens(+?)"
+} "single_mode"
+
+
+STRING FLRW_ICs_dir "Directory containing initial conditions files for the simulation -- used if FLRW_perturb_type=powerspectrum or synch_comoving. NOTE: No trailing slash on directory, this is added in the code"
+{
+ " " :: "Any string containing the path to the initial condition files"
+} ""
+
+CCTK_REAL single_perturb_wavelength "Wavelength of single mode perturbation relative to box size"
+{
+ 0.0001:* :: "Must be in (0,1]. Wavelength will be single_perturb_wavelength * FLRW_boxlength"
+} 1.0
+
+
+CCTK_REAL phi_perturb_amplitude "Amplitude of perturbation in phi - implicitly sets amplitude of rho,vel perturbation"
+{
+  0.0:* :: "Must be positive"
+} 1.e-8
+
+
+KEYWORD FLRW_perturb_direction "Choose which direction to perturb (only used if FLRW_perturb_type = single_mode)"
 {
 "x" :: "perturb x-direction only"
 "y" :: "perturb y-direction only"
@@ -60,73 +75,44 @@ KEYWORD FLRW_perturb_direction "Choose which direction to perturb (only valid if
 "all" :: "perturb all dimensions"
 } "all"
 
-CCTK_REAL FLRW_resolution "Resolution of box used (only used if FLRW_perturb_type = 'CMB_like')"
-{
- 0.0:* :: "Must be positive."
-} 32.0
 
-CCTK_REAL FLRW_boxlength "Size of box used in Mpc - need for synch_comoving derivatives"
+CCTK_REAL phi_phase_offset "The phase offset, eta, in phi=A*sin(kx*x - eta) for single mode perturbation -- applied same in all dimentions if FLRW_perturb_direction = all"
 {
- 0.0:* :: "Must be positive."
+ *:* :: "Anything"
 } 0.0
 
-CCTK_REAL single_perturb_wavelength "Wavelength of single mode perturbation"
-{
- 0.0:* :: "Must be positive and smaller than or equal to box length."
-} 1.0
 
-CCTK_REAL FLRW_lapse_value "Value of background initial lapse (alpha)"
-{
-  *:* :: "Anything"
-} 1.0
-
-CCTK_REAL phi_perturb_amplitude "Amplitude of perturbation in phi (relative to rho0) - implicitly sets amplitude of rho perturbation"
-{
-  0.0:* :: "Must be positive"
-} 0.0
-
-# CCTK_REAL FLRW_xmax "Maximum x-value of grid - assumed grid spans [-FLRW_xmax:FLRW_xmax] in each dimension"
-# {
-#   *:* :: "Anything"
-# } 240.
-
-# This below didn't work to use xmax in flrw.f90, dont know why
-# shares:CoordBase
-
-# USES CCTK_REAL xmin
-# USES CCTK_REAL ymin
-# USES CCTK_REAL zmin
-# USES CCTK_REAL xmax
-# USES CCTK_REAL ymax
-# USES CCTK_REAL zmax
+# -------------------------------------
+# Parameters used from different thorns
+# -------------------------------------
 
 shares:HydroBase
 
 EXTENDS KEYWORD initial_hydro ""
 {
-  "flrw" :: "flrw star initial hydrobase variables"
+  "flrw" :: "FLRWSolver initial hydrobase variables"
 }
 
 shares:admbase
 
 EXTENDS KEYWORD initial_data
 {
-  "flrw" :: "FLRW star initial metric"
+  "flrw" :: "FLRWSolver initial metric"
 }
 
 EXTENDS KEYWORD initial_lapse
 {
-  "flrw" :: "FLRW initial lapse"
+  "flrw" :: "FLRWSolver initial lapse"
 }
 
 EXTENDS KEYWORD initial_dtlapse
 {
-  "flrw" :: "FLRW initial dtlapse"
+  "flrw" :: "FLRWSolver initial dtlapse"
 }
 
 EXTENDS KEYWORD initial_shift
 {
-  "flrw" :: "FLRW initial shift"
+  "flrw" :: "FLRWSolver initial shift"
 }
 
 USES KEYWORD metric_type

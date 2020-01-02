@@ -1,9 +1,51 @@
 # Schedule definitions for thorn FLRWSolver
 
-schedule FLRW_InitialData IN HydroBase_Initial
+if (CCTK_Equals(FLRW_perturb, "no"))
 {
-	LANG: Fortran
-} "Sets up the initial data for FLRW"
+  schedule FLRW_NoPerturb IN HydroBase_Initial
+  {
+   LANG: Fortran
+   } "Sets up initial data for FLRW spacetime"
+}
+
+
+
+if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"single_mode")) )
+{
+  schedule FLRW_SingleMode IN HydroBase_Initial
+  {
+    LANG: Fortran
+  } "Sets up initial data for a single-mode perturbation to FLRW spacetime"
+}
+
+else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"powerspectrum")) )
+{
+  schedule FLRW_Powerspectrum IN HydroBase_Initial
+  {
+    LANG: Fortran
+  } "Sets up initial data for a power spectrum of perturbations to FLRW spacetime"
+}
+
+else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"synch_comoving")) )
+{
+  schedule FLRW_SynchComoving IN HydroBase_Initial
+  {
+    LANG: Fortran
+  } "Sets up initial data for a perturbation (read from file) to FLRW spacetime in synchronous, comoving gauge"
+}
+
+else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"framedrag_test")) )
+{
+  schedule FLRW_FramedragTest IN HydroBase_Initial
+  {
+    LANG: Fortran
+  } "Sets up initial data for a perturbation to FLRW spacetime for testing the frame-dragging effect"
+}
+
+
+
+
+#####################################################################################################
 
 ## the schedule.ccl sets up WHERE and WHEN to make the calls to the functions in this thorn.
 ## ours in simple since we only call our flrw.f90 initially - to setup
