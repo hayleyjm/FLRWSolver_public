@@ -1,16 +1,27 @@
 
 
-Build Cactus from the build directory:
+Build Cactus from the Cactus/ directory by first setting up simfactory for the particular machine you're using:
 
-./simfactory/bin/sim build --thornlist manifest/einsteintoolkit.th --optionlist=debian-intel.cfg
+simfactory/bin/sim setup
 
-OR (can't remember which one -- to confirm)
+and follow the prompts. 
+Configuration files for the build are in simfactory/mdb/optionlists/, which is the default directory that Cactus looks in when specified below. 
 
-./simfactory/bin/sim build --thornlist manifest/einsteintoolkit.th --optionlist=massive.cfg
+The command to build Cactus is:
 
-to clean the previous build, add --clean to the above command.
+./simfactory/bin/sim build --thornlist manifest/einsteintoolkit.th --optionlist=my-config-file.cfg
+
+Choose my-config-file.cfg relevant to the particular machine you're using.
+To clean the previous build, add --clean to the above command (before --thornlist).
+The thornlist manifest/einsteintoolkit.th contains the list of the thorns to be compiled (make sure you have added FLRWSolver to this as per the README)
+
+On M3 (at MASSIVE at Monash University) we use debian-intel.cfg (Paul has a config on massive: massive.cfg). 
+On Magnus at the Pawsey Supercomputing Centre in Perth, WA, we use our own config file magnus.cfg.
+Many other widely-used machines (that have been compiled and tested with Cactus) are already included in simfactory/mdb/optionlists/ as a part of Cactus. Check them out.
 
 
+
+Note: you may need to load various modules to make the compilation work (For MASSIVE Paul's are in modules.lasky in the FLRW directory).
 
 Note: common errors include anything to do with Meudon portions of the code!  If so, go into manifest/einsteintoolkit.th
 and comment out the following (using #) 
@@ -21,14 +32,3 @@ and comment out the following (using #)
 # ExternalLibraries/LORENE
 
 
-Configuration files for the build are in simfactory/mdb/optionlists/
-Default config is debian-intel.cfg
-Paul has a config on massive (massive.cfg)
-
-Then need to run:
-
-simfactory/bin/sim setup
-
-to set various options. And run build command again...
-
-On MASSIVE need to load various modules (Paul's are in modules.lasky in the FLRW directory)
