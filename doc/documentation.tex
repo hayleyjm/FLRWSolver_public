@@ -33,7 +33,7 @@
 %     not specify any graphic file extensions in your .tex file. This
 %     will allow us to create a PDF version of the ThornGuide
 %     via pdflatex.
-%   - References should be included with the latex "\bibitem" command.
+%   - References should be included with the latex "\bibitem" command.c
 %   - Use \begin{abstract}...\end{abstract} instead of \abstract{...}
 %   - Do not use \appendix, instead include any appendices you need as
 %     standard sections.
@@ -74,7 +74,8 @@
 % (Automatically used from Cactus distribution, if you have a
 %  thorn without the Cactus Flesh download this from the Cactus
 %  homepage at www.cactuscode.org)
-\usepackage{../../../../doc/latex/cactus}
+%\usepackage{../../../../doc/latex/cactus}
+\usepackage{cactus}
 \usepackage{latexsym}
 \usepackage{amssymb}
 \usepackage{amsfonts}
@@ -84,12 +85,12 @@
 \begin{document}
 
 % The author of the documentation
-\author{I.~Hawke,\\
- F.~Loeffler \textless loeffler@sissa.it \textgreater } 
-%A.~Nagar \textless alessandro.nagar@polito.it\textgreater}
+\author{H. ~J. Macpherson \textless h.macpherson@damtp.cam.ac.uk \textgreater,\\
+ P.~D. Lasky, \\
+ D.~J. Price} 
 
 % The title of the document (not necessarily the name of the Thorn)
-\title{TOVSolver}
+\title{FLRWSolver}
 
 % the date your document was last changed, if your document is in CVS,
 % please use:
@@ -106,8 +107,7 @@
 %   \def\mydef etc
 
 \begin{abstract}
-  This thorn solves the Tolman-Oppenheimer-Volkov equations of hydrostatic equilibrium
-  for a spherically symmetric static star. 
+  This thorn provides cosmological initial conditions based on a Friedmann-Lemaitre-Robertson-Walker (FLRW) spacetime, with and without small perturbations. 
 \end{abstract}
 
 
@@ -116,170 +116,7 @@
 \label{sec:intro}
 %---------------------
 
-The Tolman-Oppenheimer-Volkoff solution is a static perfect fluid
-``star''. It is frequently used as a test of relativistic hydro
-codes. Here it is intended for use without evolving the matter
-terms. This provides a compact strong field solution which is static
-but does not contain singularities.
-
-
-%------------------
-\section{Equations}
-\label{sec:eqn}
-%------------------
-
-The equations for a TOV star~\cite{Tolman39,OppVol39,mtw} are usually
-derived in Schwarzschild coordinates. In these coordinates, the metric can
-be brought into the form
-\begin{equation}
-ds^2 = -e^{2\phi}dt^2 + \left(1-\dfrac{2m}{r}\right)^{-1}dr^2 + r^2 d\Omega^2 \ .
-\end{equation}
-
-
-This thorn is based on the notes of Thomas Baumgarte~\cite{Baumgarte-file} that 
-have been partially included in this documentation. However the notation for the
-fluid quantities follows~\cite{Font00a}. 
-Here we are assuming that the stress energy tensor is given by
-\begin{equation}
-  \label{eq:Tmunu}
-  T^{\mu\nu} = (\mu + P)u^{\mu}u^{\nu} + Pg^{\mu\nu},
-\end{equation}
-where $\mu$ is the total energy, $P$ the pressure, $u^{\mu}$ the fluid
-four velocity, $\rho$ the rest-mass density, $\epsilon$ the specific
-internal energy, and
-\begin{eqnarray}
-  \label{eq:fluidquantities}
-  \mu & = & \rho (1 + \epsilon), \\
-  P & = & (\Gamma - 1)\rho\epsilon, \\
-  P & = & K \rho^{\Gamma}.
-\end{eqnarray}
-This enforces a polytropic equation of state. We note that in Cactus
-the units are $c = G = M_{\odot} = 1$.
-
-The equations to give the initial data are solved (as usual) in the
-Schwarzschild-like coordinates with the areal radius labelled $r$.
-The equations of the relativistic hydrostatic equilibrium are
-\begin{eqnarray}
-  \label{eq:TOViso}
-  \frac{d P}{d r} & = & -(\mu + P) \frac{m + 4\pi r^3 P}{r(r - 2m)}, \\
-%
-  \frac{d m}{d r} & = & 4 \pi r^2 \mu, \\
-%
-  \frac{d \phi}{d r} & = & \frac{m + 4\pi r^3 P}{r(r -
-    2m)} \ . \\
-\end{eqnarray}
-Here $m$ is the gravitational mass inside the sphere radius $r$, and
-$\phi$ the logarithm of the lapse. Once the integration is done for the 
-interior of the star we match to the exterior (see below). In the exterior 
-we have
-\begin{align}
-  \label{eq:TOVexterior}
-     P & =  {\tt TOV\_atmosphere}, \\
-     m & =  M, \\
-  \phi & = \dfrac{1}{2} \log(1-2M / r).
-\end{align}
-
-In order to impose initial data in cartesian coordinates, we want to transform
-this solution to isotropic coordinates, in which the metric takes the form
-\begin{equation}
-\label{eq:metr_iso}
-ds^2 = -e^{2\phi}dt^2+e^{2\Lambda}\left(d\bar{r}^2+\bar{r}^2d\Omega^2\right) \ .
-\end{equation}
-Here $\bar{r}$ denotes the isotropic radius. Matching the two metrics, one
-obviously finds
-\begin{align}
-r^2                                    &= e^{2\Lambda}\bar{r}^2 \ , \\
-\left(1-\dfrac{2m}{r}\right)^{-1} dr^2 &= e^{2\Lambda}d\bar{r}^2 \ .
-\end{align}
-As a result, we have an additional differential equation to solve in order
-to have $\bar{r}(r)$, that is
-\begin{equation}
-\label{eq:rbar}
-\frac{d (\log(\bar{r} / r))}{\partial r} =  \frac{r^{1/2} - (r-2m)^{1/2}}{r(r-2m)^{1/2}} \ .
-\end{equation}
-Given such a solution, the missing metric potential is simply given by
-\begin{equation}
-e^{\Lambda} = \dfrac{r}{\bar{r}} \ .
-\end{equation}
-In the following section we concentrate on solving Eq.~(\ref{eq:rbar}) in the
-exterior and in the interior of the star.
-
-Then, given these one-dimensional data we interpolate to get data on 
-the three-dimensional Cactus grid; that is, we interpolate on the three dimensional 
-{\tt r} given by the {\tt x, y, z} variables the physical hydro and spacetime
-quantities that are function of the isotropic radius $\bar{r}$ computed above. 
-Only linear interpolation is used. This avoids problems at the surface of the 
-star, and does not cause problems if the number of points in the one dimensional 
-array is sufficient ($1\times 10^5$ is the default, which should be sufficient for 
-medium-sized grids).
-
-%--------------------
-\subsection{Exterior}
-\label{sbsc:exterior}
-%--------------------
-
-In the exterior of the star, $r>R$, the mass $M\equiv m(R)$ is constant, and 
-Eq.~(\ref{eq:rbar}) can be solved analytically up to a constant of integration. 
-Fixing this constant such that $r$ and $\bar{r}$ agree at infinity, we find
-\begin{equation}
-\bar{r} = \dfrac{1}{2}\left(\sqrt{r^2-2Mr}+r -M\right) \ ,
-\end{equation}
-or, solving for $r$ [cfr. Exercise 31.7 of MTW~\cite{mtw}]
-\begin{equation}
-r=\bar{r}\left(1+\dfrac{M}{2\bar{r}}\right)^2 \ .
-\end{equation}
-The metric potential as a function of $\bar{r}$ is obviously
-\begin{equation}
-e^{2\Lambda} = \left(1+\dfrac{M}{2\bar{r}}\right)^2 \ .
-\end{equation}
-
-%--------------------
-\subsection{Interior}
-\label{sbsc:interior}
-%--------------------
-
-In the interior, Eq,~(\ref{eq:rbar}) can not be integrated analytically, because
-$m$ is now a function of $r$. Instead, we have to integrate
-\begin{equation}
-\int_0^{\bar{r}} \dfrac{d\bar{r}}{\bar{r}} = \int_0^r\left(1-\dfrac{2m}{r}\right)^{-1/2}\dfrac{dr}{r} \ .
-\end{equation}
-The left hand side can be integrated analytically, and has a singular point at
-$\bar{r}=0$. The right hand side cannot be integrated analytically, but will also
-be singular at $r=0$, which poses problems when trying to integrate the equation
-numerically. We therefore rewrite the right hand side by adding and subracting
-a term $1/r$, which yields
-\begin{equation}
-\int_0^r\dfrac{1}{r(1-2m/r)^{1/2}}dr = \int_0^r\dfrac{1-(1-2m/r)^{1/2}}{r(1-2m/r)^{1/2}}dr+\int_0^r\dfrac{dr}{r} \ .
-\end{equation}
-Since $m\sim r^3$ close to the origin, the first term on the right hand side is now
-regular and the second one can be integrated analytically. As a result, we find
-\begin{equation}
-\int_0^{\bar{r}}d\ln\bar{r}-\int_0^rd\ln r=\int_0^r\dfrac{1-(1-2m/r)^{1/2}}{r(1-2m/r)^{1/2}}dr \ .
-\end{equation}
-Replacing the lower limits ($r=\bar{r}=0$) temporarily with $r_0$ and $\bar{r}_0$, we can integrate
-the right hand side and find
-\begin{equation}
-\ln\left(\dfrac{\bar{r}}{r}\right)-\ln\left(\dfrac{\bar{r}_0}{r_0}\right)=\int_0^r\dfrac{1-(1-2m/r)^{1/2}}{r(1-2m/r)^{1/2}}dr \ ,
-\end{equation}
-or
-\begin{equation}
-\bar{r} = C r \exp\left[\int_0^r\dfrac{1-(1-2m/r)^{1/2}}{r(1-2m/r)^{1/2}}dr\right] \ .
-\end{equation}
-Here the constant of integration $C$ is related to the ratio $\bar{r}_0/r_0$ evaluated at
-the origin (which is perfectly regular). It can be chosen such that the interior solution
-matches the exterior solution at the surface of the star. This requirement implies
-\begin{equation}
-C = \dfrac{1}{2R}\left(\sqrt{R^2-2MR}+R-M\right)\exp\left[\int_0^R\dfrac{1-(1-2m/r)^{1/2}}{r(1-2m/r)^{1/2}}dr\right] \ .
-\end{equation}
-In this respect, let us recall how we do initial data for the system of 
-equations at $r=0$.  Given a value of the central density $\rho_c$ (in
-Cactus units) we pose $P_0 = K\rho_c^{\Gamma}$, $m_0=0$, $\phi_0=0$ and 
-$\bar{r}_0 = {\tt TOV\_Tiny}$, $r_0 = {\tt TOV\_Tiny}$. The {\tt TOV\_Tiny} 
-number is hardwired into the code to avoid divide by zero errors; it is $10^{-20}$. 
-Also the default parameters will give the TOV star used for the long term evolutions
-in~\cite{Font02a}. That is, a nonrotating $N=1$ ($\gamma=1+1/N=2$) polytropic star 
-with gravitational mass $M=1.4M_{\odot}$, circumferential radius $R=14.15$km, central 
-rest-mass density $\rho_c=1.28 \times 10^{-3}$ and $K=100$.
+FLRW spacetime is a homogeneous, isotropic, expanding solution to Einstein's equations. This solution is the basis for the current standard cosmological model; $\Lambda$CDM. Here we provide a thorn to give initial conditions for cosmology using the Einstein Toolkit. We provide pure-FLRW spacetime (no perturbations), and linearly-perturbed FLRW spacetime (for various kinds of perturbations). 
 
 
 %--------------------------
@@ -287,88 +124,128 @@ rest-mass density $\rho_c=1.28 \times 10^{-3}$ and $K=100$.
 \label{sec:use}
 %--------------------------
 
-To use this thorn to provide initial data for the {\tt ADMBase}
-variables $\alpha$, $\beta$, $g$ and $K$ just activate the thorn and
-set {\tt ADMBase:initial\_data = ``TOV''}.
-
-There are two ways of coupling the matter sources to the thorn that
-evolves the Einstein equations. One is to use the {\tt CalcTmunu}
-interface. This will give the components of the stress energy tensor
-\emph{pointwise} across the grid. For an example of this, see thorn
-{\tt ADM} in {\tt CactusEinstein}.
-
-To use the {\tt CalcTmunu} interface you should
-\begin{itemize}
-\item put the lines
-\begin{verbatim}
-friend: ADMCoupling
-
-USES INCLUDE: CalcTmunu.inc
-USES INCLUDE: CalcTmunu_temps.inc
-USES INCLUDE: CalcTmunu_rfr.inc
-\end{verbatim}
-in your {\tt interface.ccl}
-\item In any routine requiring the matter terms, put 
-  \begin{itemize}
-  \item {\tt \#include ``CalcTmunu\_temps.inc''} in the variable
-    declarations
-  \item declare {\tt CCTK\_REAL}s {\tt Ttt, Ttx, Tty, Ttz, Txx, Txy,
-      Txz, Tyy, Tyz, Tzz}.
-  \item Inside an {\tt i,j,k} loop put {\tt \#include
-      ``CalcTmunu.inc''}. {\bf This must be a Fortran routine} (We
-    could probably fix this if requested).
-  \end{itemize}
-\item You then use the real numbers {\tt Ttt} etc.~as the stress
-  energy tensor at a point.
-\end{itemize}
-
-As an alternative you can use the grid functions {\tt StressEnergytt,
-  StressEnergytx}, etc.~directly to have the stress energy tensor over
-the entire grid. To do this you just need the line {\tt friend:
-  ADMCoupling} in your {\tt interface.ccl}. Although this seems much
-simpler, you will now \emph{only} get the contributions from the {\tt
-  TOVSolver} thorn. If you want to use other matter sources, most of
-the current thorns ({\tt CosmologicalConstant}, the hydro code, the
-scalar field code) all use the {\tt CalcTmunu} interface.
-
-You also have the possibility to use a parameter
-{\tt GRHydrotovsolver::TOV\_Separation} to obtain a spacetime consisting
-of one TOV-system for $x>0$ and a second (similar) for $x<0$. This parameter
-sets the separation of the centers of two neutron stars, has to be positive
-and should be larger than twice the radius of one star.\\
-Be aware that the spacetime obtained by this is no physical spacetime and
-no solution of Einsteins Equations and therefore an IVP-run has to follow.
-This parameter was only introduced for testing purposes of the IVP-Solver
-and should only be considered as such. There would be better (and also easy)
-ways to obtain initial data for two TOVs than that.
+To use this thorn to provide initial data for the {\tt ADMBase} variables $\alpha$, $\beta$, $g_{ij}$ and $K_{ij}$, and the {\tt HydroBase} variables $\rho$, $v^i$ just activate the thorn and set the parameters {\tt HydroBase::initial\_hydro, ADMBase::initial\_data, ADMBase::initial\_lapse, ADMBase::initial\_shift, ADMBase::initial\_dtlapse} to ``flrw''. Also set {\tt ADMBase::initial\_dtshift} to ``zero''. Template parameter files for an FLRW and single-mode perturbation to FLRW spacetime are provided in the {\tt par/} directory. 
 
 
 
 
 
-\begin{thebibliography}{10}
+%------------------
+\section{Equations}
+\label{sec:eqn}
+%------------------
 
-\bibitem{Tolman39}
-R.~C. Tolman, Phys. Rev. {\bf 55}, 364 (1939).
-%
-\bibitem{OppVol39}
-J.~R. Oppenheimer and G. Volkoff, Physical Review {\bf 55}, 374 (1939).
-%
-\bibitem{mtw}
-C.W.~Misner, K.S.~Thorn and J.A.~Wheeler, Gravitation (Freeman and co. NY, 1973).
-%
-\bibitem{Baumgarte-file}
-T.~W. Baumgarte. There is a copy of his notes in this directory: \\
-TOVSolver/doc.
-%
-\bibitem{Font00a}
-J.~A. Font, M. Miller, W. Suen and M. Tobias, Phys. Rev. {\bf D61},
-044011 (2000).
-%
-\bibitem{Font02a}
-J.~A. Font, T. Goodale, S. Iyer, M. Miller, L. Rezzolla, E. Seidel,
-N. Stergioulas, W. Suen and M. Tobias, Phys. Rev. {\bf D65},
-084024 (2002).
+The FLRW line element in conformal time, $\eta$, is given by
+\begin{equation}
+	ds^2 = a^2(\eta) \left( - d\eta^2 + \delta_{ij}dx^i dx^j \right)
+\end{equation}
+where $a(\eta)$ is the scale factor describing the size of the Universe at time $\eta$. To initialise this spacetime, the user simply needs to specify \texttt{FLRW\_perturb} = ``no''.
+
+Including scalar only perturbations to the FLRW metric in the longitudinal gauge gives
+\begin{equation}\label{eq:perturbed_metric}
+	ds^2 = a^2(\eta) \left[ - \left(1-2\psi\right) d\eta^2 + \left(1+2\phi \right) \delta_{ij}dx^i dx^j \right],
+\end{equation}
+where $\phi,\psi$ coincide with the Bardeen potentials \cite{bardeen1980} in this gauge. Assuming $\phi,\psi\ll1$ allows us to solve Einstein's equations using linear perturbation theory, giving the system of equations \cite{macpherson2017,macpherson2019}
+ \begin{subequations} \label{eqs:perturbed_einstein}
+	\begin{align}
+		\nabla^{2}\phi - 3 \mathcal{H}\left(\phi' + \mathcal{H} \phi\right) &= 4\pi  \bar{\rho}\,\delta a^{2}, \label{eq:einstein_1} \\ 
+		\mathcal{H} \partial_{i}\phi + \partial_{i}\phi' &= -4\pi \bar{\rho} \,a^{2} \delta_{ij}v^{j}, \label{eq:einstein_2} \\ 
+		\phi'' + 3\mathcal{H}\phi' &=0, \label{eq:einstein_3}
+	\end{align}	
+\end{subequations}
+and $\phi=\psi$. The perturbed rest-mass density is $\rho = \bar{\rho} \left(1 + \delta \right)$, with $\bar{\rho}$ the background FLRW density. We have $v^i = \delta v^i$, since $\bar{v}^i = 0$ for FLRW. In the above, $\mathcal{H}\equiv a'/a$ is the conformal Hubble parameter, where $'\equiv \partial/\partial\eta$ and $\partial_i \equiv \partial/\partial x^i$. Solving the above system gives
+\begin{subequations} \label{eqs:linear_solnsg0}
+    \begin{align}
+    	\phi &= f(x^{i}), \label{eq:linear_phi}\\
+     	\delta &= \frac{a_{\mathrm{init}}}{4\pi\rho^{*}} \xi^{2}\, \nabla^{2}f(x^{i}) - 2 \,f(x^{i}), \\
+     	v^{i} &= -\sqrt{\frac{a_{\mathrm{init}}}{6\pi\rho^{*}}} \xi\, \partial^{i}f(x^{i}),
+    \end{align}
+\end{subequations}
+where $a_{\mathrm{init}} = a(\eta_{\rm init})$, with $\eta_{\rm init}$ the initial simulation time, $\rho^*\equiv \bar{\rho}a^3$ is the FLRW comoving (constant) density, and we use the scaled conformal time
+\begin{equation}
+	\xi \equiv 1 + \sqrt{\frac{2\pi\rho^{*}}{3\,a_\mathrm{init}}}\eta,
+\end{equation}
+for simplicity. In \eqref{eq:linear_phi} we have the freedom to choose the form of $f(x^i)$, so long as it has amplitude such that $\phi\ll1$. Equations \eqref{eqs:linear_solnsg0} denote the standard form of linear perturbations implemented in this thorn. See \cite{macpherson2017} and \cite{macpherson2019} for more details. 
+
+In this thorn we set $a_{\rm init}=1$, and the initial background FLRW density $\bar{\rho}_{\rm init}$ is controlled by the parameter \texttt{FLRW\_init\_rho}, which correspondingly sets $\rho^*$. The conformal Hubble parameter $\mathcal{H}$ is set according to the Friedmann equations.
+
+Below we outline several different choices for perturbations, and how to set these using the thorn parameters.
+
+%----------------
+\subsection{Single-mode perturbation}
+%----------------
+
+This initial condition sets $\phi$ as a sine-wave function, and the corresponding density and velocity perturbations set using \eqref{eqs:linear_solnsg0}. Choose \texttt{FLRW\_perturb\_type}=``single\_mode''. The parameter \texttt{FLRW\_perturb\_direction} controls in which spatial dimension to apply the perturbation, and will set either $\phi=f(x^1),f(x^2),f(x^3)$, or $f(x^i)$ depending on the choice. For example, choosing \texttt{FLRW\_perturb\_direction}=``all'' we have
+\begin{equation}
+	\phi = \phi_{0} \sum_{i=1}^{3} \mathrm{sin}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right),
+\end{equation}
+where $\lambda$ is the wavelength of the perturbation, $\theta$ is some phase offset, and $\phi_0\ll1$. This gives the density and velocity perturbation as, respectively, \cite{macpherson2017}
+\begin{align}
+	\delta &= - \left[ \left(\frac{2\pi}{\lambda}\right)^{2} \frac{a_{\mathrm{init}}}{4\pi\rho^{*}} + 2\right] \phi_{0} \sum_{i=1}^{3} \mathrm{sin}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right),\label{eq:initial_delta}\\
+	v^{i} &= \frac{2\pi}{\lambda} -\sqrt{\frac{a_{\mathrm{init}}}{6\pi\rho^{*}}}\, \phi_{0}\, \mathrm{cos}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right). \label{eq:initial_deltav}
+\end{align}
+The wavelength, $\lambda$, of the perturbation is controlled by \texttt{single\_perturb\_wavelength}, given as a fraction of the total box length (to ensure periodicity is satisfied). The phase offset $\theta$ is controlled by {\tt phi\_phase\_offset}, and the amplitude is set by \texttt{phi\_perturb\_amplitude}, which must be set such that $\phi_0\ll1$ such that the corresponding density and velocity perturbations are valid solutions to Einstein's equations under the linear approximation. 
+
+%----------------
+\subsection{Power spectrum of perturbations}
+%----------------
+
+We can instead choose the initial conditions to be a power spectrum of fluctuations, to better mimic the early state of the Universe. See \cite{macpherson2019} for more details. Currently, this is implemented in this thorn by reading in files giving initial conditions for $\phi, \delta,$ and $v^i$ calculated using an external code using the power spectrum of matter fluctuations in the CMB. These files are not included as a part of this thorn yet, and the full generation of these initial conditions will be included in the future. Currently, this choice will work for any form of initial conditions read in from a file, so long as it is in the gauge given in \eqref{eq:perturbed_metric} and satisfies the system \eqref{eqs:linear_solnsg0}. 
+
+Regardless, choose this initial condition by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. The location of the files specifying $\phi, \delta$, and $v^i$ (in files named {\tt phi.dat, delta.dat, vel1.dat, vel2.dat}, and {\tt vel3.dat}, respectively) is set using the string {\tt FLRW\_ICs\_dir}. Note: these files must be written in a specific way: as a series of $x-y$ planes for each value of $z$. This will be irrelevant once the initial condition generator is incorporated into this thorn. 
+
+
+
+
+%----------------
+\subsection{More perturbations}
+%----------------
+Several test cases for initial conditions are also included in the current up-to-date version of this thorn, however since these are just tests and not intended for public use; they are not detailed here. These are in the files {\tt FLRW\_SynchComoving.F90} and {\tt FLRW\_FramedragTest.F90}. Don't worry 'bout it.
+
+
+
+%--------------------------
+\section{Gauge}
+\label{sec:gauge}
+%--------------------------
+
+The initial value of the lapse, $\alpha$ is set using \texttt{FLRW\_lapse\_value}. In a perturbed FLRW spacetime (using {\tt single\_mode} or {\tt powerspectrum}) this is the background value of the lapse, which is perturbed according to \eqref{eq:perturbed_metric}. This thorn uses $\beta^i=0$ always. Evolution of lapse is set as usual using the chosen evolution thorn. See \cite{macpherson2019} for details about appropriate gauges for nonlinear structure formation. 
+
+
+
+
+%--------------------------
+\section{Notes on using {\tt GRHydro} for cosmology}
+\label{sec:note}
+%--------------------------
+
+The work done in \cite{macpherson2017} and \cite{macpherson2019} using this thorn used {\tt GRHydro} for the hydrodynamic evolution. Below we offer a few notes and suggestions on using this thorn for cosmological evolutions. 
+
+%----------------
+\subsection{Equation of state}
+%----------------
+
+In deriving the initial conditions above, we assume a dust fluid in an FLRW spacetime, i.e. $P=0$. If using {\tt GRHydro} for the hydrodynamical evolution, it should be noted that this thorn does not work with an identically zero pressure. To compensate this, it is recommended to use a polytropic EOS, $P=K \rho^{\gamma}$ such that $P\ll\rho$. In \cite{macpherson2017} this is shown to be sufficient to match the evolution of a dust FLRW spacetime. 
+
+
+
+%----------------
+\subsection{The atmosphere}
+%----------------
+
+In {\tt GRHydro}, the atmosphere is used to solve the problem that the majority of the computational domain is essentially vacuum (when simulating compact objects; see the documentation). For cosmology, we do not need an atmosphere as the matter fluid is continuous across the whole domain (in the absence of shell-crossings). {\tt GRHydro} decides whether the position on the grid coincides with the atmosphere by checking several conditions. In some cases we have found that regions of the domain are flagged as being in ``the atmosphere'' for our cosmological simulations, whereas this is realistically not necessary. This causes these regions in the domain to be set automatically to the value of {\tt rho\_abs\_min}. To avoid this, we have located the particular line that is causing this behaviour and commented it out. This will have no effect on the evolution as we know the purpose of the atmosphere is for simulations of compact objects, and not cosmology. If using {\tt GRHydro} {\bf exclusively} for cosmology, in the code {\tt GRHydro\_UpdateMask.F90} comment out line 76 that sets {\tt atmosphere\_mask\_real(i,j,k) = 1}. If using {\tt GRHydro} for any simulations of compact objects, be sure to change this back to the distributed form, as in these cases the atmosphere is required. 
+
+
+
+
+\begin{thebibliography}{9}
+
+\bibitem{bardeen1980} J. M. Bardeen, Phys. Rev. D 22, 1882 (1980)
+
+\bibitem{macpherson2017} H. J. Macpherson, P. D. Lasky, and D. J. Price, Phys. Rev. D 95, 064028 (2017), arXiv:1611.05447
+
+\bibitem{macpherson2019} H. J. Macpherson, D. J. Price, and P. D. Lasky, Phys. Rev. D99, 063522 (2019), arXiv:1807.01711
+
 
 
 \end{thebibliography}
