@@ -1,34 +1,72 @@
+--------------------------------------------------
+
+Instructions for compiling the ET with FLRWSolver
+
+--------------------------------------------------
+
+0. Follow the download instructions for the ET here: http://einsteintoolkit.org/download.html
+
+1. Download and add FLRWSolver to the ET (as per the README).
+
+2. Add the location of your Python libraries for linking:
+
+	The powerspectrum perturbations part of FLRWSolver requires Python for linking. For this you need to specify the path to these libraries.
+
+	** See the README.Python for detailed instructions. **
+
+3. Set up simfactory for the particular machine you're using:
+
+		simfactory/bin/sim setup
+
+	and follow the prompts.
+
+4. Configuration files for the build are in Cactus/simfactory/mdb/optionlists/, which is the default directory that Cactus looks in when specified below.
+	
+	Choose one appropriate for the machine you're using and make any necessary edits.
+
+5. Build Cactus (from your Cactus/ directory) with:
+
+		./simfactory/bin/sim build --thornlist=manifest/einsteintoolkit.th --optionlist=my-config-file.cfg
+
+	Where my-config-file.cfg is your chosen configuration file (to clean the previous build, add --clean to the above command, before --thornlist).
+	The thornlist manifest/einsteintoolkit.th contains the list of the thorns to be compiled (make sure you have added FLRWSolver to this as per the README).
+
+	This can take a long time. Be patient...
+
+--------------------------------------------------
+
+Configuration file notes:
+
+--------------------------------------------------
+
+--> On MacOS Catalina 10.15.5 we have tested using osx-homebrew.cfg with a few changes to library/binary locations (different for each machine).
+
+--> On M3 (at MASSIVE at Monash University) we use debian-intel.cfg (Paul has a config on massive: massive.cfg). 
+
+--> On Magnus at the Pawsey Supercomputing Centre in Perth, WA, we use our own config file magnus.cfg (included in this repository).
+
+--> Many other widely-used machines (that have been compiled and tested with Cactus) are already included in simfactory/mdb/optionlists/ as a part of Cactus.
+		Try compiling with the default values before changing anything.
+
+--> Note: you may need to load various modules to make the compilation work (For MASSIVE Paul's are in modules.lasky in this repository).
+
+--------------------------------------------------
+
+Some known issues when compiling (non-FLRWSolver related):
+
+--------------------------------------------------
 
 
-Build Cactus from the Cactus/ directory by first setting up simfactory for the particular machine you're using:
+--> Common errors can arise from Meudon portions of the code.  If so, go into manifest/einsteintoolkit.th
+	and comment out the following (using #) 
 
-simfactory/bin/sim setup
+		# EinsteinInitialData/Meudon_Bin_BH
+		# EinsteinInitialData/Meudon_Bin_NS
+		# EinsteinInitialData/Meudon_Mag_NS
 
-and follow the prompts. 
-Configuration files for the build are in simfactory/mdb/optionlists/, which is the default directory that Cactus looks in when specified below. 
+		# ExternalLibraries/LORENE
 
-The command to build Cactus is:
-
-./simfactory/bin/sim build --thornlist manifest/einsteintoolkit.th --optionlist=my-config-file.cfg
-
-Choose my-config-file.cfg relevant to the particular machine you're using.
-To clean the previous build, add --clean to the above command (before --thornlist).
-The thornlist manifest/einsteintoolkit.th contains the list of the thorns to be compiled (make sure you have added FLRWSolver to this as per the README)
-
-On M3 (at MASSIVE at Monash University) we use debian-intel.cfg (Paul has a config on massive: massive.cfg). 
-On Magnus at the Pawsey Supercomputing Centre in Perth, WA, we use our own config file magnus.cfg.
-Many other widely-used machines (that have been compiled and tested with Cactus) are already included in simfactory/mdb/optionlists/ as a part of Cactus. Check them out.
-
-
-
-Note: you may need to load various modules to make the compilation work (For MASSIVE Paul's are in modules.lasky in the FLRW directory).
-
-Note: common errors include anything to do with Meudon portions of the code!  If so, go into manifest/einsteintoolkit.th
-and comment out the following (using #) 
-# EinsteinInitialData/Meudon_Bin_BH
-# EinsteinInitialData/Meudon_Bin_NS
-# EinsteinInitialData/Meudon_Mag_NS
-
-# ExternalLibraries/LORENE
-
+--> Generally, if you have a nontrivial error with a particular thorn, first try removing that thorn from the thornlist and re-compile.
+	The code will complain if other thorns on your thornlist depend on the thorn you have just removed. You can also remove some of these if they are not important.
+	If it turns out a thorn you really need has a dependency on that thorn, ONLY THEN spend the time debugging.
 
