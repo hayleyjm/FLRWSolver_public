@@ -3,7 +3,7 @@
 # 
 
 #
-# A sample parameter file to run a 128^3, 1Gpc box pure-FLRW spacetime
+# A sample parameter file to run a 64^3 FLRW spacetime
 #
 
 
@@ -22,12 +22,12 @@ CartGrid3D::avoid_origin = "no"
 CoordBase::xmin = 0.0
 CoordBase::ymin = 0.0
 CoordBase::zmin = 0.0
-CoordBase::xmax = 1000.0
-CoordBase::ymax = 1000.0
-CoordBase::zmax = 1000.0
-CoordBase::dx   = 7.8125
-CoordBase::dy   = 7.8125
-CoordBase::dz   = 7.8125
+CoordBase::xmax = 1.0
+CoordBase::ymax = 1.0
+CoordBase::zmax = 1.0
+CoordBase::dx   = 0.015625
+CoordBase::dy   = 0.015625
+CoordBase::dz   = 0.015625
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -77,9 +77,9 @@ ActiveThorns = "Time MoL StaticConformal NaNChecker SymBase"
 ActiveThorns = "Constants LocalReduce aeilocalinterp LoopControl"
 
 Cactus::terminate           = "time"
-Cactus::cctk_initial_time   = 0
-Cactus::cctk_final_time     = 100
-time::dtfac                 = 0.5
+Cactus::cctk_initial_time   = 1
+Cactus::cctk_final_time     = 1.015625
+time::dtfac                 = 0.1
 
 MoL::ODE_Method             = "rk4"
 MoL::MoL_Intermediate_Steps = 4
@@ -88,7 +88,6 @@ MoL::MoL_Num_Scratch_Levels = 1
 NaNChecker::check_every     = 1
 NaNChecker::action_if_found = "just warn"
 NaNChecker::check_vars      = "ADMBase::metric ADMBase::lapse ADMBase::shift HydroBase::rho HydroBase::eps HydroBase::press HydroBase::vel"
-
 
 ########################################
 # spacetime & gauge parameters
@@ -128,7 +127,8 @@ ML_BSSN::ML_dtshift_bound    = "none"
 
 ML_ADMConstraints::timelevels = 3
 
-ADMMacros::spatial_order = 4
+ADMMacros::spatial_order       = 4
+GRHydro::sources_spatial_order = 4
 
 ADMBase::metric_type             = "physical"
 ADMBase::evolution_method        = "ML_BSSN"
@@ -160,7 +160,7 @@ GRHydro::GRHydro_stencil           = 3
 GRHydro::bound                     = "none"
 GRHydro::rho_abs_min               = 1.e-30
 
-EOS_Omni::poly_k		   = 1.e-10
+EOS_Omni::poly_k		   = 1.e-15
 EOS_Omni::poly_gamma		   = 2.0
 
 
@@ -180,9 +180,9 @@ ADMBase::initial_dtlapse         = "flrw"
 ADMBase::initial_dtshift         = "zero"
 
 # some options for the background FLRW spacetime
-FLRWSolver::FLRW_boxlength       = 1000.
-FLRWSolver::FLRW_init_rho	 = 1.e-8
-FLRWSolver::FLRW_lapse_value     = 1.
+FLRWSolver::FLRW_lapse_value     = 1.0
+FLRWSolver::FLRW_init_HL         = 2.0
+FLRWSolver::FLRW_init_a          = 1.0
 
 # choose some things regarding perturbations
 FLRWSolver::FLRW_perturb	  = "no"
@@ -194,11 +194,8 @@ FLRWSolver::FLRW_perturb	  = "no"
 # below for perturb_type = single_mode only
 # FLRWSolver::FLRW_perturb_direction    = "all"
 # FLRWSolver::single_perturb_wavelength = 1.0
-# FLRWSolver::phi_perturb_amplitude     = 1.e-8
+# FLRWSolver::phi_amplitude             = 1.e-8
 # FLRWSolver::phi_phase_offset          = 0.
-
-# below for perturb_type = framedrag_test only
-# FLRWSolver::framedrag_HL              = 0.02
 
 
 ########################################

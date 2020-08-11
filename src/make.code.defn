@@ -1,7 +1,7 @@
 # Main make.code.defn file for thorn FLRWSolver
 
 # Source files in this directory
-SRCS = init_tools.F90 flrw_noperturb.F90 flrw_singlemode.F90 flrw_powerspectrum.F90 flrw_synchcomoving.F90 flrw_framedragtest.F90
+SRCS = pspec_ics.c init_tools.F90 flrw_noperturb.F90 flrw_singlemode.F90 flrw_powerspectrum.F90 flrw_synchcomoving.F90 flrw_framedragtest.F90
 
 # Subdirectories containing source files
 SUBDIRS = 

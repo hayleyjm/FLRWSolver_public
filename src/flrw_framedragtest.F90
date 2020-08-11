@@ -18,29 +18,26 @@ subroutine FLRW_FramedragTest (CCTK_ARGUMENTS)
   integer   :: i,j,k
   logical   :: lapse,dtlapse,shift,data,hydro
   
-  CCTK_REAL :: a0,rho0,asq,hub,adot
+  CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
   CCTK_REAL :: ky,b,L,cosky,cosky2,sinky,sinky2,gradH
   CCTK_REAL :: rho0denom,rho0num
+  CCTK_INT  :: ncells(3)
   
   call CCTK_INFO("Initialising FRAMEDRAG TEST")
   
   ! 
   ! set logicals that tell us whether we want to use FLRWSolver to set ICs
-  !
   call set_logicals(lapse,dtlapse,shift,data,hydro)
 
   !
-  ! set some parameters -- this is slightly different to how we do it in other routines
-  a0   = 1._dp
-  asq  = a0*a0
-  hub  = framedrag_HL / FLRW_boxlength
-  rho0 = 3._dp * hub**2 / (8._dp * pi * asq)
-  adot = hub * a0
-  
+  ! set some parameters common to all routines relating to the background
+  call set_parameters(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
+
+  !
   ! keep these to simplify things and make eqns. look as much like paper as possible
-  b  = phi_perturb_amplitude
-  L  = FLRW_boxlength
-  ky = 2._dp * pi / FLRW_boxlength
+  b  = phi_amplitude
+  L  = boxlen(2)
+  ky = 2._dp * pi / L
   
   !
   ! spatial loop over *local* grid size for this processor
@@ -64,7 +61,7 @@ subroutine FLRW_FramedragTest (CCTK_ARGUMENTS)
            if (data) then
               
               if (lapse) then
-                 alp(i,j,k) = 1._dp
+                 alp(i,j,k) = FLRW_lapse_value
               endif
               
               ! time deriv of lapse -- evolution of this is specified in ADMBase.
@@ -90,7 +87,8 @@ subroutine FLRW_FramedragTest (CCTK_ARGUMENTS)
               kxx(i,j,k) = -adot
               kxy(i,j,k) = -b * cosky / (4._dp * L)
               kxz(i,j,k) = 0._dp
-              kyy(i,j,k) = -adot + b**2 * cosky2 / (2._dp * hub * L**2)
+              !kyy(i,j,k) = -adot + b**2 * cosky2 / (2._dp * hub * L**2) ! Kyy from draft (hard-wired to get rho,v below)
+              kyy(i,j,k) = -adot - b**2 * cosky2 / (2._dp * hub * L**2)  ! Kyy directly from RGTC
               kyz(i,j,k) = 0._dp
               kzz(i,j,k) = -adot
 
@@ -105,13 +103,23 @@ subroutine FLRW_FramedragTest (CCTK_ARGUMENTS)
                  ! set density, velocity from framedrag test (Mathematica/draft paper)
                  !
                  ! denominator and numerator in first term in notes
-                 ! rho0 directly from eq.8 in draft (3.Oct.2018)
-                 rho0denom  = 128._dp * pi * L**2 * (16._dp * hub**2 * L**2 - 3._dp * b**2 * cosky2)
-                 rho0num    = (16._dp * hub**2 * L**2 - 3._dp * b**2 * cosky2)**2 - 64._dp * pi**2 * b**2 * sinky2
-                 rho(i,j,k) = 3._dp * rho0num / rho0denom
+                 ! rho0 directly from eq.8 in draft (3.Oct.2018 -- checked 9.Mar.2020)
+                 !rho0denom  = 128._dp * pi * L**2 * (16._dp * hub**2 * L**2 - 3._dp * b**2 * cosky2)
+                 !rho0num    = (16._dp * hub**2 * L**2 - 3._dp * b**2 * cosky2)**2 - 64._dp * pi**2 * b**2 * sinky2
+                 !rho(i,j,k) = 3._dp * rho0num / rho0denom
 
-                 ! vel is v^i = u^i / (alp u^t) from mathematica with same u^x as draft (3.Oct.2018)
-                 vel(i,j,k,1) = 8._dp * pi * b * sinky / (3._dp * b**2 * cosky2 - 16._dp * L**2 * hub**2)
+                 ! rho0 we get from Kyy directly from RGTC above
+                 rho0num    = - 0.25_dp * ( (23._dp / 2._dp) * b**2 * cosky2 + 24._dp * L**2 * hub**2 )**2 +&
+                      36._dp * b**2 * pi**2 * hub**4 * sinky2
+                 rho0denom  = 16._dp * L**2 * hub**4 * pi * ( -(23._dp / 2._dp) * b**2 * cosky2 - 24._dp * L**2 * hub**2 )
+                 rho(i,j,k) = rho0num / rho0denom
+
+                 !
+                 ! vel is v^i = u^i / (alp u^t) from mathematica with same u^x as draft (3.Oct.2018 -- checked 9.Mar.2020)
+                 !vel(i,j,k,1) = 8._dp * pi * b * sinky / (3._dp * b**2 * cosky2 - 16._dp * L**2 * hub**2)
+
+                 ! v^x we get from Kyy directly from RGTC above
+                 vel(i,j,k,1) = -6._dp * pi * b * sinky / ((23._dp/4._dp) * b**2 * cosky2 + 12._dp * L**2 * hub**2)
                  vel(i,j,k,2) = 0._dp
                  vel(i,j,k,3) = 0._dp
               endif

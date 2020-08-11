@@ -18,17 +18,18 @@ subroutine FLRW_SynchComoving (CCTK_ARGUMENTS)
   DECLARE_CCTK_PARAMETERS
   integer   :: i,j,k
   logical   :: lapse,dtlapse,shift,data,hydro
-  CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot
+  CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
   CCTK_REAL :: kx,ky,kz,modk
-
+  !
   ! globally-size arrays (to read in initial data files)
   CCTK_REAL, dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: delta_gs,rc_gs!,chi_gs
   CCTK_REAL, dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: dxdxchi_gs,dxdychi_gs,dxdzchi_gs,dydychi_gs,dydzchi_gs,dzdzchi_gs
-
+  !
   ! locally-sized arrays (for this processor)
   CCTK_REAL, dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)) :: delta,rc!,chi
   CCTK_REAL, dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)) :: dxdxchi,dxdychi,dxdzchi,dydychi,dydzchi,dzdzchi
-
+  CCTK_INT  :: ncells(3)
+  !
   character(len=100) :: deltafile,rcfile,ics_dir!,chifile
   character(len=100) :: dxdxchifile,dxdychifile,dxdzchifile,dydychifile,dydzchifile,dzdzchifile
   integer :: dr_unit,rc_unit,xx_unit,xy_unit,xz_unit,yy_unit,yz_unit,zz_unit!,chi_unit
@@ -44,12 +45,12 @@ subroutine FLRW_SynchComoving (CCTK_ARGUMENTS)
   !
   ! set parameters used in setting metric, matter parameters
   !
-  call set_parameters(a0,rho0,asq,rhostar,hub,adot,hubdot)
+  call set_parameters(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
 
   ! wavenumbers for each direction (all the same since we assume a regular grid)
-  kx = 2._dp * pi / FLRW_boxlength
-  ky = 2._dp * pi / FLRW_boxlength
-  kz = 2._dp * pi / FLRW_boxlength
+  kx = 2._dp * pi / boxlen(1)
+  ky = 2._dp * pi / boxlen(2)
+  kz = 2._dp * pi / boxlen(3)
   modk = sqrt(kx**2 + ky**2 + kz**2)
   
   !

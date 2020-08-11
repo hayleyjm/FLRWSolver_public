@@ -15,9 +15,10 @@ subroutine FLRW_NoPerturb (CCTK_ARGUMENTS)
   DECLARE_CCTK_ARGUMENTS
   DECLARE_CCTK_FUNCTIONS
   DECLARE_CCTK_PARAMETERS
-  integer   :: i,j,k
-  logical   :: lapse,dtlapse,shift,data,hydro
-  CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,alpijk
+  integer     :: i,j,k
+  logical     :: lapse,dtlapse,shift,data,hydro
+  CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3),kvalue
+  CCTK_INT  :: ncells(3)
 
   call CCTK_INFO("Initialising an FLRW spacetime")
 
@@ -29,8 +30,8 @@ subroutine FLRW_NoPerturb (CCTK_ARGUMENTS)
   !
   ! set parameters used in setting metric, matter parameters
   !
-  call set_parameters(a0,rho0,asq,rhostar,hub,adot,hubdot)
-
+  call set_parameters(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
+  
   !
   ! spatial loop over *local* grid size for this processor
   !
@@ -44,8 +45,7 @@ subroutine FLRW_NoPerturb (CCTK_ARGUMENTS)
            if (data) then
 
               if (lapse) then
-                 alpijk     = FLRW_lapse_value
-                 alp(i,j,k) = alpijk
+                 alp(i,j,k) = FLRW_lapse_value
               endif
               
               ! time deriv of lapse -- evolution of this is specified in ADMBase.
@@ -67,12 +67,13 @@ subroutine FLRW_NoPerturb (CCTK_ARGUMENTS)
               gyz(i,j,k) = 0._dp
               gzz(i,j,k) = asq
 
-              kxx(i,j,k) = -adot * a0 / alpijk
+              kvalue     = - adot * a0 / FLRW_lapse_value
+              kxx(i,j,k) = kvalue
               kxy(i,j,k) = 0._dp
               kxz(i,j,k) = 0._dp
-              kyy(i,j,k) = -adot * a0 / alpijk
+              kyy(i,j,k) = kvalue
               kyz(i,j,k) = 0._dp
-              kzz(i,j,k) = -adot * a0 / alpijk
+              kzz(i,j,k) = kvalue
 
               !
               ! set up  matter variables

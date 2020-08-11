@@ -20,10 +20,14 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
   logical   :: lapse,dtlapse,shift,data,hydro
   logical   :: perturb_x,perturb_y,perturb_z,perturb_all
   
-  CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot
-  CCTK_REAL :: kx,ky,kz,modk,perturb_rho0,perturb_v0
-  CCTK_REAL :: dphi1,dphi2,dphi3,alpijk
+  CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
+  CCTK_REAL :: lambda(3),kx,ky,kz,modk,perturb_rho0,perturb_v0
+  CCTK_REAL :: dphi1,dphi2,dphi3,kvalue
   CCTK_REAL :: phi_ijk,deltaijk,delta_velijk(3)
+  CCTK_REAL :: delta_test,dvel_test
+  CCTK_REAL, parameter :: perturb_size_tol = 1.e-5 ! perturbations larger than this tol will warn user
+  CCTK_INT  :: ncells(3)
+  character(len=400) :: warn_message
 
   call CCTK_INFO("Initialising a linearly-perturbed FLRW spacetime with a SINGLE-MODE perturbation")
   
@@ -41,21 +45,46 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
   perturb_y   = CCTK_EQUALS (FLRW_perturb_direction, "y")
   perturb_z   = CCTK_EQUALS (FLRW_perturb_direction, "z")
   perturb_all = CCTK_EQUALS (FLRW_perturb_direction, "all")
-
+  !
+  if (perturb_x) then
+     call CCTK_INFO("    Perturbing in the x-direction ONLY ... ")
+  elseif (perturb_y) then
+     call CCTK_INFO("    Perturbing in the y-direction ONLY ... ")
+  elseif (perturb_z) then
+     call CCTK_INFO("    Perturbing in the z-direction ONLY ... ")
+  elseif (perturb_all) then
+     call CCTK_INFO("    Perturbing in all directions ... ")
+  else
+     call CCTK_INFO( "    Perturbing in no directions? " )
+  endif
+  
   !
   ! set some parameters used in setting the background
-  call set_parameters(a0,rho0,asq,rhostar,hub,adot,hubdot)
+  call set_parameters(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
 
-  ! wavenumbers for each direction (all the same since we assume a regular grid)
-  kx = 2._dp * pi / FLRW_boxlength
-  ky = 2._dp * pi / FLRW_boxlength
-  kz = 2._dp * pi / FLRW_boxlength
+  !
+  ! wavenumbers for each direction
+  lambda = single_perturb_wavelength * boxlen
+  kx = 2._dp * pi / lambda(1)
+  ky = 2._dp * pi / lambda(2)
+  kz = 2._dp * pi / lambda(3)
   modk = sqrt(kx**2 + ky**2 + kz**2)
 
   ! factors for the density and velocity perturbations, respectively: eqns. (28),(29) in Macpherson+(2017)
   perturb_rho0 = - kx**2 / (4._dp * pi * rho0 * asq) - 2._dp
-  perturb_v0   = - sqrt(a0 / ( 6._dp * pi * rhostar ))  
-  
+  perturb_v0   = - sqrt(a0 / ( 6._dp * pi * rhostar )) / a0
+  !
+  ! rough check of the amplitude of the perturbs, and warn if larger
+  !
+  delta_test = abs( perturb_rho0 * phi_amplitude )
+  dvel_test  = abs( perturb_v0 * kx * phi_amplitude )
+  if (delta_test > perturb_size_tol .or. dvel_test > perturb_size_tol .or. phi_amplitude > perturb_size_tol) then
+     write(warn_message,'(a,e12.5,a,e12.5,a,e12.5)')"Perturbation/s may be too large to satisfy linear approximation. Density:",&
+          delta_test," velocity:",dvel_test," and phi:",phi_amplitude
+     call CCTK_WARN(CCTK_WARN_ALERT,warn_message)
+     call CCTK_WARN(CCTK_WARN_ALERT,"Please REDUCE phi_amplitude or INCREASE FLRW_init_HL to reduce perturbation sizes")
+  endif
+     
   !
   ! spatial loop over *local* grid size for this processor
   !
@@ -69,23 +98,23 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
            phi_ijk = 0._dp; delta_velijk = 0._dp; deltaijk = 0._dp
 
            if (perturb_x) then
-              phi_ijk = phi_perturb_amplitude * sin(kx * x(i,j,k) - phi_phase_offset)
-              dphi1   = phi_perturb_amplitude * kx * cos(kx * x(i,j,k) - phi_phase_offset)
+              phi_ijk = phi_amplitude * sin(kx * x(i,j,k) - phi_phase_offset)
+              dphi1   = phi_amplitude * kx * cos(kx * x(i,j,k) - phi_phase_offset)
               delta_velijk(1) = perturb_v0 * dphi1
            elseif (perturb_y) then
-              phi_ijk = phi_perturb_amplitude * sin(ky * y(i,j,k) - phi_phase_offset)
-              dphi2   = phi_perturb_amplitude * ky * cos(ky * y(i,j,k) - phi_phase_offset)
+              phi_ijk = phi_amplitude * sin(ky * y(i,j,k) - phi_phase_offset)
+              dphi2   = phi_amplitude * ky * cos(ky * y(i,j,k) - phi_phase_offset)
               delta_velijk(2) = perturb_v0 * dphi2
            elseif (perturb_z) then
-              phi_ijk = phi_perturb_amplitude * sin(kz * z(i,j,k) - phi_phase_offset)
-              dphi3   = phi_perturb_amplitude * kz * cos(kz * z(i,j,k) - phi_phase_offset)
+              phi_ijk = phi_amplitude * sin(kz * z(i,j,k) - phi_phase_offset)
+              dphi3   = phi_amplitude * kz * cos(kz * z(i,j,k) - phi_phase_offset)
               delta_velijk(3) = perturb_v0 * dphi3
            elseif (perturb_all) then
-              phi_ijk = phi_perturb_amplitude * (sin(kx * x(i,j,k) - phi_phase_offset) + &
+              phi_ijk = phi_amplitude * (sin(kx * x(i,j,k) - phi_phase_offset) + &
                    sin(ky * y(i,j,k) - phi_phase_offset) + sin(kz * z(i,j,k) - phi_phase_offset))
-              dphi1   = phi_perturb_amplitude * kx * cos(kx * x(i,j,k) - phi_phase_offset)
-              dphi2   = phi_perturb_amplitude * ky * cos(ky * y(i,j,k) - phi_phase_offset)
-              dphi3   = phi_perturb_amplitude * kz * cos(kz * z(i,j,k) - phi_phase_offset)
+              dphi1   = phi_amplitude * kx * cos(kx * x(i,j,k) - phi_phase_offset)
+              dphi2   = phi_amplitude * ky * cos(ky * y(i,j,k) - phi_phase_offset)
+              dphi3   = phi_amplitude * kz * cos(kz * z(i,j,k) - phi_phase_offset)
               delta_velijk(1) = perturb_v0 * dphi1
               delta_velijk(2) = perturb_v0 * dphi2
               delta_velijk(3) = perturb_v0 * dphi3
@@ -98,8 +127,7 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
            if (data) then
               
               if (lapse) then
-                 alpijk     = FLRW_lapse_value * sqrt(1._dp + 2._dp * phi_ijk)
-                 alp(i,j,k) = alpijk
+                 alp(i,j,k) = FLRW_lapse_value * sqrt(1._dp + 2._dp * phi_ijk)
               endif
               
               ! time deriv of lapse -- evolution of this is specified in ADMBase.
@@ -122,12 +150,13 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
               gyz(i,j,k) = 0._dp
               gzz(i,j,k) = asq * (1._dp - 2._dp * phi_ijk)
 
-              kxx(i,j,k) = -adot * a0 * (1._dp - 2._dp * phi_ijk) / alpijk
+              kvalue     = - adot * a0 / alp(i,j,k)
+              kxx(i,j,k) = kvalue * (1._dp - 2._dp * phi_ijk)
               kxy(i,j,k) = 0._dp
               kxz(i,j,k) = 0._dp
-              kyy(i,j,k) = -adot * a0 * (1._dp - 2._dp * phi_ijk) / alpijk
+              kyy(i,j,k) = kvalue * (1._dp - 2._dp * phi_ijk)
               kyz(i,j,k) = 0._dp
-              kzz(i,j,k) = -adot * a0 * (1._dp - 2._dp * phi_ijk) / alpijk
+              kzz(i,j,k) = kvalue * (1._dp - 2._dp * phi_ijk)
 
               !
               ! set up  matter variables

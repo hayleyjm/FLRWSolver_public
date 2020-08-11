@@ -2,37 +2,35 @@
 # Parameter definitions for thorn FLRWSolver
 #
 
-
 # -----------------------------------------------
 # Parameters relating to the background spacetime
 # -----------------------------------------------
 
-CCTK_REAL FLRW_boxlength "Size of box used in comoving Mpc"
+CCTK_REAL FLRW_boxlength "Size of box used in comoving Mpc -- used in generating power spectrum perturbations"
 {
  0.0:* :: "Must be positive."
-} 0.0
+} 1.0
 
-
-CCTK_REAL FLRW_init_rho "FLRW Initial Density -- used in all cases except framedrag_test"
+CCTK_REAL FLRW_init_a "FLRW initial scale factor"
 {
-  0.0:* :: "Must be positive"
-} 0.0
-
+ 0.0001:* :: "Must be positive and non-zero"
+} 1.0
 
 CCTK_REAL FLRW_lapse_value "Value of background initial lapse (alpha) -- for perturbations this becomes alp=FLRW_lapse_value*sqrt(1 + 2 Phi)"
 {
   *:* :: "Anything"
 } 1.0
 
-CCTK_REAL framedrag_HL "set the value for H*L (initial Hubble param times box length), given FLRW_boxlength this sets the init_rho for framedrag_test"
+CCTK_REAL FLRW_init_HL "FLRW initial H_* L -- ratio of box length to horizon size. This sets initial background density"
 {
- 0.0:* :: "must be positive"
-} 0.02
+ 0.0:* :: "Must be positive"
+} 1.0
 
 
-# ------------------------------------------------
-# Parameters relating to the perturbation (if any)
-# ------------------------------------------------
+# ----------------------------------------------------
+# Parameters relating to the perturbation (if present)
+# ----------------------------------------------------
+
 
 KEYWORD FLRW_perturb "Add perturbation to matter and metric"
 {
@@ -44,16 +42,29 @@ KEYWORD FLRW_perturb "Add perturbation to matter and metric"
 KEYWORD FLRW_perturb_type "Add perturbation of the following type"
 { 
  "single_mode" :: "Single mode perturbation (sine wave in density). Set FLRW_perturb_direction to choose dimensions of perturbation and single_perturb_wavelength."
- "powerspectrum" :: "A power spectrum of perturbations. Generated from CAMB power spectrum of density at the CMB. Require files output from Python script (to be incorporated in future)"
- "synch_comoving" :: "Add linear perturbations calculated in the synchronous, comoving gauge. Requires files output from Python script"
- "framedrag_test" :: "Do the opposite stream framedrag (vector mode B_i) test from Adamek,Barerra-Hinjosa,Macpherson,Mertens(+?)"
+ "powerspectrum" :: "A power spectrum of (linear) perturbations. Supply the path to your chosen power spectrum in FLRW_powerspectrum_file"
+ "synch_comoving" :: "** Still in TESTING ** Add linear perturbations calculated in the synchronous, comoving gauge. Requires files output from Python script.
+ "framedrag_test" :: "Do the opposite stream framedrag (vector mode B_i) test from Adamek+(2020)"
 } "single_mode"
 
 
-STRING FLRW_ICs_dir "Directory containing initial conditions files for the simulation -- used if FLRW_perturb_type=powerspectrum or synch_comoving. NOTE: No trailing slash on directory, this is added in the code"
+STRING FLRW_ICs_dir "Directory containing initial conditions files for the simulation -- used if FLRW_perturb_type=synch_comoving. NOTE: No trailing slash on directory, this is added in the code"
 {
- " " :: "Any string containing the path to the initial condition files"
+" " :: "Any string containing the path to the initial condition files"
 } ""
+
+
+STRING FLRW_powerspectrum_file "Path to (and name of) text file specifying the P(k) to be used to generate perturbations if perturb_type=powerspectrum is chosen. File is assume to be in CAMB format, i.e. two column with k, P(k) for 3D power spectrum. Assumed no k=0 data point, this is added when generating ICs."
+{
+ " " :: "Any string containing the path to the powerspectrum file"
+} ""
+
+
+CCTK_INT FLRW_random_seed "Random seed for generating the Gaussian random density perturbation from the power spectrum given in FLRW_powerspectrum_file."
+{
+ 0:* :: "Must be positive - I think?"
+} 10
+
 
 CCTK_REAL single_perturb_wavelength "Wavelength of single mode perturbation relative to box size"
 {
@@ -61,7 +72,7 @@ CCTK_REAL single_perturb_wavelength "Wavelength of single mode perturbation rela
 } 1.0
 
 
-CCTK_REAL phi_perturb_amplitude "Amplitude of perturbation in phi - implicitly sets amplitude of rho,vel perturbation"
+CCTK_REAL phi_amplitude "Amplitude of perturbation in phi - implicitly sets amplitude of rho,vel perturbation"
 {
   0.0:* :: "Must be positive"
 } 1.e-8
@@ -129,7 +140,6 @@ USES REAL initial_rho_abs_min
 USES REAL initial_rho_rel_min
 USES REAL initial_atmosphere_factor
 USES real GRHydro_rho_central
-
 
 shares:EOS_Omni
 USES REAL gl_gamma
