@@ -1,0 +1,93 @@
+Instructions on how to link your Python libraries to FLRWSolver for the powerspectrum perturbations code. Please read this carefully to ensure a smooth compilation.
+
+    NOTE: you need to do this even if you don't want to use the powerspectrum part of the code, since this is required for compilation.
+
+------------------------------------------------------------------
+
+Required Python packages:
+
+------------------------------------------------------------------
+
+cffi
+numpy
+scipy
+astropy
+c2raytools
+    --> includes the functions for generating the Gaussian random field from a power spectrum
+    --> original code is here: https://github.com/hjens/c2raytools (Python 2 version)
+    --> this repo includes c2raytools3.tar: a version that has been translated to Python 3.8
+
+* This linking has only been tested with Python 3.8. Keep this in mind if trying with earlier versions.
+
+------------------------------------------------------------------
+
+FLRWSolver files included used for Python linking:
+
+------------------------------------------------------------------
+
+- create_ics.py:
+
+    The Python 3 script that generates the Gaussian-random density field that follows the given powerspectrum, along with the
+    corresponding velocity and metric perturbations.
+
+    * You should not need to change this file. But - if you do, please note you DO NOT need to recompile the ET, since this is called only at runtime.
+    
+- builder.py
+
+    The script that generates the C code to link Fortran to Python using CFFI (https://cffi.readthedocs.io/en/latest).
+    
+    * You DO need to make a small change to this file specific to your machine. Open the file and follow the instructions around line 40.
+    
+- convert_types.py
+
+    This provides a function to convert C pointers to the corresponding Python type. It is called by builder.py. Do not change this file.
+    
+- plugin.h, pspec_ics.c
+
+    The files generated when running builder.py (instructions below). 
+    
+    ** DO NOT change these files.
+    
+- flrw_powerspectrum.F90
+
+    The FLRWSolver code that calls create_ics.py via the C code pspec_ics.c. Do not change this code.
+    
+- init_tools.F90
+
+    FLRWsolver code that contains the C interface required for linking. Do not change this code.
+    
+------------------------------------------------------------------
+
+Linking + compiling instructions:
+
+------------------------------------------------------------------
+
+0. Ensure all required Python dependencies are installed via pip (or similar), and c2raytools is un-tarred.
+
+1. Open builder.py and follow the instructions around line 40 for including your own paths to FLRWSolver src/ directory and c2raytools directory.
+    
+2. Build the static library:
+
+        python builder.py
+    
+    which will generate plugin.h and pspec_ics.c. You only need to do this ONCE (unless you change the paths again in builder.py).
+    
+3. Determine the appropriate CFLAGS and LDFLAGS for linking Python to C.
+
+    3a. CFLAGS
+
+            python-config --cflags
+
+        Open the file flrwsolver/src/make.code.deps and copy the output of the above into (be sure to delete any previously present paths):
+            
+            CFLAGS+=
+
+        (note: I have found that including these CFLAGS directly into the .cfg file doesn't work)
+
+    3b. LDFLAGS
+        
+            python-config --ldflags
+        
+        Copy the output of this into your chosen .cfg file (if there is no LDFLAGS= line, then add one). Do not delete any previously present flags.
+        
+4. Continue the compilation instructions as per README.Compilation
