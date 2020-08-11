@@ -1,0 +1,570 @@
+% @version $Header$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\NeedsTeXFormat{LaTeX2e}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\IfFileExists{../interface.ccl} % Is this the documentation.tex for a thorn?
+{
+  \ProvidesPackage{../../../../doc/latex/cactus}
+}
+{
+  \IfFileExists{../FAQ} % Is this the UsersGuide or MaintGuide?
+  {
+    \ProvidesPackage{../latex/cactus}
+  }
+  {
+    \IfFileExists{../../../arrangements/README} % Is this the
+					 % documentation.tex for an
+					 % entire arrangement?
+    {
+      \ProvidesPackage{../../../doc/latex/cactus}
+    }
+    {
+      \ProvidesPackage{cactus}
+    }
+  }
+}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Load in other packages.
+
+\RequirePackage[utf8]{inputenc}
+\RequirePackage{fancyhdr}
+\RequirePackage{graphicx}
+\RequirePackage{latexsym}
+\RequirePackage{amssymb}
+\RequirePackage{amsmath}
+\RequirePackage{ifthen}
+\RequirePackage{calc}
+\RequirePackage{thumbpdf}
+\RequirePackage{hyperref}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Remember that the output needs to look nice on both A4 and letter
+% sized paper.  A4 is longer, and letter is wider.  Please don't change
+% the measures below without checking both. 
+
+% In order to check, fire up gv and set the paper size to A4 or letter
+% manually.
+
+\parskip = 10 pt
+\parindent = 0 pt
+\oddsidemargin = 0 cm
+\textwidth = 16 cm
+\topmargin = -1 cm
+\textheight = 22 cm
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% macros
+\def\text#1{{\rm #1}}
+\def\q{\bf QUERY: }
+\def\t{\tt \obeylines }
+\def\ie{\hbox{i.e.\hbox{}}}
+
+\def\nhat{{\hat n}} 
+\def\vone{{v_{{}_{(1)}}}} 
+\def\vtwo{{v_{{}_{(2)}}}}
+\def\vthree{{v_{{}_{(3)}}}} 
+\def\eref#1{(\ref{#1})}
+
+% nicely typeset "C++" (adapted from a comp.lang.C++ FAQ entry)
+\def\Cplusplus{\hbox{C\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}}}
+
+% reference to code, i.e. routine or variable names
+\newcommand{\code}[1]{\texttt{#1}}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% MANPAGE like description setting for options, use as % \begin{Lentry}
+%\item[text] text \end{Lentry} \usepackage{ifthen,calc}
+\newcommand{\entrylabel}[1]{\mbox{\textsf{#1}}\hfil}
+\newenvironment{entry}
+  {\begin{list}{}
+    {\renewcommand{\makelabel}{\entrylabel}
+      \setlength{\labelwidth}{90pt}
+      \setlength{\leftmargin}{\labelwidth+\labelsep}
+    }
+  }
+  {\end{list}} \newlength{\Mylen} \newcommand{\Lentrylabel}[1]{%
+% Latex doesn't always like spaces -- sometimes it outputs them, and
+% then they destroy the layout.  Please don't indent the following,
+% nor add spaces, nor remove the percent signs, nor add spaces in
+% front of them.
+\settowidth{\Mylen}{\textsf{#1}}%
+\ifthenelse{\lengthtest{\Mylen > \labelwidth}}%
+{\parbox[b]{\labelwidth}% term > labelwidth
+{\makebox[0pt][l]{\textsf{#1}}\\}}%
+{\textsf{#1}}%
+\hfil\relax} \newenvironment{Lentry}
+  {\renewcommand{\entrylabel}{\Lentrylabel}
+   \begin{entry}}
+  {\end{entry}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%
+% Alternate environments/macros to define function descriptions
+% (can/should be used to replace CCTKFunc environment)
+% Jonathan Thornburg, 10 Nov 2001, revised 26 Mar 2002 && 3 Apr 2002
+%
+% Usage:
+%	\begin{FunctionDescription}{name}
+%	\label{label}
+%	Synopsis for this function			(running text rules)
+%
+%	\begin{SynopsisSection}
+%	\begin{Synopsis}{C}
+%	text of C function synopsis			(running text rules)
+%	\end{Synopsis}
+%	\begin{Synopsis}{Fortran}
+%	text of Fortran function synopsis		(running text rules)
+%	\end{Synopsis}
+%	\end{SynopsisSection}
+%
+%	\begin{ResultSection}
+%	\begin{ResultNote}
+%	optional note to go at the beginning of all results
+%							(running text rules)
+%	\end{ResultNote}
+%	\begin{Result}{name or value (automatically in \tt font)}
+%	desription of what the result means in general,
+%	or of what this particular result value means	(running text rules)
+%	\end{Result}
+%	\end{ResultSection}
+%
+%	\begin{ParameterSection}
+%	\begin{Parameter}{name (automatically in \tt font)}
+%	desription of parameter				(running text rules)
+%	\end{Parameter}
+%	\begin{Parameter}{name2 (automatically in \tt font)}
+%	desription of another parameter			(running text rules)
+%	\end{Parameter}
+%	\end{ParameterSection}
+%
+%	\begin{Discussion}
+%	(note that there is no "DiscussionSection" environment!)
+%	discussion					(running text rules)
+%
+%	another paragraph of discussion			(running text rules)
+%
+%	yet another paragraph of discussion		(running text rules)
+%	\end{Discussion}
+%
+%	\begin{SeeAlsoSection}
+%	\begin{SeeAlso}{foo (automatically in \tt font)}
+%	brief description of the foo function (running text rules)
+%	\end{SeeAlso}
+%	\begin{SeeAlso2}{bar (automatically in \tt font)}{latex-label-of-bar}
+%	brief description of the bar function (running text rules)
+%	\end{SeeAlso2}
+%	\end{SeeAlsoSection}
+%
+%	\begin{ErrorSection}
+%	\begin{Error}{error\_code (automatically in \tt font)}
+%	description of what this error code means	(running text rules)
+%	\end{Error}
+%	\begin{Error}{error\_code2 (automatically in \tt font)}
+%	description of what next error code means	(running text rules)
+%	\end{Error}
+%	\end{ErrorSection}
+%
+%	\begin{ExampleSection}
+%	\begin{Example}{C}
+%	example C code					(running text rules)
+%	\end{Example}
+%	\begin{Example}{Fortran}
+%	example Fortran code				(running text rules)
+%	\end{Example}
+%	\end{ExampleSection}
+%
+%	\end{FunctionDescription}
+%
+% For arguments which are automatically in \tt font, \rm may be used
+% to switch back to normal Roman font (eg for a numerical value), and
+% $...$ may be used for math mode (eg  ($\ge 0$)  to mark a result
+% which is always non-negative).
+%
+% Each "running text rules" item is the body of a latex environment,
+% so it may include multiple lines or even paragraphs.  Normally
+% underscore must be escaped (\_), but  \verb|...|  and/or
+%	\begin{verbatim}
+%	...
+%	\end{verbatim}
+% or similar constructs (which can't be used inside a macro argument)
+% may also be used (in which case _ { } \ etc need not be escaped).
+%
+% All the subsections are optional.
+%
+% Bugs:
+% - An empty section gives a latex error, eg
+%	\begin{ParameterSection}
+%	% no parameters here
+%	\end{ParameterSection}
+%   doesn't work.  Maybe someone who knows more about LaTeX lists than
+%   I do can figure out how to fix this???
+% - It would be nice if we could avoid having to escape underscore
+%   within arguments.
+% - Error checking: if you have to ask, there isn't enough for you! :)
+% - There are no controls to prevent a page break falling between the
+%   line "C" or "Fortran", and an immediately following example generated
+%   by the Example subenvironment.  In fact, LaTeX seems to like doing
+%   this. :(
+% - It would be nice to have a "...continued" legend at the bottom of
+%   all but the last page of a multi-page description.
+% - The running header giving the function name, only appears for the
+%   first page of a multi-page description.
+% - In some ideal world, "See Also" would generate pdf hotlinks.
+% - The horizontal spacing is ugly in a ResultNote environment, and it's
+%   really *really* ugly if the note spans multiple lines of text. :(
+% - There are often unwanted one-horizontal-space indentations at
+%   the start of items; I don't know how to get rid of these. :(
+%   
+\ifx \HCode\Undef
+\newenvironment{FunctionDescription}[1]
+{
+\newpage
+\phantomsection
+\noindent{\tt #1}
+\vskip1mm
+\hrule 
+\vskip3mm
+%
+% We define all the subenvironments inside the main one, so they won't
+% interfere with any conflicting global definitions.
+%
+\newenvironment{FunctionDescriptionEntry}
+	       {%%%
+	       \begin{list}%%%
+		     {}%%%
+		     {%%%
+		     \renewcommand{\makelabel}{\Lentrylabel}%%%
+		     \setlength{\topsep}{0ex}%%%
+		     \setlength{\partopsep}{0ex}%%%
+		     \setlength{\itemsep}{0ex}%%%
+		     \setlength{\labelwidth}{8em}%%%
+		     \setlength{\leftmargin}{\labelwidth+\labelsep}%%%
+		     \setlength{\itemindent}{0em}%%%
+		     \setlength{\listparindent}{0em}%%%
+		     }%%%
+	       }%%%
+	       {\end{list}}%%%
+\newenvironment{FunctionDescriptionWideEntry}
+	       {%%%
+	       \begin{list}%%%
+		     {}%%%
+		     {%%%
+		     \renewcommand{\makelabel}{\Lentrylabel}%%%
+		     \setlength{\topsep}{0ex}%%%
+		     \setlength{\partopsep}{0ex}%%%
+		     \setlength{\itemsep}{0ex}%%%
+		     \setlength{\labelwidth}{16em}%%%
+		     \setlength{\leftmargin}{\labelwidth+\labelsep}%%%
+		     \setlength{\itemindent}{0em}%%%
+		     \setlength{\listparindent}{0em}%%%
+		     }%%%
+	       }%%%
+	       {\end{list}}%%%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\newenvironment{SynopsisSection}
+	       {%%%
+	       \par\noindent{\bf Synopsis}
+               \begin{FunctionDescriptionEntry}
+	       }%%%
+               {\end{FunctionDescriptionEntry}}
+\newenvironment{Synopsis}[1]{\item[\bf{##1}]}{}
+%
+\newenvironment{ResultSection}
+	       {%%%
+	       \par\noindent{\bf Result}
+               \begin{FunctionDescriptionEntry}
+	       }%%%
+               {\end{FunctionDescriptionEntry}}
+\newenvironment{ResultNote}{\item[]\hskip-\leftmargin{}}{}
+\newenvironment{Result}[1]{\item[\tt{##1}]}{}
+%
+\newenvironment{ParameterSection}
+	       {%%%
+	       \par\noindent{\bf Parameters}
+               \begin{FunctionDescriptionEntry}
+	       }%%%
+               {\end{FunctionDescriptionEntry}}
+\newenvironment{Parameter}[1]{\item[\tt{##1}]}{}
+%
+\newenvironment{Discussion}%%%
+               {%%%
+	       \par\noindent{\bf Discussion}
+	       \begin{FunctionDescriptionEntry}
+               \item[]
+               }%%%
+               {\end{FunctionDescriptionEntry}}
+%
+\newenvironment{SeeAlsoSection}
+	       {%%%
+	       \par\noindent{\bf See Also}
+               \begin{FunctionDescriptionWideEntry}
+	       }%%%
+               {\end{FunctionDescriptionWideEntry}}
+\newenvironment{SeeAlso}[1]{\item[\tt{##1}]}{}
+\newenvironment{SeeAlso2}[2]{\item[\tt{##1} \rm{[\pageref{##2}]}]}{}
+%
+\newenvironment{ErrorSection}
+	       {%%%
+	       \par\noindent{\bf Errors}
+               \begin{FunctionDescriptionWideEntry}
+	       }%%%
+               {\end{FunctionDescriptionWideEntry}}
+\newenvironment{Error}[1]{\item[\tt{##1}]}{}
+%
+\newenvironment{ExampleSection}
+	       {%%%
+	       \par\noindent{\bf Examples}
+               \begin{FunctionDescriptionEntry}
+	       }%%%
+               {\end{FunctionDescriptionEntry}}
+\newenvironment{ExampleDescription}{\item }{}
+\newenvironment{Example}[1]{\item[\bf{##1}]}{}
+%
+}%%%	% end of \begin{FunctionDescription} expansion
+{%%%
+}%%%	% \end{FunctionDescription} expansion is empty
+
+\else
+% If using tex4ht, we have a different, simpler style
+\newenvironment{FunctionDescription}[1]
+{
+\Css{ div.functiondescription {
+  background-color: \#f6f6f6;
+  border: 1px solid \#e6e6e6;
+  color: black;
+  padding: 4px 10px;
+}
+}
+\Css{ div.functiondescription h3.likesectionHead {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+}
+\Css{ div.functiondescription p.noindent {
+  display: none;
+}
+}
+\Css{ div.functiondescriptioncontent {
+  padding: 0px 10px;
+}
+}
+\Css{ div.codecontent {
+  float: left;
+  background-color: \#f6f6f6;
+  -moz-border-radius: 7px;
+  border-radius: 7px;
+  border: 1px solid \#e6e6e6;
+  color: black;
+  padding: 0 10px 0 10px;
+}
+}
+\Css{ div.codetype {
+  float: left;
+  -moz-border-radius: 7px;
+  border-radius: 7px;
+  padding: 0 10px;
+  margin: -5px 0 5px 0;
+  background-color: white;
+  border: 1px solid \#e6e6e6;
+}
+}
+
+\HCode{<div class="functiondescription">}
+\section*{\bf #1}
+\HCode{</div>}
+\HCode{<div class="functiondescriptioncontent">}
+
+%
+% We define all the subenvironments inside the main one, so they won't
+% interfere with any conflicting global definitions.
+%
+\newenvironment{FunctionDescriptionEntry}
+	       {\renewcommand{\makelabel}{\Lentrylabel}}{}
+\newenvironment{FunctionDescriptionWideEntry}
+	       {\renewcommand{\makelabel}{\Lentrylabel}}{}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\newenvironment{SynopsisSection}
+	       {\par{\bf Synopsis}\begin{FunctionDescriptionEntry}}%%%
+         {\end{FunctionDescriptionEntry}}
+\newenvironment{Synopsis}[1]
+         {\par
+          \HCode{<div class="codecontent">}
+          \HCode{<div class="codetype">}##1\HCode{</div>}
+         }
+         {\HCode{</div><br style="clear: both;"/>}}
+
+\newenvironment{ResultSection}
+	       {\par{\bf Result}\par\begin{FunctionDescriptionEntry}}%%%
+         {\end{FunctionDescriptionEntry}}
+
+\newenvironment{ResultNote}{}{}
+\newenvironment{Result}[1]{{\tt ##1} }{\HCode{<br/>}}
+%
+\newenvironment{ParameterSection}
+	       {\par{\bf Parameters}\par\begin{FunctionDescriptionEntry}}%%%
+         {\end{FunctionDescriptionEntry}}
+\newenvironment{Parameter}[1]{{\tt ##1} }{\HCode{<br/>}}
+%
+\newenvironment{Discussion}%%%
+               {\par{\bf Discussion}\par\begin{FunctionDescriptionEntry}}%%%
+               {\end{FunctionDescriptionEntry}}
+%
+\newenvironment{SeeAlsoSection}
+	       {\par{\bf See Also}\par\begin{FunctionDescriptionWideEntry}}%%%
+         {\end{FunctionDescriptionWideEntry}}
+         
+\newenvironment{SeeAlso}[1]{{\tt ##1} }{\HCode{<br/>}}
+\newenvironment{SeeAlso2}[2]{{\tt ##1} \rm{[\pageref{##2}]}}{\HCode{<br/>}}
+%
+\newenvironment{ErrorSection}
+	       {\par{\bf Errors}\par\begin{FunctionDescriptionWideEntry}}%%%
+         {\end{FunctionDescriptionWideEntry}}
+\newenvironment{Error}[1]{{\tt ##1} }{\HCode{<br/>}}
+%
+\newenvironment{ExampleSection}
+	       {\par{\bf Examples}\par\begin{FunctionDescriptionEntry}}%%%
+         {\end{FunctionDescriptionEntry}}
+\newenvironment{Example}[1]
+         {\par
+          \HCode{<div class="codecontent">}
+          \HCode{<div class="codetype">}##1\HCode{</div>}
+         }
+         {\HCode{</div><br style="clear: both;"/>}}
+\newenvironment{ExampleDescription}{}{}
+%
+}%%%	% end of \begin{FunctionDescription} expansion
+{%%%
+\HCode{</div>}}%%%	% \end{FunctionDescription}
+\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Takes three arguments - the name of the document, the revision, and
+% the date.
+% Additionally ther eis an optional first argument with the version number
+\ifx \HCode\Undef
+\newcommand{\cactustitlepage}[4][4.0]
+{
+\thispagestyle{empty}
+\setlength{\parindent}{0mm}
+\setlength{\parskip}{0mm}
+\vspace*{\stretch{1}}
+\rule{\linewidth}{1mm}
+\begin{flushright}
+  \Huge Cactus #1\\[5mm]
+        #2
+\end{flushright}
+\rule{\linewidth}{1mm}
+\vspace*{\stretch{2}}
+\begin{center}
+\includegraphics[angle=0,width=5cm]{bincactus2}
+\end{center}
+\vspace*{\stretch{2}}
+\begin{center}
+   \Large #3 \\[3mm]
+          #4
+\end{center}
+\newpage
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{10pt}
+}
+
+\else
+
+\newcommand{\cactustitlepage}[4][4.0]
+{
+\begin{center}
+{\Huge Cactus #1\\[5mm] #2}\par
+\includegraphics[width=3cm]{bincactus2}\par
+{ #3 \\ #4}
+\end{center}
+}
+\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\makeatletter
+\def\BigAlph#1{\expandafter\@BigAlph\csname c@#1\endcsname}
+\def\@BigAlph#1{%
+  \ifcase#1\or A\or B\or C\or D\or E\or F\or G\or H\or I\or J\or
+  K\or L\or M\or N\or O\or P\or Q\or R\or S\or T\or U\or V\or W\or X\or
+  Y\or Z\or
+  a\or b\or c\or d\or e\or f\or g\or h\or i\or j\or
+  k\or l\or m\or n\or o\or p\or q\or r\or s\or t\or u\or v\or w\or x\or
+  y\or z\else\@ctrerr\fi}
+\makeatother
+
+%
+% arguments:
+% #1 = Name of this part, eg "Function Reference"
+% #2 = $RCSFile:$ keyword
+% #3 = $Revision$ keyword
+%
+\newenvironment{cactuspart}[3]
+{
+  \clearpage
+  \renewcommand{\thepage}{\BigAlph{part}\arabic{page}}
+  % Redefine the plain style
+  \fancypagestyle{plain}
+  {
+    \fancyhf{} % Clear all header and footer fields
+    \lfoot{#2}
+    \cfoot{#3}
+    \rfoot{\thepage/\pageref{lastpage:\thepart}}
+    \renewcommand{\headrulewidth}{0.0pt}  
+    \renewcommand{\footrulewidth}{0.4pt}  
+    \renewcommand{\thepage}{\BigAlph{part}\arabic{page}}
+  }
+
+  % Make sure it's arabic numbering
+  \pagenumbering{arabic}
+  % Start the page counter at 1
+  \setcounter{page}{1}
+  % Start a new part
+  \renewcommand{\thepage}{\BigAlph{part}\arabic{page}}
+  \part{#1}
+  % Redefine the page
+  % Set up fancy headings.
+  \lfoot{#2}
+  \cfoot{#3}
+  \rfoot{\thepage/\pageref{lastpage:\thepart}}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0.4pt}
+}
+{
+  % Remember the last page of the 
+  \label{lastpage:\thepart}
+  \clearpage
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\endinput
+%% End of cactus.sty

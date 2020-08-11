@@ -1,0 +1,9 @@
+#
+# Added dependencies for FLRWSolver
+#
+
+# Flags we need for Python linking - found using python-config --cflags/--ldflags
+#     NOTE LDFLAGS is currently in .cfg file
+
+CFLAGS+=-I/usr/local/Cellar/python@3.8/3.8.5/Frameworks/Python.framework/Versions/3.8/include/python3.8 -I/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers
+# LDFLAGS+=-L/usr/local/opt/python@3.8/Frameworks/Python.framework/Versions/3.8/lib/python3.8/config-3.8-darwin -lpython3.8 -ldl

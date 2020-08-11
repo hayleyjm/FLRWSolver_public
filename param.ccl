@@ -43,7 +43,7 @@ KEYWORD FLRW_perturb_type "Add perturbation of the following type"
 { 
  "single_mode" :: "Single mode perturbation (sine wave in density). Set FLRW_perturb_direction to choose dimensions of perturbation and single_perturb_wavelength."
  "powerspectrum" :: "A power spectrum of (linear) perturbations. Supply the path to your chosen power spectrum in FLRW_powerspectrum_file"
- "synch_comoving" :: "** Still in TESTING ** Add linear perturbations calculated in the synchronous, comoving gauge. Requires files output from Python script.
+ "synch_comoving" :: "** Still in TESTING ** Add linear perturbations calculated in the synchronous, comoving gauge. Requires files output from Python script."
  "framedrag_test" :: "Do the opposite stream framedrag (vector mode B_i) test from Adamek+(2020)"
 } "single_mode"
 
