@@ -38,6 +38,10 @@ FLRWSolver files included used for Python linking:
     
     * You DO need to make a small change to this file specific to your machine. Open the file and follow the instructions around line 40.
     
+- convert_types.py
+
+    This provides a function to convert C pointers to the corresponding Python type. It is called by builder.py. Do not change this file.
+    
 - plugin.h, pspec_ics.c
 
     The files generated when running builder.py (instructions below). 
