@@ -139,23 +139,25 @@ To use this thorn to provide initial data for the {\tt ADMBase} variables $\alph
 
 Template parameter files for an FLRW and single-mode perturbation to FLRW spacetime are provided in the {\tt par/} directory. Specific test parameter files for the cases presented in Section~\ref{sec:tests} are located in the {\tt par/tests/} directory. 
 
-This thorn was first presented in \cite{macpherson2017}, and used further in \cite{macpherson2019}. For these cases, and all tests presented in Section~\ref{sec:tests}, we use this thorn with {\tt GRHydro} and {\tt EOS\_Omni}. At the time of writing, neither of these thorns can handle a pure dust description, i.e. $P=0$. Instead we use a polytropic EOS and ensure $P\ll\rho$ by setting the polytropic constant accordingly. In \cite{macpherson2017} this was shown to be sufficient to match a dust FLRW evolution. 
+This thorn was first presented in \cite{macpherson2017}, and used further in \cite{macpherson2019}. For these cases, and all tests presented in Section~\ref{sec:tests}, we use this thorn with {\tt GRHydro} (see Section~\ref{sec:note}) and {\tt EOS\_Omni}. At the time of writing, neither of these thorns can handle a pure dust description, i.e. $P=0$. Instead we use a polytropic EOS and ensure $P\ll\rho$ by setting the polytropic constant accordingly. In \cite{macpherson2017} this was shown to be sufficient to match a dust FLRW evolution. 
 
 
 
 
 %------------------
-\section{Equations}
+\section{Choosing initial conditions}
 \label{sec:eqn}
 %------------------
 
-\subsection{FLRW spacetime}
+\subsection{FLRW spacetime \& background for perturbations} \label{sec:FLRWinit}
 
 The FLRW line element in conformal time, $\eta$, is given by
 \begin{equation}
 	ds^2 = a^2(\eta) \left( - d\eta^2 + \delta_{ij}dx^i dx^j \right)
 \end{equation}
-where $a(\eta)$ is the scale factor describing the size of the Universe at time $\eta$. To initialise this spacetime, the user simply needs to specify \texttt{FLRW\_perturb} = ``no''. In addition, the initial value for the dimensionless product of the conformal Hubble parameter and the box length, $\mathcal{H}_* L$, is specified with \texttt{FLRW\_init\_HL}, from which the initial background density in code units is set via the Friedmann equations with $G=c=1$, and $k=\Lambda=0$. 
+where $a(\eta)$ is the scale factor describing the size of the Universe at time $\eta$. To initialise this spacetime, the user simply needs to specify \texttt{FLRW\_perturb} = ``no''. In addition, the initial value for the dimensionless product of the conformal Hubble parameter and the box length, $\mathcal{H}_* L$, is specified with \texttt{FLRW\_init\_HL}, from which the initial background density in code units is set via the Friedmann equations with $G=c=1$, and $k=\Lambda=0$. The initial value for the scale factor $a$ is controlled with \texttt{FLRW\_init\_a}, and the initial lapse by \texttt{FLRW\_lapse\_value}, both of which default to 1. 
+
+These parameters all still need to be set to describe the FLRW background if choosing \texttt{FLRW\_perturb} = ``yes''.
 
 \subsection{Linear perturbations to FLRW spacetime}
 
@@ -202,15 +204,22 @@ where $\lambda$ is the wavelength of the perturbation, $\theta$ is some phase of
 	\delta &= - \left[ \left(\frac{2\pi}{\lambda}\right)^{2} \frac{a_{\mathrm{init}}}{4\pi\rho^{*}} + 2\right] \phi_{0} \sum_{i=1}^{3} \mathrm{sin}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right),\label{eq:initial_delta}\\
 	v^{i} &= \frac{2\pi}{\lambda}\sqrt{\frac{a_{\mathrm{init}}}{6\pi\rho^{*}}}\, \phi_{0}\, \mathrm{cos}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right). \label{eq:initial_deltav}
 \end{align}
-The wavelength, $\lambda$, of the perturbation is controlled by \texttt{single\_perturb\_wavelength}, given as a fraction of the total box length (to ensure periodicity is satisfied). The phase offset $\theta$ is controlled by {\tt phi\_phase\_offset}, and the amplitude is set by \texttt{phi\_amplitude}, which must be set such that $\phi_0\ll1$, and $\lambda, \rho^*$ must also be chosen such that the corresponding density and velocity perturbations are also small enough to satisfy the linear approximation. 
+The wavelength, $\lambda$, of the perturbation is controlled by \texttt{single\_perturb\_wavelength}, given as a fraction of the total box length (to ensure periodicity is satisfied). The phase offset $\theta$ is controlled by {\tt phi\_phase\_offset}, and the amplitude is set by \texttt{phi\_amplitude}, which must be set such that $\phi_0\ll1$, and $\lambda, \rho^*$ must also be chosen such that the corresponding density and velocity perturbations are also small enough to satisfy the linear approximation. Set the FLRW background according to Section~\ref{sec:FLRWinit}.
 
 %----------------
 \subsubsection{Power spectrum of perturbations}
 %----------------
 
-We can instead choose the initial conditions to be a power spectrum of fluctuations, to better mimic the early state of the Universe. See \cite{macpherson2019} for more details. Currently, this is implemented in this thorn by reading in files giving initial conditions for $\phi, \delta,$ and $v^i$ calculated using an external code using the power spectrum of matter fluctuations in the CMB. These files are not included as a part of this thorn yet, and the full generation of these initial conditions will be included in the future. Currently, this choice will work for any form of initial conditions read in from a file, so long as it is in the gauge given in \eqref{eq:perturbed_metric} and satisfies the system \eqref{eqs:linear_solnsg0}. 
+We can instead choose the initial conditions to be a power spectrum of fluctuations, to better mimic the early state of the Universe. See \cite{macpherson2019} for more details. 
+Note these fluctuations are still assumed to be linear perturbations to an FLRW background. 
 
-Regardless, choose this initial condition by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. The location of the files specifying $\phi, \delta$, and $v^i$ (in files named {\tt phi.dat, delta.dat, vel1.dat, vel2.dat}, and {\tt vel3.dat}, respectively) is set using the string {\tt FLRW\_ICs\_dir}. Note: these files must be written in a specific way: as a series of $x-y$ planes for each value of $z$. This will be irrelevant once the initial condition generator is incorporated into this thorn. 
+This is implemented by reading in a two-column text file with the 3-dimensional matter power spectrum $P(k)$, where the wavenumber is $k=\sqrt{k_x^2+k_y^2+k_z^2}$. It is assumed the text file is the same format as the matter power spectrum output from CAMB \cite{lewis2002}, i.e. a text file with two columns $k, P(k)$ (in units of  and a one-line comment at the top, with \emph{no} line for $k=0$. Any file in this format will work, in units corresponding to CAMB output\footnote{see https://camb.info}.
+
+Using a slightly modified version of the \texttt{c2raytools}\footnote{https://github.com/hjens/c2raytools} Python package, \texttt{FLRWSolver} generates a Gaussian random field that follows the given power spectrum. This is the density perturbation to the FLRW background. Assuming the metric \eqref{eq:perturbed_metric}, we use equations \eqref{eqs:linear_solnsg0} to find the corresponding velocity and metric perturbations for this density perturbation in Fourier space.
+
+This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. Set the FLRW background according to Section~\ref{sec:FLRWinit}, and set the path to (and name of) the text file containing the matter power spectrum using \texttt{FLRW\_powerspectrum\_file}. The Gaussian random field will be drawn with seed corresponding to \texttt{FLRW\_random\_seed}, so keep this constant to draw the same field more than once. You also must specify the size of the domain in comoving Mpc (cMpc) using \texttt{FLRW\_boxlength}, as physical units are required to generate the dimensionless perturbations from the power spectrum. 
+
+
 
 
 %----------------

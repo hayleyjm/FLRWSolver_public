@@ -6,7 +6,16 @@ Instructions for compiling the ET with FLRWSolver
 
 0. Follow the download instructions for the ET here: http://einsteintoolkit.org/download.html
 
-1. Download and add FLRWSolver to the ET (as per README).
+1. Clone the FLRWSolver repository:
+
+   	     cd Cactus/arrangements/EinsteinInitialData/
+             git clone https://USERNAME@bitbucket.org/hayleymac/flrwsolver.git
+
+	 replacing USERNAME with your bitbucket username.
+
+	 Add FLRWSolver to the thornlist (manifest/einsteintoolkit.th) by adding the line below other EinsteinInitialData thorns:
+
+	     EinsteinInitialData/flrwsolver
 
 2. Add the location of your Python libraries for linking ans build the static library:
 

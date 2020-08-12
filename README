@@ -1,22 +1,17 @@
-PL 20/02/2014
-Updated: HM 11/08/2020
+Thorn FLRWSolver
+Created      : PL 20/02/2014
+Author(s)    : Paul Lasky, Hayley Macpherson, Daniel Price
+Maintainer(s): Hayley Macpherson <hayleyjmacpherson@gmail.com>
+Updated      : HM 12/08/2020
+Licence      :
+--------------------------------------------------------------------------
 
-FLRWSolver -- supplying cosmological initial conditions for the ET
+1. Purpose
 
-Directions:
-	* Put the entire thorn (i.e., the folder FLRWSolver) in the directory Cactus/arrangements/EinsteinInitialData/
-          You can do this directly from the git repository on bitbucket using:
-          
-          cd Cactus/arrangements/EinsteinInitialData/
-          git clone https://USERNAME@bitbucket.org/hayleymac/flrwsolver.git
-          
-          replacing USERNAME with your bitbucket username.
+Provides cosmological initial conditions for the ET
+See the documentation for detailed instructions on choosing perturbations and other parameters
+Enjoy!
 
-	* Add a line in the thornlist (Cactus/manifest/einsteintoolkit.th) below other EinsteinInitialData thorns:
-	      EinsteinInitialData/flrwSolver
+2. Citation
 
-	* Compile (see README.Compilation for details)
-    
-    * See the documentation for detailed instructions on choosing perturbations and other parameters
-    
-    * Enjoy!
+Please cite Macpherson, Lasky, & Price (2017; arXiv:1611.05447) if using FLRWSolver in any publications
