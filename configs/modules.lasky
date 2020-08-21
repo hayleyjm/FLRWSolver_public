@@ -1,0 +1,10 @@
+# module load intel/2011.9
+module load intel/2013.3
+module load mercurial
+# module load hdf5
+module unload openmpi-gcc/1.4.3
+module load openmpi/1.4.3-intel
+module load lapack
+module load gsl
+module load fftw
+module load ipython

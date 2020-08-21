@@ -1,0 +1,56 @@
+# Schedule definitions for thorn FLRWSolver
+
+if (CCTK_Equals(FLRW_perturb, "no"))
+{
+  schedule FLRW_NoPerturb IN HydroBase_Initial
+  {
+   LANG: Fortran
+   } "Sets up initial data for FLRW spacetime"
+}
+
+
+
+if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"single_mode")) )
+{
+  schedule FLRW_SingleMode IN HydroBase_Initial
+  {
+    LANG: Fortran
+  } "Sets up initial data for a single-mode perturbation to FLRW spacetime"
+}
+
+else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"powerspectrum")) )
+{
+  schedule FLRW_Powerspectrum IN HydroBase_Initial
+  {
+    LANG: Fortran
+  } "Sets up initial data for a power spectrum of perturbations to FLRW spacetime"
+}
+
+else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"synch_comoving")) )
+{
+  schedule FLRW_SynchComoving IN HydroBase_Initial
+  {
+    LANG: Fortran
+  } "Sets up initial data for a perturbation (read from file) to FLRW spacetime in synchronous, comoving gauge"
+}
+
+else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"framedrag_test")) )
+{
+  schedule FLRW_FramedragTest IN HydroBase_Initial
+  {
+    LANG: Fortran
+  } "Sets up initial data for a perturbation to FLRW spacetime for testing the frame-dragging effect"
+}
+
+
+
+
+#####################################################################################################
+
+## the schedule.ccl sets up WHERE and WHEN to make the calls to the functions in this thorn.
+## ours in simple since we only call our flrw.f90 initially - to setup
+## e.g. for an evolution subroutine, we would want to call at some stage in the MoL evolution.
+## see Helvi's repositories for her scalar field evolution.
+
+## what we could do: is split each initial data (flrw, single_mode, cmb, gauge etc) into separate subroutines - and in here we'd have if (CCTK_EQUALS initial_data "flrw") then schedule flrw.f90, similarly for other initial data. this is a MUCH nicer way to do it 
+

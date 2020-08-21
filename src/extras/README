@@ -1,0 +1,7 @@
+here are some extra codes we might want to use with FLRWSolver
+- framedrag test (FINISHED PAPER)
+- synch, comving ICs (didn't quite work, and doesn't seem to be going any further...)
+
+and the corresponding param.ccl and schedule.ccl that works with both of these files present in src/
+
+- H. Mac (I removed these for the public version)
