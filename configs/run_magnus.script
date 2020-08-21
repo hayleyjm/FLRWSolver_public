@@ -1,0 +1,52 @@
+#!/bin/bash -l
+#SBATCH --job-name=flrw
+#SBATCH --account=director2006
+
+# Select memory allocated per CPU core
+# SBATCH --mem-per-cpu=2000MB
+
+# Select number of nodes (24 cores per node)
+#SBATCH --nodes=2
+# SBATCH --ntasks=48
+# SBATCH --ntasks-per-node=24
+
+# Select time to run <days-hours:mins:secs>
+#SBATCH --time=00:05:00
+
+# Specify your email address to be notified of progress (default is submitting
+# user. Options: ALL,BEGIN,FAIL,END)
+# SBATCH --mail-type=ALL
+# SBATCH --mail-user=hayley.macpherson@monash.edu
+
+# Note we avoid any inadvertent OpenMP threading by setting
+# OMP_NUM_THREADS=1  # from example MPI script on Pawsey documentation
+export OMP_NUM_THREADS=1
+
+# run job using aprun command
+# -n <total-number-of-tasks>
+# -N <tasks-per-node>
+
+par=FLRW_1xres_harmonic_prd.par
+cp $par /home/hayleymac/par_backups/
+aprun -n 48 -N 24 ./cactus_sim $par
+
+
+
+####### NOTES #########
+# Specification of -n, -N in run command is IMPORTANT.
+# The #SBATCH commands tell Magnus how many nodes to reserve and for how long, but the aprun command tells the code how many nodes/cores to use when using MPI.
+# You can reserve, say, 8 nodes but not specify -n, -N and only run on 1 node (default).
+
+# Note: account is charged for FULL nodes allocated, even if you don't use all 24 cores. 
+# Nodes are not shared on Magnus. If you reserve 1 node, but only run on 1 core for 1 hour (1 hr walltime), you are charged 24*1=24 CPU hours.
+
+
+### SUMMARY OF MAGNUS FILESYSTEMS ### 
+
+# the line above the aprun command is because SCRATCH, GROUP directories are NOT BACKED UP ON MAGNUS. The /home/<user> directory IS BACKED UP. Copy your parameter file here to ensure you can re-create simulations if they are lost.
+# MAGNUS FILE PURGE: if files in /scratch/ are not accessed within 30 days - they are deleted. 
+# /home/ or /group/ are NOT PURGED.
+
+# check your storage allocation with 
+# pawseyAccountBalance -storage
+
