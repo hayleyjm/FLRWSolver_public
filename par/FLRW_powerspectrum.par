@@ -1,5 +1,10 @@
 #
 # Macpherson, Price & Lasky's FLRWSolver
+# 
+
+#
+# A sample parameter file to run a 64^3 FLRW spacetime
+#     with a power spectrum of perturbations
 #
 
 
@@ -18,12 +23,12 @@ CartGrid3D::avoid_origin = "no"
 CoordBase::xmin = 0.0
 CoordBase::ymin = 0.0
 CoordBase::zmin = 0.0
-CoordBase::xmax = 1000.0
-CoordBase::ymax = 1000.0
-CoordBase::zmax = 1000.0
-CoordBase::dx   = 31.25
-CoordBase::dy   = 31.25
-CoordBase::dz   = 31.25
+CoordBase::xmax = 1.0
+CoordBase::ymax = 1.0
+CoordBase::zmax = 1.0
+CoordBase::dx   = 0.015625
+CoordBase::dy   = 0.015625
+CoordBase::dz   = 0.015625
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -74,7 +79,7 @@ ActiveThorns = "Constants LocalReduce aeilocalinterp LoopControl"
 
 Cactus::terminate           = "time"
 Cactus::cctk_initial_time   = 1
-Cactus::cctk_final_time     = 32.25
+Cactus::cctk_final_time     = 1.015625
 time::dtfac                 = 0.1
 
 MoL::ODE_Method             = "rk4"
@@ -84,7 +89,6 @@ MoL::MoL_Num_Scratch_Levels = 1
 NaNChecker::check_every     = 1
 NaNChecker::action_if_found = "just warn"
 NaNChecker::check_vars      = "ADMBase::metric ADMBase::lapse ADMBase::shift HydroBase::rho HydroBase::eps HydroBase::press HydroBase::vel"
-
 
 ########################################
 # spacetime & gauge parameters
@@ -157,7 +161,7 @@ GRHydro::GRHydro_stencil           = 3
 GRHydro::bound                     = "none"
 GRHydro::rho_abs_min               = 1.e-30
 
-EOS_Omni::poly_k		   = 1.e-10
+EOS_Omni::poly_k		   = 1.e-15
 EOS_Omni::poly_gamma		   = 2.0
 
 
@@ -177,20 +181,17 @@ ADMBase::initial_dtlapse         = "flrw"
 ADMBase::initial_dtshift         = "zero"
 
 # some options for the background FLRW spacetime
-FLRWSolver::FLRW_init_HL         = 2.0
 FLRWSolver::FLRW_lapse_value     = 1.0
+FLRWSolver::FLRW_init_HL         = 2.0
 FLRWSolver::FLRW_init_a          = 1.0
 
 # choose some things regarding perturbations
 FLRWSolver::FLRW_perturb	  = "yes"
 FLRWSolver::FLRW_perturb_type     = "powerspectrum"
 
-# path to powerspectrum file
-FLRWSolver::FLRW_powerspectrum_file = "/Users/hayleymac/Documents/PhD/initial_conditions/CAMB/FLRW_matterpower_z1100.dat"
+# below for perturb_type = powerspectrum 
+FLRWSolver::FLRW_powerspectrum_file = "/Users/hayleymac/Documents/codes/flrwsolver/powerspectra/FLRW_matterpower_z1100.dat"
 FLRWSolver::FLRW_random_seed        = 10
-
-# below for perturb_type = powerspectrum OR synch_comoving
-# FLRWSolver::FLRW_ICs_dir          = "/Users/hayleymac/simulations/initial_conditions/032/1Gpc_full"
 
 # below for perturb_type = single_mode only
 # FLRWSolver::FLRW_perturb_direction    = "all"
@@ -224,14 +225,14 @@ IOScalar::outScalar_vars  = "
  ML_ADMConstraints::ML_mom
 "
 
-IOHDF5::out3d_every	= 20
-IOHDF5::out3d_vars 	= "
- ADMBase::alp
- HydroBase::rho
- HydroBase::vel
- ADMBase::metric
- ADMBase::curv
-"
+# no 3D data needed for FLRW
+# IOHDF5::out3d_every	= 20
+# IOHDF5::out3d_vars 	= "
+#  HydroBase::rho
+#  HydroBase::vel
+#  ADMBase::metric
+#  ADMBase::curv
+# "
 
 IO::out_mode      = "onefile"  
 IO::out_unchunked = "yes"

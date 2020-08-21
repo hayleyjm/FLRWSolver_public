@@ -1,10 +1,12 @@
 #
 # Macpherson, Price & Lasky's FLRWSolver
-#
+# 
 
 #
-# A sample parameter file to run a 128^3, 1Gpc box perturbed FLRW spacetime (single-mode perturbation)
+# A sample parameter file to run a 64^3 FLRW spacetime
+#  with a single-mode perturbation
 #
+
 
 ########################################
 # grid parameters
@@ -87,7 +89,6 @@ MoL::MoL_Num_Scratch_Levels = 1
 NaNChecker::check_every     = 1
 NaNChecker::action_if_found = "just warn"
 NaNChecker::check_vars      = "ADMBase::metric ADMBase::lapse ADMBase::shift HydroBase::rho HydroBase::eps HydroBase::press HydroBase::vel"
-
 
 ########################################
 # spacetime & gauge parameters
@@ -180,16 +181,17 @@ ADMBase::initial_dtlapse         = "flrw"
 ADMBase::initial_dtshift         = "zero"
 
 # some options for the background FLRW spacetime
-FLRWSolver::FLRW_init_a          = 1.0
-FLRWSolver::FLRW_init_HL 	 = 2.0
 FLRWSolver::FLRW_lapse_value     = 1.0
+FLRWSolver::FLRW_init_HL         = 2.0
+FLRWSolver::FLRW_init_a          = 1.0
 
 # choose some things regarding perturbations
 FLRWSolver::FLRW_perturb	  = "yes"
 FLRWSolver::FLRW_perturb_type     = "single_mode"
 
-# below for perturb_type = powerspectrum OR synch_comoving
-# FLRWSolver::FLRW_ICs_dir          = "/users/hayleyjm/simulations/initial_conditions"
+# below for perturb_type = powerspectrum 
+# FLRWSolver::FLRW_powerspectrum_file = "/Users/hayleymac/Documents/codes/flrwsolver/powerspectra/FLRW_matterpower_z1100.dat"
+# FLRWSolver::FLRW_random_seed        = 10
 
 # below for perturb_type = single_mode only
 FLRWSolver::FLRW_perturb_direction    = "all"
@@ -223,14 +225,14 @@ IOScalar::outScalar_vars  = "
  ML_ADMConstraints::ML_mom
 "
 
-IOHDF5::out3d_every	= 20
-IOHDF5::out3d_vars 	= "
- ADMBase::alp
- HydroBase::rho
- HydroBase::vel
- ADMBase::metric
- ADMBase::curv
-"
+# no 3D data needed for FLRW
+# IOHDF5::out3d_every	= 20
+# IOHDF5::out3d_vars 	= "
+#  HydroBase::rho
+#  HydroBase::vel
+#  ADMBase::metric
+#  ADMBase::curv
+# "
 
 IO::out_mode      = "onefile"  
 IO::out_unchunked = "yes"

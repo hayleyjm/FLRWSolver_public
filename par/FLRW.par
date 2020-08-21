@@ -188,8 +188,9 @@ FLRWSolver::FLRW_init_a          = 1.0
 FLRWSolver::FLRW_perturb	  = "no"
 # FLRWSolver::FLRW_perturb_type     = "powerspectrum"
 
-# below for perturb_type = powerspectrum OR synch_comoving
-# FLRWSolver::FLRW_ICs_dir          = "/users/hayleyjm/simulations/initial_conditions"
+# below for perturb_type = powerspectrum 
+# FLRWSolver::FLRW_powerspectrum_file = "/Users/hayleymac/Documents/codes/flrwsolver/powerspectra/FLRW_matterpower_z1100.dat"
+# FLRWSolver::FLRW_random_seed        = 10
 
 # below for perturb_type = single_mode only
 # FLRWSolver::FLRW_perturb_direction    = "all"

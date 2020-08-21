@@ -8,40 +8,6 @@ implements: FLRWSolver
 ## i think we get the vars stored in the interface.ccl file for these thorns.
 ## e.g. we CANNOT see xmin,xmax etc in CoordBase since these are PRIVATE (by default) params in param.ccl
 
-# OG
-#inherits: ADMBase, HydroBase, Constants, StaticConformal, EOS_Omni, CoordBase
-
 inherits: HydroBase, EOS_Omni, ADMBase, Constants, StaticConformal, CoordBase
 
-#USES INCLUDE: EOS_Base.inc
 USES INCLUDE: SpaceMask.h
-#USES INCLUDE: EOS_Base.h
-
-CCTK_REAL FLRW_params TYPE=gf
-{
-	FLRW_rho0
-	FLRW_Lambda
-} "FLRW parameters"
-
-
-# below temporary functions for interpolating file-read in data to CCTK grid..
-# not sure if this method works yet. TESTING.
-# type = grid functions
-
-CCTK_REAL metric_tmp TYPE=gf
-{
-	gxx_tmp,gyy_tmp,gzz_tmp
-} "temporary metric functions"
-
-CCTK_REAL rho_tmp TYPE=gf
-CCTK_REAL vel_tmp[3] TYPE=gf
-
-CCTK_REAL lapse_tmp TYPE=gf
-{
-	alp_tmp
-} "temporary lapse function"
-
-CCTK_REAL curv_tmp TYPE=gf
-{
-	kxx_tmp, kyy_tmp, kzz_tmp
-} "temporary curvature functions"
