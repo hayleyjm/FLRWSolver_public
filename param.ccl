@@ -6,7 +6,7 @@
 # Parameters relating to the background spacetime
 # -----------------------------------------------
 
-CCTK_REAL FLRW_boxlength "Size of box used in comoving Mpc -- used in generating power spectrum perturbations"
+CCTK_REAL FLRW_boxlength "Size of box used in comoving Mpc -- only used in generating power spectrum perturbations"
 {
  0.0:* :: "Must be positive."
 } 1.0

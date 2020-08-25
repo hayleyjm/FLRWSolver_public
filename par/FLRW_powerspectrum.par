@@ -3,7 +3,7 @@
 # 
 
 #
-# A sample parameter file to run a 64^3 FLRW spacetime
+# A sample parameter file to run an FLRW spacetime
 #     with a power spectrum of perturbations
 #
 
@@ -26,9 +26,9 @@ CoordBase::zmin = 0.0
 CoordBase::xmax = 1.0
 CoordBase::ymax = 1.0
 CoordBase::zmax = 1.0
-CoordBase::dx   = 0.015625
-CoordBase::dy   = 0.015625
-CoordBase::dz   = 0.015625
+CoordBase::dx   = 0.03125
+CoordBase::dy   = 0.03125
+CoordBase::dz   = 0.03125
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -79,7 +79,7 @@ ActiveThorns = "Constants LocalReduce aeilocalinterp LoopControl"
 
 Cactus::terminate           = "time"
 Cactus::cctk_initial_time   = 1
-Cactus::cctk_final_time     = 1.015625
+Cactus::cctk_final_time     = 1.03125
 time::dtfac                 = 0.1
 
 MoL::ODE_Method             = "rk4"
@@ -192,6 +192,7 @@ FLRWSolver::FLRW_perturb_type     = "powerspectrum"
 # below for perturb_type = powerspectrum 
 FLRWSolver::FLRW_powerspectrum_file = "/Users/hayleymac/Documents/codes/flrwsolver/powerspectra/FLRW_matterpower_z1100.dat"
 FLRWSolver::FLRW_random_seed        = 10
+FLRWSolver::FLRW_boxlength          = 1.0
 
 # below for perturb_type = single_mode only
 # FLRWSolver::FLRW_perturb_direction    = "all"
@@ -207,7 +208,7 @@ FLRWSolver::FLRW_random_seed        = 10
 ActiveThorns = "CarpetIOASCII CarpetIOScalar CarpetIOHDF5 CarpetIOBasic"
 
 IOBasic::outInfo_criterion	= "iteration"
-IOBasic::outInfo_every      = 10
+IOBasic::outInfo_every      = 1
 IOBasic::outInfo_vars       = "HydroBase::rho ADMBase::lapse"
 
 IO::out_dir      = $parfile
@@ -216,7 +217,6 @@ IOScalar::outScalar_every    = 1
 IOScalar::one_file_per_group = no
 IOScalar::outScalar_vars  = "
  HydroBase::rho
- HydroBase::press
  HydroBase::vel
  ADMBase::alp
  ADMBase::metric
@@ -225,14 +225,11 @@ IOScalar::outScalar_vars  = "
  ML_ADMConstraints::ML_mom
 "
 
-# no 3D data needed for FLRW
-# IOHDF5::out3d_every	= 20
-# IOHDF5::out3d_vars 	= "
-#  HydroBase::rho
-#  HydroBase::vel
-#  ADMBase::metric
-#  ADMBase::curv
-# "
+IOHDF5::out3d_every	= 2
+IOHDF5::out3d_vars 	= "
+  HydroBase::rho
+  ADMBase::metric
+ "
 
 IO::out_mode      = "onefile"  
 IO::out_unchunked = "yes"
