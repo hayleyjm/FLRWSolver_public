@@ -22,12 +22,12 @@ CartGrid3D::avoid_origin = "no"
 CoordBase::xmin = 0.0
 CoordBase::ymin = 0.0
 CoordBase::zmin = 0.0
-CoordBase::xmax = 1.0
-CoordBase::ymax = 1.0
-CoordBase::zmax = 1.0
-CoordBase::dx   = 0.03125
-CoordBase::dy   = 0.03125
-CoordBase::dz   = 0.03125
+CoordBase::xmax = 1000.0
+CoordBase::ymax = 1000.0
+CoordBase::zmax = 1000.0
+CoordBase::dx   = 31.25
+CoordBase::dy   = 31.25
+CoordBase::dz   = 31.25
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -78,7 +78,7 @@ ActiveThorns = "Constants LocalReduce aeilocalinterp LoopControl"
 
 Cactus::terminate           = "time"
 Cactus::cctk_initial_time   = 1
-Cactus::cctk_final_time     = 1.03125
+Cactus::cctk_final_time     = 32.25
 time::dtfac                 = 0.1
 
 MoL::ODE_Method             = "rk4"
@@ -191,7 +191,7 @@ FLRWSolver::FLRW_perturb	  = "no"
 # below for perturb_type = powerspectrum 
 # FLRWSolver::FLRW_powerspectrum_file = "/Users/hayleymac/Documents/codes/flrwsolver/powerspectra/FLRW_matterpower_z1100.dat"
 # FLRWSolver::FLRW_random_seed        = 10
-# FLRWSolver::FLRW_boxlength          = 1.0
+# FLRWSolver::FLRW_boxlength          = 1000.0
 
 # below for perturb_type = single_mode only
 # FLRWSolver::FLRW_perturb_direction    = "all"
