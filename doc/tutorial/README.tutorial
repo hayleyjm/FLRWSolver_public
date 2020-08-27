@@ -1,0 +1,12 @@
+Author:	Hayley Macpherson
+  Date: 27/08/2020
+
+------------------------------------------------
+
+The files in this directory were made for the GR simulations in cosmology workshop (QMUL / Zoom) in September 2020.
+
+See tutorial notes here:
+https://docs.google.com/document/d/1qqNSuu2oN68BoO0pQ0-uJpXU5VxXrC1Ea2tqv59J_2s/edit
+https://docs.google.com/document/d/11NlnlStmQzeJKBN9mUez9PfJokwU0juiKPuEQTscBw8/edit
+
+The Python notebook details how to read in and visualise the (split) HDF5 data using Python.
