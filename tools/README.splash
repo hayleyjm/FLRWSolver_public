@@ -1,0 +1,4 @@
+The splash.* files in this directory are limit and spline settings that work for easy & quick visualisation of the split HDF5 files using splash (csplash-hdf5).
+http://users.monash.edu.au/~dprice/splash/
+
+Copy these into your working simulation directory before running splash to visualise your HDF5 files.
