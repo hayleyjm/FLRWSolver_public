@@ -222,80 +222,80 @@ This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``power
 
 
 
-%----------------
-\subsection{Exact perturbation of metric}
-%----------------
-
-{\bf NOTE: not yet implemented in FLRWSolver. Just a note here for now.}
-
-Instead of assuming linear perturbations (i.e. $\phi,\psi,\delta,\delta v^i \ll 1$), we can set a perturbation to the metric in the same way as \eqref{eq:perturbed_metric} and solve the Hamiltonian and momentum constraints exactly. The corresponding extrinsic curvature is
-\begin{equation}
-	K_{ij} = \frac{-a\dot{a}(1-2\phi)}{\alp} \delta_{ij},
-\end{equation}
-with trace
-\begin{equation}
-	K = - \frac{3\dot{a}}{a\alp}.
-\end{equation}
-
-Using the Mathematica package Riemannian Geometry and Tensor Calculus (RGTC; add cite), we calculate the Ricci three-curvature scalar ${}^3 R$, and solve the Hamiltonian constraint
-\begin{equation}
-	{}^3 R + K^2 - K_{ij}K^{ij} = 16\pi\rho
-\end{equation}
-to get the ADM density $\rho \equiv T_{\mu\nu} n^\mu n^\nu$. We then solve the momentum constraint
-\begin{equation}
-	D_i \left( K^{ij} - \gamma^{ij} K \right) = 8\pi S^i
-\end{equation}
-to find the momentum density $S^i$. The rest-frame density $\rho_0$ can be calculated from the ADM density and the momentum density using
-\begin{equation} \label{eq:rho0_fromADM}
-	\rho_0 = \rho - \frac{S^i S_i}{\rho}.
-\end{equation}
-The momentum density is
-\begin{align}
-	S^i &= - n_\mu T^{i\mu}, \label{eq:Si}\\
-	\Rightarrow S^i S_i &= \rho_0 \Gamma^2 u^i u_i,
-\end{align}
-and the ADM density can be written using its definition as
-\begin{equation}
-	\rho = \rho_0 \Gamma^2,
-\end{equation}
-and so \eqref{eq:rho0_fromADM} becomes
-\begin{equation}
-	\rho - \frac{S^i S_i}{\rho} = \rho_0 \Gamma^2 - u^i u_i.
-\end{equation}
-Now using the normalisation condition 
-\begin{align}
-	u_\mu u^\mu &= -1, \\
-	u_0 u^0 + u_i u^i &= -1, \\
-	\Rightarrow u_i u^i &= \Gamma^2 - 1.
-\end{align}
-\textbf{This somehow gives $\rho_0$. Need to confirm how...} We find
-\begin{equation}
-	\rho_0 = \frac{1}{16\pi} \rho_{\rm curv} - \frac{\dot{a}^2 \partial_i (\alp) \partial^i (\alp)}{\pi a^4 \alp^4 (1-2\phi) \rho_{\rm curv}}, 
-\end{equation}
-where, for convenience we have defined
-\begin{align}
-	\rho_{\rm curv} &= \frac{6\dot{a}^2}{a^2 \alp^2} - \frac{2a^4}{\gamma} \left[ (4\phi - 2) \nabla^2 \phi - 3\partial_i (\phi) \partial^i (\phi) \right], \\
-	&= \frac{6\dot{a}^2}{a^2 \alp^2} + {}^3 R,
-\end{align}
-and $\gamma = a^6 (1-2\phi)^3$ is the determinant of the spatial metric. The fluid three-velocity w.r.t an Eulerian observer, $v^i$, can also be constructed from the momentum density and ADM density as follows, using \eqref{eq:Si},
-\begin{align}
-	\frac{S^i}{\rho} &= \frac{\alp T^{i0}}{\rho_0\Gamma^2}, \\
-	&= \frac{\rho_0 \Gamma^2 v^i}{\rho_0\Gamma^2}, \\
-	&= v^i.
-\end{align}
-Using this, we find
-\begin{equation}
-	v^i = \frac{- 4\dot{a}\partial^i (\alp)}{a^3 (1-2\phi) \alp^2 \rho_{\rm curv}}.
-\end{equation}
-
-
-
-
-%----------------
-\subsection{More perturbations}
-%----------------
-Several test cases for initial conditions are also included in the current up-to-date version of this thorn, however since these are just tests and not intended for public use; they are not detailed here. These are in the files {\tt FLRW\_SynchComoving.F90} and {\tt FLRW\_FramedragTest.F90}. Don't worry 'bout it.
-
+%%----------------
+%\subsection{Exact perturbation of metric}
+%%----------------
+%
+%{\bf NOTE: not yet implemented in FLRWSolver. Just a note here for now.}
+%
+%Instead of assuming linear perturbations (i.e. $\phi,\psi,\delta,\delta v^i \ll 1$), we can set a perturbation to the metric in the same way as \eqref{eq:perturbed_metric} and solve the Hamiltonian and momentum constraints exactly. The corresponding extrinsic curvature is
+%\begin{equation}
+%	K_{ij} = \frac{-a\dot{a}(1-2\phi)}{\alp} \delta_{ij},
+%\end{equation}
+%with trace
+%\begin{equation}
+%	K = - \frac{3\dot{a}}{a\alp}.
+%\end{equation}
+%
+%Using the Mathematica package Riemannian Geometry and Tensor Calculus (RGTC; add cite), we calculate the Ricci three-curvature scalar ${}^3 R$, and solve the Hamiltonian constraint
+%\begin{equation}
+%	{}^3 R + K^2 - K_{ij}K^{ij} = 16\pi\rho
+%\end{equation}
+%to get the ADM density $\rho \equiv T_{\mu\nu} n^\mu n^\nu$. We then solve the momentum constraint
+%\begin{equation}
+%	D_i \left( K^{ij} - \gamma^{ij} K \right) = 8\pi S^i
+%\end{equation}
+%to find the momentum density $S^i$. The rest-frame density $\rho_0$ can be calculated from the ADM density and the momentum density using
+%\begin{equation} \label{eq:rho0_fromADM}
+%	\rho_0 = \rho - \frac{S^i S_i}{\rho}.
+%\end{equation}
+%The momentum density is
+%\begin{align}
+%	S^i &= - n_\mu T^{i\mu}, \label{eq:Si}\\
+%	\Rightarrow S^i S_i &= \rho_0 \Gamma^2 u^i u_i,
+%\end{align}
+%and the ADM density can be written using its definition as
+%\begin{equation}
+%	\rho = \rho_0 \Gamma^2,
+%\end{equation}
+%and so \eqref{eq:rho0_fromADM} becomes
+%\begin{equation}
+%	\rho - \frac{S^i S_i}{\rho} = \rho_0 \Gamma^2 - u^i u_i.
+%\end{equation}
+%Now using the normalisation condition 
+%\begin{align}
+%	u_\mu u^\mu &= -1, \\
+%	u_0 u^0 + u_i u^i &= -1, \\
+%	\Rightarrow u_i u^i &= \Gamma^2 - 1.
+%\end{align}
+%\textbf{This somehow gives $\rho_0$. Need to confirm how...} We find
+%\begin{equation}
+%	\rho_0 = \frac{1}{16\pi} \rho_{\rm curv} - \frac{\dot{a}^2 \partial_i (\alp) \partial^i (\alp)}{\pi a^4 \alp^4 (1-2\phi) \rho_{\rm curv}}, 
+%\end{equation}
+%where, for convenience we have defined
+%\begin{align}
+%	\rho_{\rm curv} &= \frac{6\dot{a}^2}{a^2 \alp^2} - \frac{2a^4}{\gamma} \left[ (4\phi - 2) \nabla^2 \phi - 3\partial_i (\phi) \partial^i (\phi) \right], \\
+%	&= \frac{6\dot{a}^2}{a^2 \alp^2} + {}^3 R,
+%\end{align}
+%and $\gamma = a^6 (1-2\phi)^3$ is the determinant of the spatial metric. The fluid three-velocity w.r.t an Eulerian observer, $v^i$, can also be constructed from the momentum density and ADM density as follows, using \eqref{eq:Si},
+%\begin{align}
+%	\frac{S^i}{\rho} &= \frac{\alp T^{i0}}{\rho_0\Gamma^2}, \\
+%	&= \frac{\rho_0 \Gamma^2 v^i}{\rho_0\Gamma^2}, \\
+%	&= v^i.
+%\end{align}
+%Using this, we find
+%\begin{equation}
+%	v^i = \frac{- 4\dot{a}\partial^i (\alp)}{a^3 (1-2\phi) \alp^2 \rho_{\rm curv}}.
+%\end{equation}
+%
+%
+%
+%
+%%----------------
+%\subsection{More perturbations}
+%%----------------
+%Several test cases for initial conditions are also included in the current up-to-date version of this thorn, however since these are just tests and not intended for public use; they are not detailed here. These are in the files {\tt FLRW\_SynchComoving.F90} and {\tt FLRW\_FramedragTest.F90}. Don't worry 'bout it.
+%
 
 
 %--------------------------
@@ -339,12 +339,12 @@ In {\tt GRHydro}, the atmosphere is used to solve the problem that the majority 
 
 Here we present some example initial data using this thorn with various parameter choices. The exact parameter files used to initialise each of the cases below are located in the \texttt{par/test/} directory. 
 
-%----------------------------------------
-\subsection{FLRW Spacetime}
-%----------------------------------------
-
-\emph{Is there anything to be said about this IC? Maybe something about the background spacetime and interpretation? Maybe fill this in when you have better user settings for the background.}
-
+%%----------------------------------------
+%\subsection{FLRW Spacetime}
+%%----------------------------------------
+%
+%\emph{Is there anything to be said about this IC? Maybe something about the background spacetime and interpretation? Maybe fill this in when you have better user settings for the background.}
+%
 
 %----------------------------------------
 \subsection{Single-mode linear perturbations}
