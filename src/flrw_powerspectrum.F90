@@ -30,7 +30,7 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   CCTK_REAL, dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
   !
   CCTK_INT :: ncells(3)
-  character(len=100) :: pkfilename!,deltafile,vel1file,vel2file,vel3file,phifile,ics_dir
+  character(len=200) :: pkfilename!,deltafile,vel1file,vel2file,vel3file,phifile,ics_dir
   integer :: dr_unit,dv_unit1,dv_unit2,dv_unit3,p_unit
   integer :: il,jl,kl,iu,ju,ku,pkunit,pklen!,ics_dir_len
   
@@ -54,8 +54,8 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   !
   open(newunit=pkunit,file="pk_filename.txt",status='replace')
   ! convert CCTK string to Fortran string
-  call CCTK_FortranString(pklen,FLRW_powerspectrum_file,pkfilename)
-  write(pkunit,"(a)") pkfilename
+  call CCTK_FortranString(pklen,FLRW_powerspectrum_file,trim(pkfilename))
+  write(pkunit,"(a)") trim(pkfilename)
   close(pkunit)
   
   !
