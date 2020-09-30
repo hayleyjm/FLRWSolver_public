@@ -54,7 +54,7 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   !
   open(newunit=pkunit,file="pk_filename.txt",status='replace')
   ! convert CCTK string to Fortran string
-  call CCTK_FortranString(pklen,FLRW_powerspectrum_file,trim(pkfilename))
+  call CCTK_FortranString(pklen,FLRW_powerspectrum_file,pkfilename)
   write(pkunit,"(a)") trim(pkfilename)
   close(pkunit)
   
