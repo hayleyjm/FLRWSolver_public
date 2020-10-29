@@ -154,8 +154,38 @@ def make_ics(a_init,box_size,resol,num_ghosts,rseed):
         vely_2d[i*res:(i+1)*res,:]  = vely_gh[:,:,i]
         velz_2d[i*res:(i+1)*res,:]  = velz_gh[:,:,i]
 
-    np.savetxt(deltafile,delta_2d)
-    np.savetxt(phifile,phi_2d)
-    np.savetxt(vel1file,velx_2d)
-    np.savetxt(vel2file,vely_2d)
-    np.savetxt(vel3file,velz_2d)
+    #
+    # Open the files for writing
+    #
+    delta_file = open(deltafile,"w")
+    phi_file   = open(phifile,"w")
+    vel1_file  = open(vel1file,"w")
+    vel2_file  = open(vel2file,"w")
+    vel3_file  = open(vel3file,"w")
+
+    #print("velx = ",velx_2d[40,:])
+    #print("vely = ",vely_2d[40,:])
+    #print("velz = ",velz_2d[40,:])
+    np.savetxt(delta_file,delta_2d)
+    np.savetxt(phi_file,phi_2d)
+    np.savetxt(vel1_file,velx_2d)
+    np.savetxt(vel2_file,vely_2d)
+    np.savetxt(vel3_file,velz_2d)
+
+    delta_file.close()
+    phi_file.close()
+    vel1_file.close()
+    vel2_file.close()
+    vel3_file.close()
+
+    #print("re-loading data...")
+    #v1file = open(vel1file)
+    #v1data = v1file.read()#.rstrip()
+    #print("v1data = ",v1data)
+    #v1file.close()
+    #v1data = np.loadtxt(vel1file)
+    #v2data = np.loadtxt(vel2file)
+    #v3data = np.loadtxt(vel3file)
+    #print("re-loaded v1 = ",v1data)
+    #print("re-loaded v2 = ",v2data)
+    #print("re-loaded v3 = ",v3data)
