@@ -233,3 +233,9 @@ IOHDF5::out3d_vars 	= "
 
 IO::out_mode      = "onefile"  
 IO::out_unchunked = "yes"
+
+IOHDF5::checkpoint                  = no
+# IO::checkpoint_dir                  = $parfile
+# IO::checkpoint_ID                   = no
+# IO::checkpoint_every_walltime_hours = 1.0
+# IO::checkpoint_on_terminate         = yes
