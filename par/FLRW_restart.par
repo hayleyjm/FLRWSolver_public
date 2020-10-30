@@ -1,0 +1,56 @@
+# /*@@
+#   @file      test_recover.par (adapted)
+#   @date      Thu Oct 12 2000
+#   @author    Thomas Radke (Hayley Macpherson for FLRWSolver)
+#   @version   $Id: test_recover.par,v 1.1.1.1 2006/01/26 00:40:13 kelly Exp $
+# @@*/
+
+ActiveThorns = "Coordbase CartGrid3d CoordGauge"
+ActiveThorns = "GenericFD NewRad"
+ActiveThorns = "Periodic Slab CarpetSlab SpaceMask"
+ActiveThorns = "Carpet CarpetLib CarpetReduce CarpetRegrid2 CarpetInterp"
+ActiveThorns = "Time MoL StaticConformal NaNChecker SymBase"
+ActiveThorns = "Constants LocalReduce aeilocalinterp LoopControl"
+ActiveThorns = "ML_BSSN ML_BSSN_Helper ML_ADMConstraints"
+ActiveThorns = "ADMBase ADMMacros ADMCoupling"
+ActiveThorns = "HydroBase Tmunubase GRHydro EOS_Omni"
+ActiveThorns = "FLRWSolver InitBase"
+ActiveThorns = "CarpetIOASCII CarpetIOScalar CarpetIOHDF5 CarpetIOBasic"
+
+# Say that we want to recover ...
+# You can also try "auto" and omit the ".it_0" field in the recover_file.
+#IO::recover       = "manual"
+IOUtil::recover       = "auto"
+
+# Recover from a ID checkpoint file with basename:
+IO::recover_file  = "checkpoint.chkpt"
+
+# checkpoint files to be found in directory:
+IOUtil::recover_dir    = "FLRW/"
+
+# Note that this parameter is restored to "yes" during parameter recovery.
+# Since we don't need to checkpoint twice it is explicitely disabled here.
+IO::checkpoint_ID = "yes"
+
+# disable output of file information (parameter filename, creation date)
+# because this could cause diffs when running the testsuite
+IO::out_fileinfo = "none"
+
+# do not use the new scheme for names of output files
+IO::new_filename_scheme = "no"
+
+IOScalar::outScalar_vars  = "
+ HydroBase::rho
+ HydroBase::vel
+ ADMBase::alp
+ ADMBase::metric
+ ADMBase::curv
+"
+
+IOHDF5::out3D_vars	= "
+ HydroBase::vel
+ HydroBase::rho
+ ADMBase::lapse
+ ADMBase::metric
+ ADMBase::curv
+"

@@ -56,7 +56,7 @@ except:
 k = pdata[:,0]                 # |k| values
 P = pdata[:,1]                 # P(k) values
 
-P_cut  = np.zeros(P.size)             # array for "cut" power spectrum
+P_cut  = np.zeros(P.size)                 # array for "cut" power spectrum
 wavmin = cutfac * (boxL / res)            # minimum wavelength
 kmax   = np.sqrt(3) * 2. * np.pi / wavmin # maximum k-value -- sqrt(3) from assuming kx=ky=kz
 
@@ -74,7 +74,7 @@ cutfile   = open(pkcutfile,"w")
 cutdata   = np.zeros(pdata.shape)
 cutdata[:,0] = k
 cutdata[:,1] = P_cut
-np.savetxt(cutfile,cutdata,header=f"k, P(k; min wavelength {cutfac} x dx)")
+np.savetxt(cutfile,cutdata,header=f"k/h, P(k; min wavelength {cutfac} x dx)")
 cutfile.close()
 print("Done.")
 print(f"Find your cut powerspectrum at {pkcutfile}. BYE")
