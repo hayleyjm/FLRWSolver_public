@@ -27,8 +27,8 @@ nskip = 1
 cutfac = 10.0
 
 # Physical box size (cMpc) and resolution (number of grid cells in each dimension)
-boxL = 1.0
-res  = 128
+boxL = 1000.0
+res  = 32
 
 # ------------------------------------
 
