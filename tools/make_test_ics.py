@@ -5,6 +5,7 @@ A script to generate 3x different resolution initial conditions for the SAME dis
     - based on a cut power spectrum as set in cut_powerspectrum.py
     - makes ICs for the lowest resolution based on this powerspectrum
     - then interpolates to get the two higher resolution ICs
+    - make sure to change the sys.path.insert commands below to where your c2raytools3 is located
 
 '''
 import sys
@@ -14,13 +15,12 @@ from astropy.cosmology import WMAP9
 import numpy as np
 from scipy.interpolate import interp1d
 from scipy.interpolate import RegularGridInterpolator
-# sys.path.insert(0,"/path/to/flrwsolver/tools/")
-sys.path.insert(1, "/Users/hayleymac/software/c2raytools3/src/")
-sys.path.insert(2, "/Users/hayleymac/software/c2raytools3/src/c2raytools3/")
+sys.path.insert(1, "/cosma/home/dp002/dc-macp1/software/flrwsolver/c2raytools3/src/")
+sys.path.insert(2, "/cosma/home/dp002/dc-macp1/software/flrwsolver/c2raytools3/src/c2raytools3/")
 import c2raytools3
 from c2raytools3.power_spectrum import _get_dims, _get_k, power_spectrum_1d
 import cut_powerspectrum
-from cut_powerspectrum import boxL,pkcutfile # does this work?
+from cut_powerspectrum import boxL,pkcutfile,cutfac,res # res here is resolution we used to cut Pk
 
 #
 # Choose the resolutions you want
@@ -82,11 +82,11 @@ C3 = - np.sqrt( a_init / ( 6. * np.pi * G * rhostar ) )  # in physical units
 deltafiles = []; phifiles = []
 vel1files = []; vel2files = []; vel3files = []
 for r in resolutions:
-    deltafiles.append(f"init_delta_{r}.dat")
-    phifiles.append(f"init_phi_{r}.dat")
-    vel1files.append(f"init_vel1_{r}.dat")
-    vel2files.append(f"init_vel2_{r}.dat")
-    vel3files.append(f"init_vel3_{r}.dat")
+    deltafiles.append(f"init_delta_{r}_{cutfac}dx{res}.dat")
+    phifiles.append(f"init_phi_{r}_{cutfac}dx{res}.dat")
+    vel1files.append(f"init_vel1_{r}_{cutfac}dx{res}.dat")
+    vel2files.append(f"init_vel2_{r}_{cutfac}dx{res}.dat")
+    vel3files.append(f"init_vel3_{r}_{cutfac}dx{res}.dat")
 
 #
 # Make ICs for lowest resolution
