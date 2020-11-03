@@ -1,16 +1,16 @@
 !
-! file    flrw_powerspectrum.F90
+! file    flrw_fileread.F90
 ! author  Hayley Macpherson
-! date    30.12.2019
-! desc    A spectrum of perturbations to FLRW initial data, longitudinal gauge, zero shift
-!            calls create_ics.py initial conditions generator for the given parameters
+! date    03.11.2020
+! desc   Linear perturbations to FLRW initial data, longitudinal gauge, zero shift
+!         read-in from supplied filenames + paths for: delta, phi, vel(3)
 !
 #include "cctk.h"
 #include "cctk_Arguments.h"
 #include "cctk_Functions.h"
 #include "cctk_Parameters.h"
 
-subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
+subroutine FLRW_FileRead (CCTK_ARGUMENTS)
   USE init_tools
   implicit none
   DECLARE_CCTK_ARGUMENTS
@@ -31,12 +31,28 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   CCTK_REAL, dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
   !
   CCTK_INT :: ncells(3)
-  character(len=200) :: pkfilename!,deltafile,vel1file,vel2file,vel3file,phifile,ics_dir
+  character(len=200) :: deltafile,vel1file,vel2file,vel3file,phifile
   integer :: dr_unit,dv_unit1,dv_unit2,dv_unit3,p_unit
-  integer :: il,jl,kl,iu,ju,ku,pkunit,pklen!,ics_dir_len
+  integer :: il,jl,kl,iu,ju,ku,dlen
   
-  call CCTK_INFO("Initialising a POWER SPECTRUM of perturbations to an FLRW spacetime")
-  
+  call CCTK_INFO("Initialising linear perturbations to an FLRW spacetime")
+
+  !
+  ! Convert CCTK strings to Fortran strings for ICs filenames
+  !       (send dummy length dlen since we don't use this anyway)
+  !
+  call CCTK_FortranString(dlen,FLRW_deltafile,deltafile)
+  call CCTK_FortranString(dlen,FLRW_phifile,phifile)
+  call CCTK_FortranString(dlen,FLRW_velxfile,vel1file)
+  call CCTK_FortranString(dlen,FLRW_velyfile,vel2file)
+  call CCTK_FortranString(dlen,FLRW_velzfile,vel3file)
+  call CCTK_INFO("From files: ")
+  call CCTK_INFO(trim(deltafile))
+  call CCTK_INFO(trim(phifile))
+  call CCTK_INFO(trim(vel1file))
+  call CCTK_INFO(trim(vel2file))
+  call CCTK_INFO(trim(vel3file))
+
   !
   ! set logicals that tell us whether we want to use FLRWSolver to set ICs
   !
@@ -47,38 +63,15 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   ! --> note boxlen is in code units here
   !
   call set_parameters(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
-
-  !
-  ! Before we call the ICs generator we need to write the Pk file name to a text file
-  !      --> this sucks, but it's easier than figuring out how to pass Fortran strings --> c strings --> Python strings...
-  !      --> Next step: read Pk in here, pass the array into Python. Even this was a bit tricky, so I delayed it. 
-  !
-  open(newunit=pkunit,file="pk_filename.txt",status='replace')
-  ! convert CCTK string to Fortran string
-  call CCTK_FortranString(pklen,FLRW_powerspectrum_file,pkfilename)
-  write(pkunit,"(a)") trim(pkfilename)
-  close(pkunit)
-  
-  !
-  ! call initial conditions generator
-  ! --> note FLRW_boxlength is in cMpc here
-  !
-  ! this makes the ICs and puts them into files with corresponding names as below
-  !
-  call CCTK_INFO("Calling create_ics for initial conditions...")
-  if (ncells(1)/=ncells(2)) call CCTK_WARN(CCTK_WARN_ALERT,"non-uniform grid")
-  
-  call call_make_ics(a0,FLRW_boxlength,ncells(1),2*cctk_nghostzones(1),FLRW_random_seed)
-  call CCTK_INFO("Done making initial conditions.")
   
   !
   ! read in perturbations from files
   !
-  open(newunit=dr_unit,file='init_delta.dat',status='old')  ! delta rho file
-  open(newunit=dv_unit1,file='init_vel1.dat',status='old')  ! delta vel file [1]
-  open(newunit=dv_unit2,file='init_vel2.dat',status='old')  ! delta vel file [2]
-  open(newunit=dv_unit3,file='init_vel3.dat',status='old')  ! delta vel file [3] 
-  open(newunit=p_unit,file='init_phi.dat',status='old')     ! phi file
+  open(newunit=dr_unit,file=deltafile,status='old')  ! delta rho file
+  open(newunit=dv_unit1,file=vel1file,status='old')  ! delta vel file [1]
+  open(newunit=dv_unit2,file=vel2file,status='old')  ! delta vel file [2]
+  open(newunit=dv_unit3,file=vel3file,status='old')  ! delta vel file [3] 
+  open(newunit=p_unit,file=phifile,status='old')     ! phi file
 
   !
   ! spatial loop over *global* grid size
@@ -184,4 +177,4 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   call check_metric()
 
 
-end subroutine FLRW_Powerspectrum
+end subroutine FLRW_FileRead

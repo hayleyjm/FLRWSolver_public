@@ -220,6 +220,15 @@ Using a slightly modified version of the \texttt{c2raytools}\footnote{https://gi
 This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. Set the FLRW background according to Section~\ref{sec:FLRWinit}, and set the path to (and name of) the text file containing the matter power spectrum using \texttt{FLRW\_powerspectrum\_file}. The Gaussian random field will be drawn with seed corresponding to \texttt{FLRW\_random\_seed}, so keep this constant to draw the same field more than once. You also must specify the size of the domain in comoving Mpc (cMpc) using \texttt{FLRW\_boxlength}, as physical units are required to generate the dimensionless perturbations from the power spectrum. 
 
 
+%----------------
+\subsubsection{Linear perturbations from user-specified files}
+%----------------
+
+There is also a possibility for you to set up your own initial conditions and read them in to \texttt{FLRWSolver}. These must be in ascii format, and the 3D data must be stored in a specific way (this may be generalised to a more widely-used format at some point in the future). The data is assumed to be stored in 2D $N\times N$ slices of the $x-y$ plane, with the $z$ index increasing every $N$ rows, where $N=n+n_{\rm gh}$ is the resolution ($n$) including the number of ghost cells in each dimension ($n_{\rm gh}$; i.e., with $n_{\rm gh}/2$ ghost cells on each side). Therefore, the columns are the $x$ indices, and the rows are the $y$ indices, repeating every $N$ rows. The files are therefore assumed to include ghost cells, although these may be set to zero, since the ET asserts periodic boundary conditions.
+
+The files are assumed to be linear perturbations to an FLRW spacetime in the longitudinal gauge, as with other forms of initial conditions. The parameter \texttt{FLRW\_deltafile} specifies the fractional density perturbation $\delta$, \texttt{FLRW\_phifile} for the metric perturbation $\phi/c^2$, and \texttt{FLRW\_velxfile}, \texttt{FLRW\_velyfile}, and \texttt{FLRW\_velzfile} for each component of the contravariant fluid three-velocity with respect to the Eulerian observer, $v^i/c$ (see \texttt{HydroBase} documentation for more details). All quantities are assumed to be specified in code units (normalised by the speed of light, $c$, with $\delta$ already dimensionless).
+
+This option is useful for, e.g., running test simulations with a controlled number of modes (but keeping the gradients the same between resolutions) that can be created using \texttt{tools/make\_test\_ics.py} alongside \texttt{tools/cut\_powerspectrum.py}.
 
 
 %%----------------

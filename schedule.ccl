@@ -24,4 +24,11 @@ else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"
   } "Sets up initial data for a power spectrum of perturbations to FLRW spacetime"
 }
 
+else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"fileread")) )
+{
+  schedule FLRW_FileRead IN HydroBase_Initial
+  {
+    LANG: Fortran
+  } "Sets up initial data for linear perturbations to FLRW spacetime from user-specified ascii files"
+}
 
