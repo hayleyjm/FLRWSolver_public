@@ -8,9 +8,10 @@
 #         which contains all variables you have output. Nice.
 #
 #                Author: Hayley Macpherson (2018)
-#                        hayleyjmacpherson@gmail.com
 #
 '''
+
+
 import numpy as np
 import h5py
 import subprocess
@@ -28,13 +29,7 @@ def keys(f):
 
 '''
 Function to execute bash commands
-=========================================================================================================================
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-*** BE CAREFUL RUNNING THIS AS COMMANDS INPUT ARE *ACTUALLY* EXCECUTED... SO DON'T DELETE ANYTHING USING THIS FUNCTION!**
-
-=========================================================================================================================                                                                                                              
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+*** BE CAREFUL RUNNING THIS AS COMMANDS INPUT ARE *ACTUALLY* EXCECUTED... SO DON'T DELETE ANYTHING!**
 '''
 def BASH(command):
     return subprocess.check_output(command,shell=True).decode().strip()
@@ -67,9 +62,10 @@ def find_var(file):
 ##########################################################################################################
 
 # -----------------------------
-# Name the new .hdf5 files based on the simulation name. The pwd method works if there is only one 'FLRW' in the path.
-#        But e.g. now when using simfactory the output is in simulations/FLRW_.../output-0000/FLRW_..., so this doesn't work.
-#        New method below!
+# Name the new .hdf5 files based on the simulation name.
+#
+#    - get current directory name and delete everything before the LAST slash
+#        using sed (this works for both dirs with _restart.par AND with simfactory-style directory structure)
 # -----------------------------
 
 # pwd = str(BASH('pwd'))                                    # Find directory we are in
@@ -77,20 +73,24 @@ def find_var(file):
 # dr = pwd[idx:]                                            # Extract directory from BASH command
 #print 'Current directory is {}/'.format(dr)               # Confirm directory name
 
-par = str(BASH('ls *.par'))                                 # all simulation directories should include the parameter file with the same name
-dr  = par[:-4]                                              # remove the .par at the end of the string to get sim name
+#par = str(BASH('ls *.par'))                                 # all simulation directories should include the parameter file with the same name (NOTE some will have _restart.par...)
+#dr  = par[:-4]                                              # remove the .par at the end of the string to get sim name
+#print(f" par = {par}, dr = {dr}")
+
+pwd = str(BASH("pwd"))                   # Current directory
+dr  = str(BASH("pwd | sed 's:.*/::'"))   # Strip the simulation name (same as the par file) from the current location
 
 # check if any split files already exist - tell user to delete them as script will fail with files existing...
-if os.path.isfile('./{}_it0.hdf5'.format(dr)):
+if os.path.isfile(f'./{dr}_it0.hdf5'):
     print('WARNING!!! Some split files may already exist: DELETE THEM BEFORE PROCEEDING!')
-    
+
 files = BASH('ls *.xyz.h5').split('\n')                   # Files as all HDF5 output by Cactus (excludes chkpts)
 print('============================================')
 print('')
 print('             HDF5 FILE SPLITTER             ')
 print('')
 print('============================================')
-print(' splitting files from {}:'.format(dr))
+print(f' splitting files for {dr}:')
 for fl in files:
     print(fl)
 print('')
@@ -104,12 +104,12 @@ fcnt = -1
 for file in files:
     if 'Ricci' in file:
         print('Ignoring Ricci')
-        continue            # ignore Ricci (from ADMAnalysis -- this gives junk in our experience)
+        continue            # ignore Ricci (from ADMAnalysis)
     fcnt+=1                                 # Counter for files
     f = h5py.File(file,'r') # open the file as an object
     print('--------------------------------------------')
-    print(' fcount = {} of {} '.format(fcnt,len(files)-1))
-    print(' using file: {} ... '.format(f.filename))
+    print(f' file {fcnt+1} of {len(files)} ')
+    print(f' filename: {f.filename} ... ')
     start=time.time()
     try:
         filekeys = list(f.keys())
@@ -118,7 +118,7 @@ for file in files:
         # bash to get list of keys with h5ls
         filekeys = BASH('h5ls ' + file).split('\n')
         h5ls = True
-    print(' ... got keys in {}s!'.format(time.time()-start))
+    print(f"   got keys in {time.time()-start} sec ")
     
     it_prev = -1
     cnt = 0 # counter for number of keys per iteration
@@ -153,7 +153,7 @@ for file in files:
                     itcnt += 1  # count number of independent iterations we have
 
                 if (cnt==0):    # we're at the first dataset for this iteration
-                    fname = '{}_it{:06d}.hdf5'.format(dr,it)
+                    fname = f'{dr}_it{it:06d}.hdf5'
                     fnew = h5py.File(fname,'a') # open a file and create first dataset (a appends to existing file 'add')
                 
                     if (fcnt==0): # we are on the first file 
