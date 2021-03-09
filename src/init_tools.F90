@@ -70,7 +70,7 @@ contains
     rho0    = 3._dp * hub**2 / (8._dp * pi * asq) ! Initial background density from Friedmann eqn.
     rhostar = rho0 * a0**3                        ! Conserved FLRW density
     adot    = hub * a0                            ! a' (conformal) from H = a'/a
-    hubdot  = -4._dp * pi * rho0 * asq / 3._dp    ! H' from derivative of Friedmann eqns   
+    hubdot  = -4._dp * pi * rho0 * asq / 3._dp    ! H' from derivative of Friedmann eqns
 
   end subroutine set_parameters
 

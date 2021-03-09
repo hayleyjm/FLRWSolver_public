@@ -40,8 +40,9 @@ KEYWORD FLRW_perturb "Add perturbation to matter and metric"
 
 
 KEYWORD FLRW_perturb_type "Add perturbation of the following type"
-{ 
+{
  "single_mode" :: "Single mode perturbation (sine wave in density). Set FLRW_perturb_direction to choose dimensions of perturbation and single_perturb_wavelength."
+ "single_mode_tensor" :: "Single mode perturbation (cos wave in tensor perturbation). Set params as for above, except hplus(cross)_amplitude instead of phi."
  "powerspectrum" :: "A power spectrum of (linear) perturbations. Supply the path to your chosen power spectrum in FLRW_powerspectrum_file"
  "fileread" :: "Linear perturbations to FLRW in longitudinal gauge -- read in from supplied ascii files (specific format - see doc)"
 } "single_mode"
@@ -59,7 +60,7 @@ CCTK_INT FLRW_random_seed "Random seed for generating the Gaussian random densit
 } 10
 
 
-CCTK_REAL single_perturb_wavelength "Wavelength of single mode perturbation relative to box size"
+CCTK_REAL single_perturb_wavelength "Wavelength of single mode SCALAR perturbation relative to box size"
 {
  0.0001:* :: "Must be in (0,1]. Wavelength will be single_perturb_wavelength * FLRW_boxlength"
 } 1.0
@@ -69,6 +70,16 @@ CCTK_REAL phi_amplitude "Amplitude of perturbation in phi - implicitly sets ampl
 {
   0.0:* :: "Must be positive"
 } 1.e-8
+
+CCTK_REAL hplus_amplitude "Amplitude of perturbation in h_ij + polarisation if single_mode_tensor is set"
+{
+  0.0:* :: "Must be positive"
+} 0.0
+
+CCTK_REAL hcross_amplitude "Amplitude of perturbation in h_ij x polarisation if single_mode_tensor is set"
+{
+  0.0:* :: "Must be positive"
+} 0.0
 
 
 KEYWORD FLRW_perturb_direction "Choose which direction to perturb (only used if FLRW_perturb_type = single_mode)"

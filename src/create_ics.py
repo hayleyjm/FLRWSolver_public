@@ -131,7 +131,7 @@ def make_ics(a_init,box_size,resol,num_ghosts,rseed):
     # Put data into arrays including ghost cells
     # (the ghost values are here set to zero. Cactus fills these out for us after FLRWSolver.)
     #
-    delta_gh[3:-3,3:-3,3:-3] = random
+    delta_gh[3:-3,3:-3,3:-3] = delta
     phi_gh[3:-3,3:-3,3:-3]   = phi_on_c2
     velx_gh[3:-3,3:-3,3:-3]  = velx_on_c
     vely_gh[3:-3,3:-3,3:-3]  = vely_on_c
