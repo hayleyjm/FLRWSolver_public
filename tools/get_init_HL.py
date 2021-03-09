@@ -5,7 +5,7 @@ A script to get the proper initial HL for use with FLRWSolver
     -- to make sure things are consistent with e.g. the box length
     
     USAGE:
-    python get_init_HL.py boxL_z0(Gpc) zini
+    python get_init_HL.py res boxL_z0(Gpc) zini
 
     (mainly adapted from my scribblings in Projects/ImprovedAveraging/translate_phys_units.ipynb)
 '''

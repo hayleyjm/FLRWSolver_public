@@ -83,6 +83,7 @@
 
 
 \newcommand{\alp}{\alpha}
+\newcommand{\flrwsolver}{\texttt{FLRWSolver}}
 
 
 \begin{document}
@@ -155,7 +156,26 @@ The FLRW line element in conformal time, $\eta$, is given by
 \begin{equation}
 	ds^2 = a^2(\eta) \left( - d\eta^2 + \delta_{ij}dx^i dx^j \right)
 \end{equation}
-where $a(\eta)$ is the scale factor describing the size of the Universe at time $\eta$. To initialise this spacetime, the user simply needs to specify \texttt{FLRW\_perturb} = ``no''. In addition, the initial value for the dimensionless product of the conformal Hubble parameter and the box length, $\mathcal{H}_* L$, is specified with \texttt{FLRW\_init\_HL}, from which the initial background density in code units is set via the Friedmann equations with $G=c=1$, and $k=\Lambda=0$. The initial value for the scale factor $a$ is controlled with \texttt{FLRW\_init\_a}, and the initial lapse by \texttt{FLRW\_lapse\_value}, both of which default to 1. 
+where $a(\eta)$ is the scale factor describing the size of the Universe at time $\eta$. To initialise this spacetime, the user simply needs to specify \texttt{FLRW\_perturb} = ``no''. 
+
+\vspace{2mm}
+{\bf HERE is what we want to change things to (?) param names will change, basic structure should be the same}
+\vspace{2mm}
+
+\flrwsolver currently assumes an EdS model, i.e. matter-dominated, flat initial conditions. The user chooses the initial value of (the dimensionless) $HL$, i.e. the ratio of the Hubble horizon $d_H(z)\equiv c/H(z)$ to the physical \emph{proper} length of the box $L$. This is set using the parameter \texttt{FLRW\_init\_HL}. Since \flrwsolver assumes the EdS model, it is also assumed that the size of the Hubble horizon at $z=0$ is equivalent to $d_{H_0}=c/H_0\approx 6.6{\rm Gpc}$. The initial value of $HL$ set by the user, along with the chosen $z_{\rm init}$ (controlled by \texttt{FLRW\_init\_z} {\bf TO BE ADDED}), therefore implies the physical length of the box $L$ at the initial time. When setting pure FLRW or single-mode perturbations to FLRW (see fSection~\ref{sec:singlemode_ics} below), the physical side of the box is not necessary for creating initial data and therefore is only relevant when physically interpreting the results. This means the assumption of $d_{H_0}$ \emph{does not affect} pure-FLRW or single-mode perturbation initial conditions. However, when setting a powerspectrum of initial data (see Section~\ref{sec:pspec_ics} below), \flrwsolver also requires the \emph{physical} (comoving) box size (i.e., the proper length $L$ in Mpc at $z=0$) as input to create initial data from the relevant section of the CAMB matter power spectrum. It is up to the user to ensure the values of initial $HL$ and comoving box size are consistent ({\bf though maybe we can put a check in somehow? or just make it so that $z_{\rm init}$ sets the physical box size?}).
+
+
+
+Physical units can then be achieved using the length unit, $L_{unit}$, defined by
+\begin{equation}
+	L_{code} \times L_{unit} = L_{phys},
+\end{equation}
+(easily translated to a time unit using the convention $c=1$) which can be used to translate $H(z)$ at any time, in code units, back to a physical $H(z)$ in $km/s Mpc$. 
+
+\vspace{2mm}
+{\bf BELOW is what is currently incorporated, to be changed to the above...}
+\vspace{2mm}
+In addition, the initial value for the dimensionless product of the conformal Hubble parameter and the box length, $\mathcal{H}_* L$, is specified with \texttt{FLRW\_init\_HL}, from which the initial background density in code units is set via the Friedmann equations with $G=c=1$, and $k=\Lambda=0$. The initial value for the scale factor $a$ is controlled with \texttt{FLRW\_init\_a}, and the initial lapse by \texttt{FLRW\_lapse\_value}, both of which default to 1. 
 
 These parameters all still need to be set to describe the FLRW background if choosing \texttt{FLRW\_perturb} = ``yes''.
 
@@ -173,7 +193,7 @@ where $\phi,\psi$ coincide with the Bardeen potentials \cite{bardeen1980} in thi
 		\phi'' + 3\mathcal{H}\phi' &=0, \label{eq:einstein_3}
 	\end{align}	
 \end{subequations}
-and $\phi=\psi$. The perturbed rest-mass density is $\rho = \bar{\rho} \left(1 + \delta \right)$, with $\bar{\rho}$ the background FLRW density. We have $v^i = \delta v^i$, since $\bar{v}^i = 0$ for FLRW. In the above, $\mathcal{H}\equiv a'/a$ is the conformal Hubble parameter, where $'\equiv \partial/\partial\eta$ and $\partial_i \equiv \partial/\partial x^i$. Solving the above system gives
+and $\phi=\psi$. The perturbed rest-mass density is $\rho = \bar{\rho} \left(1 + \delta \right)$, with $\bar{\rho}$ the background FLRW density. We have $v^i = \delta v^i$, since $\bar{v}^i = 0$ for FLRW. In the above, $\mathcal{H}\equiv a'/a$ is the conformal Hubble parameter, where $'\equiv \partial/\partial\eta$ and $\partial_i \equiv \partial/\partial x^i$. Solving the above system, choosing \emph{only} the growing mode (see \cite{macpherson2019} for more details), gives
 \begin{subequations} \label{eqs:linear_solnsg0}
     \begin{align}
     	\phi &= f(x^{i}), \label{eq:linear_phi}\\
@@ -192,7 +212,7 @@ In this thorn the initial scale factor $a_{\rm init}$ is set with \texttt{FLRW\_
 Below we outline several different choices for perturbations, and how to set these using the thorn parameters.
 
 %----------------
-\subsubsection{Single-mode perturbation}
+\subsubsection{Single-mode perturbation}\label{sec:singlemode_ics}
 %----------------
 
 This initial condition sets $\phi$ as a sine-wave function, and the corresponding density and velocity perturbations set using \eqref{eqs:linear_solnsg0}. Choose \texttt{FLRW\_perturb\_type}=``single\_mode''. The parameter \texttt{FLRW\_perturb\_direction} controls in which spatial dimension to apply the perturbation, and will set either $\phi=f(x^1),f(x^2),f(x^3)$, or $f(x^i)$ depending on the choice. For example, choosing \texttt{FLRW\_perturb\_direction}=``all'' we have
@@ -207,7 +227,7 @@ where $\lambda$ is the wavelength of the perturbation, $\theta$ is some phase of
 The wavelength, $\lambda$, of the perturbation is controlled by \texttt{single\_perturb\_wavelength}, given as a fraction of the total box length (to ensure periodicity is satisfied). The phase offset $\theta$ is controlled by {\tt phi\_phase\_offset}, and the amplitude is set by \texttt{phi\_amplitude}, which must be set such that $\phi_0\ll1$, and $\lambda, \rho^*$ must also be chosen such that the corresponding density and velocity perturbations are also small enough to satisfy the linear approximation. Set the FLRW background according to Section~\ref{sec:FLRWinit}.
 
 %----------------
-\subsubsection{Power spectrum of perturbations}
+\subsubsection{Power spectrum of perturbations}\label{sec:pspec_ics}
 %----------------
 
 We can instead choose the initial conditions to be a power spectrum of fluctuations, to better mimic the early state of the Universe. See \cite{macpherson2019} for more details. 
