@@ -5,7 +5,7 @@ A script to get the proper initial HL for use with FLRWSolver
     -- to make sure things are consistent with e.g. the box length
     
     USAGE:
-    python get_init_HL.py boxL_z0(Gpc) zini
+    python get_init_HL.py res boxL_z0(Gpc) zini
 
     (mainly adapted from my scribblings in Projects/ImprovedAveraging/translate_phys_units.ipynb)
 '''
@@ -53,7 +53,9 @@ boxL  = 1.0
 dtfac = 0.1
 dx    = boxL / res
 dt    = dtfac * dx
-
+#
+# Redshift after which you'd like to increase freq of 3D output
+zinc = 1.0
 '''
 ====================================================================================
 '''
@@ -100,13 +102,14 @@ etatest     = np.arange(tinit,1e5,dt)
 xitest      = xi(etatest,rhostarinit,ainit,tinit)
 aflrwval    = aflrw(xitest,ainit)
 zvals       = get_z(aflrwval,zini)
-aidx        = np.where(aflrwval>afinal)[0][0]
-zidx        = np.where(zvals<1.0)[0][0] # index where z<1 for the first time, when to increase output
-etafinal    = etatest[aidx]
+aidx_fin    = np.where(aflrwval>afinal)[0][0]
+zidx_inc    = np.where(zvals<zinc)[0][0] # index where z<1 for the first time, when to increase output
+eta_inc     = etatest[zidx_inc]          # time at which we want to then increase freq. of 3D data
+etafinal    = etatest[aidx_fin]
 itfinal     = (etafinal-tinit)/dt
-itz1        = (etatest[zidx]-tinit)/dt  # iteration where z=1
+itz1        = (etatest[zidx_inc]-tinit)/dt  # iteration where z=1
 print(f' running from a = {ainit} to a = {afinal} will take {int(itfinal)} iterations')
-print(f'    and FYI you will reach z={zvals[zidx]:.4f} at eta = {etatest[zidx]:.4f} after {int(itz1)} iterations')
+print(f'    and FYI you will reach z={zvals[zidx_inc]:.4f} at eta = {etatest[zidx_inc]:.4f} after {int(itz1)} iterations')
 
 
 print(f'')
@@ -115,9 +118,18 @@ print(f' FLRWSolver::FLRW_init_HL            = {HL_zini}')
 print(f' FLRWSolver::FLRW_init_a             = {ainit}')
 print(f' FLRWSolver::FLRW_lapse_value        = {ainit}')
 print(f' FLRWSolver::FLRW_boxlength          = {Lz0mpc}')
-print(f' FLRWSolver::FLRW_powerspectrum_file = FLRW_matterpower_z{int(zini)}.dat')
+if (Lz0.value>2.0):
+    print("WARNING: Make sure to use powerspectrum in LONGITUDINAL gauge for larger-scale sims")
+else:
+    print(f' FLRWSolver::FLRW_powerspectrum_file = FLRW_matterpower_z{int(zini)}.dat')
 
 print('')
+print(f'First run to z = {zinc}:')
+print('')
 print(f' Cactus::cctk_initial_time = {tinit}')
-print(f' Cactus::cctk_final_time   = {etafinal}')
+print(f' Cactus::cctk_final_time   = {eta_inc}')
 print(f'   time::dtfac             = {dtfac} ')
+
+print('')
+print('--- RESTART PARAMS ---')
+print(f' Cactus::cctk_final_time   = {etafinal}')
