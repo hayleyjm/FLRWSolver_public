@@ -43,6 +43,7 @@ KEYWORD FLRW_perturb_type "Add perturbation of the following type"
 {
  "single_mode" :: "Single mode perturbation (sine wave in density). Set FLRW_perturb_direction to choose dimensions of perturbation and single_perturb_wavelength."
  "single_mode_tensor" :: "Single mode perturbation (cos wave in tensor perturbation). Set params as for above, except hplus(cross)_amplitude instead of phi."
+ "single_mode_scalar_tensor" :: "Single mode perturbation (BOTH scalar and tensor). Set params for both above two options."
  "powerspectrum" :: "A power spectrum of (linear) perturbations. Supply the path to your chosen power spectrum in FLRW_powerspectrum_file"
  "fileread" :: "Linear perturbations to FLRW in longitudinal gauge -- read in from supplied ascii files (specific format - see doc)"
 } "single_mode"
