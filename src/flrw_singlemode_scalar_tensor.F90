@@ -25,7 +25,7 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
   CCTK_REAL :: lambda(3),kx,ky,kz,modk,perturb_rho0,perturb_v0
   CCTK_REAL :: dphi1,dphi2,dphi3,kvalue,coskx,sinkx
   CCTK_REAL :: kx_hij,ky_hij,kz_hij,modk_hij,ksq_hij
-  CCTK_REAL :: hplus_ini,hcross_ini,hplus,hcross,nfac
+  CCTK_REAL :: nfac,hxx,hxy,hyy
   CCTK_REAL :: phi_ijk,deltaijk,delta_velijk(3)
   CCTK_REAL :: delta_test,dvel_test
   CCTK_REAL, parameter :: perturb_size_tol = 1.e-5 ! perturbations larger than this tol will warn user

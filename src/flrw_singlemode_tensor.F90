@@ -22,7 +22,7 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
 
   CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
   CCTK_REAL :: kx,ky,kz,modk,kvalue,coskx,sinkx
-  CCTK_REAL :: hplus_ini,hcross_ini,hplus,hcross
+  CCTK_REAL :: hxx,hxy,hyy,ksq,nfac
   CCTK_INT  :: ncells(3)
   character(len=400) :: warn_message
 
