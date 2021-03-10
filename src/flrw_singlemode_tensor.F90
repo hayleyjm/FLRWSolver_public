@@ -23,6 +23,7 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
   CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
   CCTK_REAL :: kx,ky,kz,modk,kvalue,coskx,sinkx
   CCTK_REAL :: hxx,hxy,hyy,ksq,nfac
+  CCTK_REAL :: ki(3),modk,kvalue,coskx,sinkx,lambda(3)
   CCTK_INT  :: ncells(3)
   character(len=400) :: warn_message
 
@@ -63,17 +64,21 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
   ! Set the wavevector based on box size. Need k/H<1 for modes outside horizon
   !
   if (FLRW_init_HL > 1._dp) then
-      ! Our box size is larger than the horizon, set wavelength equal to this
+      ! Our box size is larger than the horizon, set wavelength equal to box size
       nfac = 1._dp / FLRW_init_HL
+      lambda = 3._dp*boxlen ! factor of 3 to cancel the 3 from ki all the same
+      ki     = 2._dp * pi / lambda
+      modk   = sqrt(ki(1)**2 + ki(2)**2 + ki(3)**2)
+      kx = ki(1); ky = ki(2); kz = ki(3)
   else
       ! Our box size is smaller than the horizon, give a warning...
       call CCTK_WARN(CCTK_WARN_ALERT,"Please set FLRW_init_HL > 1 for tensor perturbations outside horizon")
       nfac = 0.9
+      modk = nfac * hub
+      ksq  = modk**2
+      kx   = modk / sqrt(3._dp)
+      ky = kx; kz = kx
   endif
-  modk = nfac * hub
-  ksq  = modk**2
-  kx   = modk / sqrt(3._dp)
-  ky   = kx; kz = kx
 
   !
   ! spatial loop over *local* grid size for this processor
