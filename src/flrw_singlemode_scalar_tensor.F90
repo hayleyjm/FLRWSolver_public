@@ -23,8 +23,8 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
 
   CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
   CCTK_REAL :: lambda(3),kx,ky,kz,modk,perturb_rho0,perturb_v0
-  CCTK_REAL :: dphi1,dphi2,dphi3,kvalue,coskx,sinkx
-  CCTK_REAL :: kx_hij,ky_hij,kz_hij,modk_hij,ksq_hij
+  CCTK_REAL :: dphi1,dphi2,dphi3,kvalue,coskx,sinkx,lambda_hij(3)
+  CCTK_REAL :: kx_hij,ky_hij,kz_hij,modk_hij,ksq_hij,ki_hij(3)
   CCTK_REAL :: hplus_ini,hcross_ini,hplus,hcross,nfac
   CCTK_REAL :: phi_ijk,deltaijk,delta_velijk(3)
   CCTK_REAL :: delta_test,dvel_test
@@ -69,17 +69,21 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
   ! Set the wavevector for h_ij based on box size. Need k/H<1 for modes outside horizon
   !
   if (FLRW_init_HL > 1._dp) then
-      ! Our box size is larger than the horizon, set wavelength equal to this
+      ! Our box size is larger than the horizon, set wavelength equal to box size
       nfac = 1._dp / FLRW_init_HL
+      lambda_hij = 3._dp*boxlen ! factor of 3 to cancel the 3 from ki all the same
+      ki_hij     = 2._dp * pi / lambda
+      modk_hij   = sqrt(ki_hij(1)**2 + ki_hij(2)**2 + ki_hij(3)**2)
+      kx_hij     = ki_hij(1); ky_hij = ki_hij(2); kz_hij = ki_hij(3)
   else
       ! Our box size is smaller than the horizon, give a warning...
       call CCTK_WARN(CCTK_WARN_ALERT,"Please set FLRW_init_HL > 1 for tensor perturbations outside horizon")
       nfac = 0.9
+      modk_hij = nfac * hub
+      ksq_hij  = modk_hij**2
+      kx_hij   = modk_hij / sqrt(3._dp)
+      ky_hij = kx_hij; kz_hij = kx_hij
   endif
-  modk_hij = nfac * hub
-  ksq_hij  = modk_hij**2
-  kx_hij   = modk_hij / sqrt(3._dp)
-  ky_hij   = kx_hij; kz_hij = kx_hij
 
   !
   ! wavenumbers for phi perturbation in each direction
