@@ -16,7 +16,7 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   DECLARE_CCTK_ARGUMENTS
   DECLARE_CCTK_FUNCTIONS
   DECLARE_CCTK_PARAMETERS
-  
+
   integer   :: i,j,k
   logical   :: lapse,dtlapse,shift,data,hydro
   CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
@@ -34,9 +34,9 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   character(len=200) :: pkfilename!,deltafile,vel1file,vel2file,vel3file,phifile,ics_dir
   integer :: dr_unit,dv_unit1,dv_unit2,dv_unit3,p_unit
   integer :: il,jl,kl,iu,ju,ku,pkunit,pklen!,ics_dir_len
-  
+
   call CCTK_INFO("Initialising a POWER SPECTRUM of perturbations to an FLRW spacetime")
-  
+
   !
   ! set logicals that tell us whether we want to use FLRWSolver to set ICs
   !
@@ -51,14 +51,14 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   !
   ! Before we call the ICs generator we need to write the Pk file name to a text file
   !      --> this sucks, but it's easier than figuring out how to pass Fortran strings --> c strings --> Python strings...
-  !      --> Next step: read Pk in here, pass the array into Python. Even this was a bit tricky, so I delayed it. 
+  !      --> Next step: read Pk in here, pass the array into Python. Even this was a bit tricky, so I delayed it.
   !
   open(newunit=pkunit,file="pk_filename.txt",status='replace')
   ! convert CCTK string to Fortran string
   call CCTK_FortranString(pklen,FLRW_powerspectrum_file,pkfilename)
   write(pkunit,"(a)") trim(pkfilename)
   close(pkunit)
-  
+
   !
   ! call initial conditions generator
   ! --> note FLRW_boxlength is in cMpc here
@@ -67,23 +67,23 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   !
   call CCTK_INFO("Calling create_ics for initial conditions...")
   if (ncells(1)/=ncells(2)) call CCTK_WARN(CCTK_WARN_ALERT,"non-uniform grid")
-  
+
   call call_make_ics(a0,FLRW_boxlength,ncells(1),2*cctk_nghostzones(1),FLRW_random_seed)
   call CCTK_INFO("Done making initial conditions.")
-  
+
   !
   ! read in perturbations from files
   !
   open(newunit=dr_unit,file='init_delta.dat',status='old')  ! delta rho file
   open(newunit=dv_unit1,file='init_vel1.dat',status='old')  ! delta vel file [1]
   open(newunit=dv_unit2,file='init_vel2.dat',status='old')  ! delta vel file [2]
-  open(newunit=dv_unit3,file='init_vel3.dat',status='old')  ! delta vel file [3] 
+  open(newunit=dv_unit3,file='init_vel3.dat',status='old')  ! delta vel file [3]
   open(newunit=p_unit,file='init_phi.dat',status='old')     ! phi file
 
   !
   ! spatial loop over *global* grid size
   do k = 1, cctk_gsh(3)
-     do j = 1, cctk_gsh(2) 
+     do j = 1, cctk_gsh(2)
         ! loop over ROW no. (i is COLUMN no.) (i,j,k) --> (column, row, z)
 
         !
@@ -97,6 +97,12 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
      enddo
   enddo
   call CCTK_INFO("Opened and read IC files")
+
+  close(dr_unit)
+  close(dv_unit1)
+  close(dv_unit2)
+  close(dv_unit3)
+  close(p_unit)
 
   !
   ! indices for lower bound of local (processor) grid within global grid
@@ -127,11 +133,11 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
            if (data) then
 
               phi_ijk = phi(i,j,k)
-              
+
               if (lapse) then
                  alp(i,j,k) = FLRW_lapse_value * sqrt(1._dp + 2._dp * phi_ijk)
               endif
-              
+
               ! time deriv of lapse -- evolution of this is specified in ADMBase.
               if (dtlapse) then
                  dtalp(i,j,k) = 0._dp
