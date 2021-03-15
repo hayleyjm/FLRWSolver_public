@@ -15,8 +15,10 @@ from astropy.cosmology import WMAP9
 import numpy as np
 from scipy.interpolate import interp1d
 from scipy.interpolate import RegularGridInterpolator
-sys.path.insert(1, "/cosma/home/dp002/dc-macp1/software/flrwsolver/c2raytools3/src/")
-sys.path.insert(2, "/cosma/home/dp002/dc-macp1/software/flrwsolver/c2raytools3/src/c2raytools3/")
+#sys.path.insert(1, "/cosma/home/dp002/dc-macp1/software/flrwsolver/c2raytools3/src/")
+#sys.path.insert(2, "/cosma/home/dp002/dc-macp1/software/flrwsolver/c2raytools3/src/c2raytools3/")
+sys.path.insert(1, "/Users/hayleymac/Documents/codes/flrwsolver/c2raytools3/src/")
+sys.path.insert(1, "/Users/hayleymac/Documents/codes/flrwsolver/c2raytools3/src/c2raytools3/")
 import c2raytools3
 from c2raytools3.power_spectrum import _get_dims, _get_k, power_spectrum_1d
 import cut_powerspectrum
@@ -26,14 +28,14 @@ from cut_powerspectrum import boxL,pkcutfile,cutfac,res # res here is resolution
 # Choose the resolutions you want
 #   -- assumes [low,mid,high]
 #
-resolutions = [32,64,128]
+resolutions = [32,64,96]
 #
 # Number of ghost cells in each dimension (both sides combined)
 num_ghosts  = 6
 
 #
 # Random seed for ICs generation
-rseed = 10
+rseed = 4957398
 
 #
 # Initial scale factor
@@ -76,17 +78,18 @@ rhostar = WMAP9.critical_density0.to('kg / Mpc^3')       # conserved FLRW densit
 C1 = a_init / ( 4. * np.pi * G * rhostar)                # constants C1, C3 from Macpherson et al. 2016
 C3 = - np.sqrt( a_init / ( 6. * np.pi * G * rhostar ) )  # in physical units
 
+icut = int(cutfac) # for file naming
 #
 # Names of IC's files (for each resolution}
 #
 deltafiles = []; phifiles = []
 vel1files = []; vel2files = []; vel3files = []
 for r in resolutions:
-    deltafiles.append(f"init_delta_{r}_{cutfac}dx{res}.dat")
-    phifiles.append(f"init_phi_{r}_{cutfac}dx{res}.dat")
-    vel1files.append(f"init_vel1_{r}_{cutfac}dx{res}.dat")
-    vel2files.append(f"init_vel2_{r}_{cutfac}dx{res}.dat")
-    vel3files.append(f"init_vel3_{r}_{cutfac}dx{res}.dat")
+    deltafiles.append(f"init_delta_{r}_{icut}dx{res}.dat")
+    phifiles.append(f"init_phi_{r}_{icut}dx{res}.dat")
+    vel1files.append(f"init_vel1_{r}_{icut}dx{res}.dat")
+    vel2files.append(f"init_vel2_{r}_{icut}dx{res}.dat")
+    vel3files.append(f"init_vel3_{r}_{icut}dx{res}.dat")
 
 #
 # Make ICs for lowest resolution

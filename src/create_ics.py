@@ -28,7 +28,7 @@ def make_ics(a_init,box_size,resol,num_ghosts,rseed):
     a_init     : initial FLRW background scale factor
     resol      : numerical resolution of the simulation
     num_ghosts : number of ghost cells in each dimension
-    box_size   : physical size of each side of the box in cMpc
+    box_size   : physical size of each side of the box in comoving Mpc/h
     rseed      : random seed to use to generate the Gaussian random field for density perturb
 
     '''
