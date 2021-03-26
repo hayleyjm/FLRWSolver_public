@@ -120,7 +120,10 @@
 \label{sec:intro}
 %---------------------
 
-FLRW spacetime is a homogeneous, isotropic, expanding solution to Einstein's equations. This solution is the basis for the current standard cosmological model; $\Lambda$CDM. Here we provide a thorn to give initial conditions for cosmology using the Einstein Toolkit. We provide pure-FLRW spacetime (no perturbations), and linearly-perturbed FLRW spacetime (for various kinds of perturbations). Currently this thorn implements only a linearly-accurate solution of the constraint equations, so there is a second-order error in the solution from the beginning of the simulation. This can be removed by implementing exact solutions to the constraint equations; which can be added in the future. 
+FLRW spacetime is a homogeneous, isotropic, expanding solution to Einstein's equations. This solution is the basis for the current standard cosmological model; $\Lambda$CDM.
+The spatially-flat FLRW spacetime sourced by pure-dust with no cosmological constant is the Einstein-de Sitter (EdS) spacetime. 
+
+Here we provide a thorn to give initial conditions for cosmology using the Einstein Toolkit. Currently, \flrwsolver\ only implements the EdS solution. We provide pure-EdS spacetime (no perturbations), and linearly-perturbed EdS spacetime (for various kinds of perturbations). Currently this thorn implements only a linearly-accurate solution of the constraint equations, so there is a second-order error in the solution from the beginning of the simulation. This can be removed by implementing exact solutions to the constraint equations; which can be added in the future. 
 
 
 %--------------------------
@@ -158,26 +161,18 @@ The FLRW line element in conformal time, $\eta$, is given by
 \end{equation}
 where $a(\eta)$ is the scale factor describing the size of the Universe at time $\eta$. To initialise this spacetime, the user simply needs to specify \texttt{FLRW\_perturb} = ``no''. 
 
-\vspace{2mm}
-{\bf HERE is what we want to change things to (?) param names will change, basic structure should be the same}
-\vspace{2mm}
+The user chooses the initial value of $\mathcal{H}L$, i.e. the ratio of the initial Hubble horizon $d_H(z_{\rm init})\equiv c/\mathcal{H}(z_{\rm init})$ to the comoving length of the box $L$ in physical units. Since this quantity is dimensionless, this is also the ratio of the Hubble parameter to the box length in code units. This is controlled using the parameter \texttt{FLRW\_init\_HL}. 
+This choice of $\mathcal{H}L$ sets the initial background density in code units via the Friedmann equations. The initial value for the scale factor $a$ is controlled with \texttt{FLRW\_init\_a}, and the initial lapse by \texttt{FLRW\_lapse\_value}, both of which default to 1. 
 
-\flrwsolver currently assumes an EdS model, i.e. matter-dominated, flat initial conditions. The user chooses the initial value of (the dimensionless) $HL$, i.e. the ratio of the Hubble horizon $d_H(z)\equiv c/H(z)$ to the physical \emph{proper} length of the box $L$. This is set using the parameter \texttt{FLRW\_init\_HL}. Since \flrwsolver assumes the EdS model, it is also assumed that the size of the Hubble horizon at $z=0$ is equivalent to $d_{H_0}=c/H_0\approx 6.6{\rm Gpc}$. The initial value of $HL$ set by the user, along with the chosen $z_{\rm init}$ (controlled by \texttt{FLRW\_init\_z} {\bf TO BE ADDED}), therefore implies the physical length of the box $L$ at the initial time. When setting pure FLRW or single-mode perturbations to FLRW (see fSection~\ref{sec:singlemode_ics} below), the physical side of the box is not necessary for creating initial data and therefore is only relevant when physically interpreting the results. This means the assumption of $d_{H_0}$ \emph{does not affect} pure-FLRW or single-mode perturbation initial conditions. However, when setting a powerspectrum of initial data (see Section~\ref{sec:pspec_ics} below), \flrwsolver also requires the \emph{physical} (comoving) box size (i.e., the proper length $L$ in Mpc/h at $z=0$) as input to create initial data from the relevant section of the CAMB matter power spectrum. It is up to the user to ensure the values of initial $HL$ and comoving box size are consistent ({\bf though maybe we can put a check in somehow? or just make it so that $z_{\rm init}$ sets the physical box size?}).
+When setting pure FLRW or single-mode perturbations to FLRW (see Section~\ref{sec:singlemode_ics} below), the physical side of the box (or the initial redshift $z_{\rm init}$) is not necessary for creating initial data and therefore is only relevant when physically interpreting the results. However, setting a powerspectrum of initial data does require knowledge of the physical length of the box at the initial time, see Section~\ref{sec:pspec_ics}.
 
+%Physical units can then be achieved using the length unit, $L_{unit}$, defined by
+%\begin{equation}
+%	L_{code} \times L_{unit} = L_{phys},
+%\end{equation}
+%(easily translated to a time unit using the convention $c=1$) which can be used to translate $H(z)$ at any time, in code units, back to a physical $H(z)$ in $km/s Mpc$.
 
-
-Physical units can then be achieved using the length unit, $L_{unit}$, defined by
-\begin{equation}
-	L_{code} \times L_{unit} = L_{phys},
-\end{equation}
-(easily translated to a time unit using the convention $c=1$) which can be used to translate $H(z)$ at any time, in code units, back to a physical $H(z)$ in $km/s Mpc$. 
-
-\vspace{2mm}
-{\bf BELOW is what is currently incorporated, to be changed to the above...}
-\vspace{2mm}
-In addition, the initial value for the dimensionless product of the conformal Hubble parameter and the box length, $\mathcal{H}_* L$, is specified with \texttt{FLRW\_init\_HL}, from which the initial background density in code units is set via the Friedmann equations with $G=c=1$, and $k=\Lambda=0$. The initial value for the scale factor $a$ is controlled with \texttt{FLRW\_init\_a}, and the initial lapse by \texttt{FLRW\_lapse\_value}, both of which default to 1. 
-
-These parameters all still need to be set to describe the FLRW background if choosing \texttt{FLRW\_perturb} = ``yes''.
+%The parameters described here all still need to be set to describe the FLRW background if choosing \texttt{FLRW\_perturb} = ``yes''.
 
 \subsection{Linear perturbations to FLRW spacetime}
 
@@ -201,13 +196,13 @@ and $\phi=\psi$. The perturbed rest-mass density is $\rho = \bar{\rho} \left(1 +
      	v^{i} &= -\sqrt{\frac{a_{\mathrm{init}}}{6\pi\rho^{*}}} \xi\, \partial^{i}f(x^{i}),
     \end{align}
 \end{subequations}
-where $a_{\mathrm{init}} = a(\eta_{\rm init})$, with $\eta_{\rm init}$ the initial simulation time, $\rho^*\equiv \bar{\rho}a^3$ is the FLRW comoving (constant) density, and we use the scaled conformal time
+where $a_{\mathrm{init}} = a(\eta_{\rm init})$, with $\eta_{\rm init}=2/3\mathcal{H}_{\rm init}$ the initial conformal time, $\rho^*\equiv \bar{\rho}a^3$ is the FLRW comoving (constant) density (from conservation of mass), and we use the scaled conformal time
 \begin{equation}
 	\xi \equiv 1 + \sqrt{\frac{2\pi\rho^{*}}{3\,a_\mathrm{init}}}\eta,
 \end{equation}
 for simplicity. In \eqref{eq:linear_phi} we have the freedom to choose the form of $f(x^i)$, so long as it has amplitude such that $\phi\ll1$. Equations \eqref{eqs:linear_solnsg0} denote the standard form of linear perturbations implemented in this thorn. See \cite{macpherson2017} and \cite{macpherson2019} for more details. 
 
-In this thorn the initial scale factor $a_{\rm init}$ is set with \texttt{FLRW\_init\_a}, and the initial background FLRW density $\bar{\rho}_{\rm init}$ is set implicitly from \texttt{FLRW\_init\_HL}, which correspondingly sets $\rho^*$.
+The user must still specify the FLRW background as in Section~\ref{sec:FLRWinit}.
 
 Below we outline several different choices for perturbations, and how to set these using the thorn parameters.
 
@@ -224,31 +219,39 @@ where $\lambda$ is the wavelength of the perturbation, $\theta$ is some phase of
 	\delta &= - \left[ \left(\frac{2\pi}{\lambda}\right)^{2} \frac{a_{\mathrm{init}}}{4\pi\rho^{*}} + 2\right] \phi_{0} \sum_{i=1}^{3} \mathrm{sin}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right),\label{eq:initial_delta}\\
 	v^{i} &= \frac{2\pi}{\lambda}\sqrt{\frac{a_{\mathrm{init}}}{6\pi\rho^{*}}}\, \phi_{0}\, \mathrm{cos}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right). \label{eq:initial_deltav}
 \end{align}
-The wavelength, $\lambda$, of the perturbation is controlled by \texttt{single\_perturb\_wavelength}, given as a fraction of the total box length (to ensure periodicity is satisfied). The phase offset $\theta$ is controlled by {\tt phi\_phase\_offset}, and the amplitude is set by \texttt{phi\_amplitude}, which must be set such that $\phi_0\ll1$, and $\lambda, \rho^*$ must also be chosen such that the corresponding density and velocity perturbations are also small enough to satisfy the linear approximation. Set the FLRW background according to Section~\ref{sec:FLRWinit}.
+The wavelength, $\lambda$, of the perturbation is controlled by \texttt{single\_perturb\_wavelength}, given as a fraction of the total box length.
+ %(to ensure periodicity is satisfied). 
+ The phase offset $\theta$ is controlled by {\tt phi\_phase\_offset}, and the amplitude is set by \texttt{phi\_amplitude}, which must be set such that $\phi_0\ll1$
+ %, and $\lambda, \rho^*$ must also be chosen 
+ to ensure that the corresponding density and velocity perturbations are also small enough to satisfy the linear approximation. The code will produce a warning if either the density or velocity perturbations have amplitude $> 10^{-5}$. 
 
 %----------------
 \subsubsection{Power spectrum of perturbations}\label{sec:pspec_ics}
 %----------------
 
-We can instead choose the initial conditions to be a power spectrum of fluctuations, to better mimic the early state of the Universe. See \cite{macpherson2019} for more details. 
-Note these fluctuations are still assumed to be linear perturbations to an FLRW background. 
+We can instead choose the initial conditions to be a power spectrum of fluctuations, to better mimic the early state of the Universe (see \cite{macpherson2019}). 
+These fluctuations are still assumed to be linear perturbations to an EdS background. 
 
-This is implemented by reading in a two-column text file with the 3-dimensional matter power spectrum $P(k) ({\rm Mpc}/h)^3$, where the wavenumber is $k=\sqrt{k_x^2+k_y^2+k_z^2}$ (in units of $h$/Mpc). It is assumed the text file is the same format as the matter power spectrum output from CAMB \cite{lewis2002}, i.e. a text file with two columns $k, P(k)$ (with \emph{no} line for $k=0$. Any file in this format will work, in units corresponding to CAMB output\footnote{see https://camb.info}. Note this has been tested with CLASS output and it works fine.
+This is implemented by reading in a two-column text file with the 3-dimensional matter power spectrum $P(k)$ (with units Mpc/$h)^3$, where the wavenumber is $k=\sqrt{k_x^2+k_y^2+k_z^2}$ (with units $h$/Mpc). Here $h$ is defined such that $H_0 = 100 h$km/s/Mpc. It is assumed the text file is the same format as the matter power spectrum output from CAMB\footnote{\url{https://camb.info}} or CLASS\footnote{\url{https://class-code.net}}, i.e. a text file with two columns $k, P(k)$.
 
-Using a slightly modified version of the \texttt{c2raytools}\footnote{https://github.com/hjens/c2raytools} Python package, \texttt{FLRWSolver}\ generates a Gaussian random field that follows the given power spectrum. This is the density perturbation to the FLRW background. Assuming the metric \eqref{eq:perturbed_metric}, we use equations \eqref{eqs:linear_solnsg0} to find the corresponding velocity and metric perturbations for this density perturbation in Fourier space.
+Using the \texttt{c2raytools}\footnote{\url{https://github.com/hjens/c2raytools}} Python package translated to Python 3, \texttt{FLRWSolver}\ generates a Gaussian random field that follows the given power spectrum. This field is centred around zero and sets the density perturbation to the EdS background. The code then uses equations \eqref{eqs:linear_solnsg0} to find the corresponding velocity and metric perturbations for this density perturbation in Fourier space.
 
-This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. Set the FLRW background according to Section~\ref{sec:FLRWinit}, and set the path to (and name of) the text file containing the matter power spectrum using \texttt{FLRW\_powerspectrum\_file}. The Gaussian random field will be drawn with seed corresponding to \texttt{FLRW\_random\_seed}, so keep this constant to draw the same field more than once. You also must specify the size of the domain in comoving Mpc (Mpc$/h$) using \texttt{FLRW\_boxlength}, as physical units are required to generate the dimensionless perturbations from the power spectrum. 
+This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. Set the FLRW background according to Section~\ref{sec:FLRWinit}, and set the path to (and name of) the text file containing the matter power spectrum using \texttt{FLRW\_powerspectrum\_file}\footnote{Note that sometimes if this string is too long the code will crash, if so, move the file somewhere else with a shorter path.}. The Gaussian random field will be drawn with seed corresponding to \texttt{FLRW\_random\_seed}, so keep this constant to draw the same field more than once. You also must specify the size of the domain in comoving Mpc (Mpc$/h$) using \texttt{FLRW\_boxlength}, which is required to draw the appropriate scales from the power spectrum.
+%as physical units are required to generate the dimensionless perturbations from the power spectrum. 
+
+We provide a Python script in \texttt{tools/get\_init\_HL.py} to translate a given resolution, comoving box length in Gpc$/h$ (i.e. the proper length at $z=0$), and initial redshift to the appropriate values of initial $\mathcal{H}L$ and initial coordinate time. The script will also output the final time corresponding to a particular (approximate; based on the EdS prediction) increase in volume (scale factor), and intermediate times corresponding to particular redshifts (again, approximate, and based on EdS predictions) to help with, e.g., restarting simulations at a particular late time with increased 3D output frequency. This script assumes the user is interested in approximating the EdS Hubble horizon at $z=0$ of $d_{H_0}=c/H_0\approx 6.6{\rm Gpc}$ (however in practise this is easily changed). We emphasise again that this is just an approximation for the initial data and does not ensure the simulation will be close to EdS at any time.
+
 
 
 %----------------
 \subsubsection{Linear perturbations from user-specified files}
 %----------------
 
-There is also a possibility for you to set up your own initial conditions and read them in to \texttt{FLRWSolver}. These must be in ascii format, and the 3D data must be stored in a specific way (this may be generalised to a more widely-used format at some point in the future). The data is assumed to be stored in 2D $N\times N$ slices of the $x-y$ plane, with the $z$ index increasing every $N$ rows, where $N=n+n_{\rm gh}$ is the resolution ($n$) including the number of ghost cells in each dimension ($n_{\rm gh}$; i.e., with $n_{\rm gh}/2$ ghost cells on each side). Therefore, the columns are the $x$ indices, and the rows are the $y$ indices, repeating every $N$ rows. The files are therefore assumed to include ghost cells, although these may be set to zero, since the ET asserts periodic boundary conditions.
+There is also a possibility for you to set up your own initial conditions and read them in to \texttt{FLRWSolver}. These must be in ascii format, and the 3D data must be stored in a specific way (for now). The data is assumed to be stored in 2D $N\times N$ slices of the $x-y$ plane, with the $z$ index increasing every $N$ rows, where $N=n+n_{\rm gh}$ is the resolution ($n$) including the total number of ghost cells in each dimension ($n_{\rm gh}$; i.e., with $n_{\rm gh}/2$ ghost cells on each side). Therefore, the columns are the $x$ indices, and the rows are the $y$ indices, repeating every $N$ rows. The files must include ghost cells, although these may simply be set to zero, since the ET asserts periodic boundary conditions after \flrwsolver\ is called.
 
-The files are assumed to be linear perturbations to an FLRW spacetime in the longitudinal gauge, as with other forms of initial conditions. The parameter \texttt{FLRW\_deltafile} specifies the fractional density perturbation $\delta$, \texttt{FLRW\_phifile} for the metric perturbation $\phi/c^2$, and \texttt{FLRW\_velxfile}, \texttt{FLRW\_velyfile}, and \texttt{FLRW\_velzfile} for each component of the contravariant fluid three-velocity with respect to the Eulerian observer, $v^i/c$ (see \texttt{HydroBase} documentation for more details). All quantities are assumed to be specified in code units (normalised by the speed of light, $c$, with $\delta$ already dimensionless).
+To use this kind of initial condition set \texttt{FLRW\_perturb\_type}=``fileread''. The files are assumed to correspond to linear perturbations around an EdS background. The parameter \texttt{FLRW\_deltafile} specifies the fractional density perturbation $\delta$, \texttt{FLRW\_phifile} for the metric perturbation $\phi/c^2$, and \texttt{FLRW\_velxfile}, \texttt{FLRW\_velyfile}, and \texttt{FLRW\_velzfile} for each component of the contravariant fluid three-velocity with respect to the Eulerian observer, $v^i/c$ (see \texttt{HydroBase} documentation for a definition of $v^i$). %All quantities are assumed to be specified in code units (normalised by the speed of light, $c$, with $\delta$ already dimensionless).
 
-This option is useful for, e.g., running test simulations with a controlled number of modes (but keeping the gradients the same between resolutions) that can be created using \texttt{tools/make\_test\_ics.py} alongside \texttt{tools/cut\_powerspectrum.py}.
+%This option is useful for, e.g., running test simulations with a controlled number of modes (but keeping the gradients the same between resolutions) that can be created using \texttt{tools/make\_test\_ics.py} alongside \texttt{tools/cut\_powerspectrum.py}.
 
 
 %%----------------
@@ -516,8 +519,9 @@ For this test the relevant parameters we are considering are:
 \begin{itemize}
 	\item \texttt{FLRWSolver::perturb}=``yes''
 	\item \texttt{FLRWSolver::perturb\_type}=``powerspectrum''
+	\item \texttt{FLRWSolver::FLRW\_boxlength}=1000
 \end{itemize}
-Here we are considering a $32^3$ domain with 1 Gpc$^3$ box length. The minimum scale sampled is $\lambda_{\rm min} = 2 \Delta x$, i.e. the full power spectrum to the Nyquist frequency is sampled. The power spectrum is output from CAMB\footnote{https://camb.info} at redshift $z=1100$. The resulting initial conditions are shown in Figure~\ref{fig:test6}.
+Here we are considering a $32^3$ domain with 1 Gpc$^3$ box length. The minimum scale sampled is $\lambda_{\rm min} = 2 \Delta x$, i.e. the full power spectrum to the Nyquist frequency is sampled. The power spectrum used here is output from CAMB\footnote{https://camb.info} at redshift $z=1100$. The resulting initial conditions are shown in Figure~\ref{fig:test6}.
 
 \begin{figure}[ht]
 	\begin{center}

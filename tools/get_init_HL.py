@@ -45,7 +45,7 @@ Lz0 = float(sys.argv[2]) * units.Gpc
 # Initial redshift, scale factor, time (latter should stay the same)
 zini  = float(sys.argv[3])
 ainit = 1.0
-tinit = 1.0
+# tinit = 1.0
 #
 # Simulation (code units) box size, dtfac, res, etc
 res   = int(sys.argv[1])
@@ -55,7 +55,7 @@ dx    = boxL / res
 dt    = dtfac * dx
 #
 # Redshift after which you'd like to increase freq of 3D output
-zinc = 1.0
+zinc = 3.0
 '''
 ====================================================================================
 '''
@@ -82,7 +82,6 @@ HLz0  = (H0*Lz0/const.c).to('')
 print(f'                   H_0 = {H0}')
 print(f'  Hubble horizon (z=0) = {dH_z0}')
 print(f'               HL(z=0) = {HLz0}')
-
 '''
 Scale HL(z=0) back to desired initial redshift
 '''
@@ -97,6 +96,8 @@ Find settings for final time, etc
 '''
 afinal      = ainit + zini # final scale factor we want to run to
 Hinit       = HL_zini / boxL
+tinit       = 2./(3.*Hinit)
+print(f'      tinit = 2/3Hinit = {tinit}')
 rhostarinit = Hinit**2 * 3. * ainit / (8.*np.pi)
 etatest     = np.arange(tinit,1e5,dt)
 xitest      = xi(etatest,rhostarinit,ainit,tinit)
