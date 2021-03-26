@@ -67,23 +67,16 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
 
   !
   ! Set the wavevector for h_ij based on box size. Need k/H<1 for modes outside horizon
+  !    -- note: this assumes the k(plus) = k(cross) (i.e. wavenumbers of 2 polarisations are equal)
+  !    -- but does not assume the amplitudes of these are the same
   !
-  !if (FLRW_init_HL > 1._dp) then
-      ! Our box size is larger than the horizon, set wavelength equal to box size
-  nfac = 1._dp / FLRW_init_HL
-  lambda_hij = 3._dp*boxlen ! factor of 3 to cancel the 3 from ki all the same
-  ki_hij     = 2._dp * pi / lambda_hij
+  if (FLRW_init_HL <= 1._dp) then
+     call CCTK_WARN(CCTK_WARN_ALERT,"Please set FLRW_init_HL > 1 for tensor perturbations outside horizon. Initial choice of hdot=0 may not be valid.")
+  endif
+  lambda_hij = boxlen                  ! lambda^x = lambda^y = lambda^z
+  ki_hij     = 2._dp * pi / lambda_hij ! k^x = k^y = k^z
   modk_hij   = sqrt(ki_hij(1)**2 + ki_hij(2)**2 + ki_hij(3)**2)
   kx_hij     = ki_hij(1); ky_hij = ki_hij(2); kz_hij = ki_hij(3)
-  !else
-      ! Our box size is smaller than the horizon, give a warning...
-  !    call CCTK_WARN(CCTK_WARN_ALERT,"Please set FLRW_init_HL > 1 for tensor perturbations outside horizon")
-  !    nfac = 0.9
-  !    modk_hij = nfac * hub
-  !    ksq_hij  = modk_hij**2
-  !    kx_hij   = modk_hij / sqrt(3._dp)
-  !    ky_hij = kx_hij; kz_hij = kx_hij
-  !endif
 
   !
   ! wavenumbers for phi perturbation in each direction
@@ -163,9 +156,9 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
 
            endif
            deltaijk = perturb_rho0 * phi_ijk
-           hxx = hplus_amplitude * coskx
-           hyy = - hplus_amplitude * coskx
-           hxy = hcross_amplitude * sinkx
+           hxx = 0.5_dp * hplus_amplitude * coskx + 0.5_dp * hcross_amplitude * coskx
+           hyy = - hxx
+           hxy = 0.5_dp * hplus_amplitude * sinkx + 0.5_dp * hcross_amplitude * sinkx
 
            !
            ! set up metric, extrinsic curvature, lapse and shift

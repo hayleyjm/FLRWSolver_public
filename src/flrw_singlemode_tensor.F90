@@ -61,24 +61,17 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
   call set_parameters(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
 
   !
-  ! Set the wavevector based on box size. Need k/H<1 for modes outside horizon
+  ! Set the wavevector based on box size. Need (k eta) < 1 for modes outside horizon
+  !    -- note: this assumes the k(plus) = k(cross) (i.e. wavenumbers of 2 polarisations are equal)
+  !    -- but does not assume the amplitudes of these are the same
   !
-  !if (FLRW_init_HL > 1._dp) then ! think we need a CCTK comparison for this 'if'
-      ! Our box size is larger than the horizon, set wavelength equal to box size
-  nfac = 1._dp / FLRW_init_HL
-  lambda = boxlen ! factor of 3 to cancel the 3 from ki all the same
-  ki     = 2._dp * pi / lambda
+  if (FLRW_init_HL <= 1._dp) then
+     call CCTK_WARN(CCTK_WARN_ALERT,"Please set FLRW_init_HL > 1 for tensor perturbations outside horizon. Initial choice of hdot=0 may not be valid.")
+  endif
+  lambda = boxlen              ! lambda^x = lambda^y = lambda^z
+  ki     = 2._dp * pi / lambda ! k^x = k^y = k^z
   modk   = sqrt(ki(1)**2 + ki(2)**2 + ki(3)**2)
   kx = ki(1); ky = ki(2); kz = ki(3)
-  !else
-      ! Our box size is smaller than the horizon, give a warning...
-  !    call CCTK_WARN(CCTK_WARN_ALERT,"Please set FLRW_init_HL > 1 for tensor perturbations outside horizon")
-  !    nfac = 0.9
-  !    modk = nfac * hub
-  !    ksq  = modk**2
-  !    kx   = modk / sqrt(3._dp)
-  !    ky = kx; kz = kx
-  !endif
 
   !
   ! spatial loop over *local* grid size for this processor
@@ -103,9 +96,9 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
               coskx = cos(kx * x(i,j,k) + ky * y(i,j,k) + kz * z(i,j,k))
               sinkx = sin(kx * x(i,j,k) + ky * y(i,j,k) + kz * z(i,j,k))
            endif
-           hxx = hplus_amplitude * coskx
-           hyy = - hplus_amplitude * coskx
-           hxy = hcross_amplitude * sinkx
+           hxx = 0.5_dp * hplus_amplitude * coskx + 0.5_dp * hcross_amplitude * coskx
+           hyy = - hxx
+           hxy = 0.5_dp * hplus_amplitude * sinkx + 0.5_dp * hcross_amplitude * sinkx
 
            !
            ! set up metric, extrinsic curvature, lapse and shift
