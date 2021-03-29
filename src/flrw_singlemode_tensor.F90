@@ -36,25 +36,25 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
 
   !
   ! set logicals that are specific to this single mode case only
-  perturb_x = .False.; perturb_y = .False.
-  perturb_z = .False.; perturb_all = .False.
+  !perturb_x = .False.; perturb_y = .False.
+  !perturb_z = .False.; perturb_all = .False.
 
-  perturb_x   = CCTK_EQUALS (FLRW_perturb_direction, "x")
-  perturb_y   = CCTK_EQUALS (FLRW_perturb_direction, "y")
-  perturb_z   = CCTK_EQUALS (FLRW_perturb_direction, "z")
-  perturb_all = CCTK_EQUALS (FLRW_perturb_direction, "all")
+  !perturb_x   = CCTK_EQUALS (FLRW_perturb_direction, "x")
+  !perturb_y   = CCTK_EQUALS (FLRW_perturb_direction, "y")
+  !perturb_z   = CCTK_EQUALS (FLRW_perturb_direction, "z")
+  !perturb_all = CCTK_EQUALS (FLRW_perturb_direction, "all")
   !
-  if (perturb_x) then
-     call CCTK_INFO("    Perturbing in the x-direction ONLY ... ")
-  elseif (perturb_y) then
-     call CCTK_INFO("    Perturbing in the y-direction ONLY ... ")
-  elseif (perturb_z) then
-     call CCTK_INFO("    Perturbing in the z-direction ONLY ... ")
-  elseif (perturb_all) then
-     call CCTK_INFO("    Perturbing in all directions ... ")
-  else
-     call CCTK_INFO( "    Perturbing in no directions? " )
-  endif
+  !if (perturb_x) then
+    ! call CCTK_INFO("    Perturbing in the x-direction ONLY ... ")
+  !elseif (perturb_y) then
+    ! call CCTK_INFO("    Perturbing in the y-direction ONLY ... ")
+  !elseif (perturb_z) then
+    ! call CCTK_INFO("    Perturbing in the z-direction ONLY ... ")
+  !elseif (perturb_all) then
+    ! call CCTK_INFO("    Perturbing in all directions ... ")
+  !else
+    ! call CCTK_INFO( "    Perturbing in no directions? " )
+  !endif
 
   !
   ! set some parameters used in setting the background
@@ -68,10 +68,12 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
   if (FLRW_init_HL <= 1._dp) then
      call CCTK_WARN(CCTK_WARN_ALERT,"Please set FLRW_init_HL > 1 for tensor perturbations outside horizon. Initial choice of hdot=0 may not be valid.")
   endif
-  lambda = boxlen              ! lambda^x = lambda^y = lambda^z
-  ki     = 2._dp * pi / lambda ! k^x = k^y = k^z
+  lambda = boxlen              ! lambda^z only for motion in z-direction, others all zero
+  kz     = 2._dp * pi / lambda ! k^z for motion in only z-direction, others all zero
+  ki     = 0._dp
+  ki(3)  = kz
   modk   = sqrt(ki(1)**2 + ki(2)**2 + ki(3)**2)
-  kx = ki(1); ky = ki(2); kz = ki(3)
+  kx = ki(1); ky = ki(2)!; kz = ki(3)
 
   !
   ! spatial loop over *local* grid size for this processor
@@ -83,19 +85,19 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
            !
            ! Set components of h_ij based on what kind of perturbation we want
            !
-           if (perturb_x) then
-              coskx = cos(kx * x(i,j,k))
-              sinkx = sin(kx * x(i,j,k))
-           elseif (perturb_y) then
-              coskx = cos(ky * y(i,j,k))
-              sinkx = sin(ky * y(i,j,k))
-           elseif (perturb_z) then
-              coskx = cos(kz * z(i,j,k))
-              sinkx = sin(kz * z(i,j,k))
-           elseif (perturb_all) then
-              coskx = cos(kx * x(i,j,k) + ky * y(i,j,k) + kz * z(i,j,k))
-              sinkx = sin(kx * x(i,j,k) + ky * y(i,j,k) + kz * z(i,j,k))
-           endif
+           !if (perturb_x) then
+            !  coskx = cos(kx * x(i,j,k))
+             ! sinkx = sin(kx * x(i,j,k))
+           !elseif (perturb_y) then
+            !  coskx = cos(ky * y(i,j,k))
+             ! sinkx = sin(ky * y(i,j,k))
+           !elseif (perturb_z) then
+            !  coskx = cos(kz * z(i,j,k))
+            !  sinkx = sin(kz * z(i,j,k))
+           !elseif (perturb_all) then
+           coskx = cos(kx * x(i,j,k) + ky * y(i,j,k) + kz * z(i,j,k))
+           sinkx = sin(kx * x(i,j,k) + ky * y(i,j,k) + kz * z(i,j,k))
+           !endif
            hxx = 0.5_dp * hplus_amplitude * coskx + 0.5_dp * hcross_amplitude * coskx
            hyy = - hxx
            hxy = 0.5_dp * hplus_amplitude * sinkx + 0.5_dp * hcross_amplitude * sinkx

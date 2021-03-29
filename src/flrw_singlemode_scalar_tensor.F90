@@ -41,25 +41,25 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
 
   !
   ! set logicals that are specific to this single mode case only
-  perturb_x = .False.; perturb_y = .False.
-  perturb_z = .False.; perturb_all = .False.
+  !perturb_x = .False.; perturb_y = .False.
+  !perturb_z = .False.; perturb_all = .False.
 
-  perturb_x   = CCTK_EQUALS (FLRW_perturb_direction, "x")
-  perturb_y   = CCTK_EQUALS (FLRW_perturb_direction, "y")
-  perturb_z   = CCTK_EQUALS (FLRW_perturb_direction, "z")
-  perturb_all = CCTK_EQUALS (FLRW_perturb_direction, "all")
+  !perturb_x   = CCTK_EQUALS (FLRW_perturb_direction, "x")
+  !perturb_y   = CCTK_EQUALS (FLRW_perturb_direction, "y")
+  !perturb_z   = CCTK_EQUALS (FLRW_perturb_direction, "z")
+  !perturb_all = CCTK_EQUALS (FLRW_perturb_direction, "all")
   !
-  if (perturb_x) then
-     call CCTK_INFO("    Perturbing in the x-direction ONLY ... ")
-  elseif (perturb_y) then
-     call CCTK_INFO("    Perturbing in the y-direction ONLY ... ")
-  elseif (perturb_z) then
-     call CCTK_INFO("    Perturbing in the z-direction ONLY ... ")
-  elseif (perturb_all) then
-     call CCTK_INFO("    Perturbing in all directions ... ")
-  else
-     call CCTK_INFO( "    Perturbing in no directions? " )
-  endif
+  !if (perturb_x) then
+    ! call CCTK_INFO("    Perturbing in the x-direction ONLY ... ")
+  !elseif (perturb_y) then
+    ! call CCTK_INFO("    Perturbing in the y-direction ONLY ... ")
+  !elseif (perturb_z) then
+    ! call CCTK_INFO("    Perturbing in the z-direction ONLY ... ")
+  !elseif (perturb_all) then
+    ! call CCTK_INFO("    Perturbing in all directions ... ")
+  !else
+    ! call CCTK_INFO( "    Perturbing in no directions? " )
+  !endif
 
   !
   ! set some parameters used in setting the background
@@ -73,10 +73,12 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
   if (FLRW_init_HL <= 1._dp) then
      call CCTK_WARN(CCTK_WARN_ALERT,"Please set FLRW_init_HL > 1 for tensor perturbations outside horizon. Initial choice of hdot=0 may not be valid.")
   endif
-  lambda_hij = boxlen                  ! lambda^x = lambda^y = lambda^z
-  ki_hij     = 2._dp * pi / lambda_hij ! k^x = k^y = k^z
+  lambda_hij = boxlen                  ! lambda^z only for motion in z-direction, others all zero
+  kz_hij     = 2._dp * pi / lambda_hij ! k^z for motion in only z-direction, others all zero
+  ki_hij     = 0._dp
+  ki_hij(3)  = kz_hij
   modk_hij   = sqrt(ki_hij(1)**2 + ki_hij(2)**2 + ki_hij(3)**2)
-  kx_hij     = ki_hij(1); ky_hij = ki_hij(2); kz_hij = ki_hij(3)
+  kx_hij     = ki_hij(1); ky_hij = ki_hij(2)!; kz_hij = ki_hij(3)
 
   !
   ! wavenumbers for phi perturbation in each direction
@@ -119,8 +121,8 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
               dphi1   = phi_amplitude * kx * cos(kx * x(i,j,k) - phi_phase_offset)
               delta_velijk(1) = perturb_v0 * dphi1
 
-              coskx = cos(kx_hij * x(i,j,k))
-              sinkx = sin(kx_hij * x(i,j,k))
+              !coskx = cos(kx_hij * x(i,j,k))
+              !sinkx = sin(kx_hij * x(i,j,k))
 
            elseif (perturb_y) then
 
@@ -128,8 +130,8 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
               dphi2   = phi_amplitude * ky * cos(ky * y(i,j,k) - phi_phase_offset)
               delta_velijk(2) = perturb_v0 * dphi2
 
-              coskx = cos(ky_hij * y(i,j,k))
-              sinkx = sin(ky_hij * y(i,j,k))
+              !coskx = cos(ky_hij * y(i,j,k))
+              !sinkx = sin(ky_hij * y(i,j,k))
 
            elseif (perturb_z) then
 
@@ -137,8 +139,8 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
               dphi3   = phi_amplitude * kz * cos(kz * z(i,j,k) - phi_phase_offset)
               delta_velijk(3) = perturb_v0 * dphi3
 
-              coskx = cos(kz_hij * z(i,j,k))
-              sinkx = sin(kz_hij * z(i,j,k))
+              !coskx = cos(kz_hij * z(i,j,k))
+              !sinkx = sin(kz_hij * z(i,j,k))
 
            elseif (perturb_all) then
 
@@ -151,11 +153,14 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
               delta_velijk(2) = perturb_v0 * dphi2
               delta_velijk(3) = perturb_v0 * dphi3
 
-              coskx = cos(kx_hij * x(i,j,k) + ky_hij * y(i,j,k) + kz_hij * z(i,j,k))
-              sinkx = sin(kx_hij * x(i,j,k) + ky_hij * y(i,j,k) + kz_hij * z(i,j,k))
+              !coskx = cos(kx_hij * x(i,j,k) + ky_hij * y(i,j,k) + kz_hij * z(i,j,k))
+              !sinkx = sin(kx_hij * x(i,j,k) + ky_hij * y(i,j,k) + kz_hij * z(i,j,k))
 
            endif
            deltaijk = perturb_rho0 * phi_ijk
+
+           coskx = cos(kx_hij * x(i,j,k) + ky_hij * y(i,j,k) + kz_hij * z(i,j,k))
+           sinkx = sin(kx_hij * x(i,j,k) + ky_hij * y(i,j,k) + kz_hij * z(i,j,k))
            hxx = 0.5_dp * hplus_amplitude * coskx + 0.5_dp * hcross_amplitude * coskx
            hyy = - hxx
            hxy = 0.5_dp * hplus_amplitude * sinkx + 0.5_dp * hcross_amplitude * sinkx
