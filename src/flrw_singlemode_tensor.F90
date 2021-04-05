@@ -69,7 +69,7 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
      call CCTK_WARN(CCTK_WARN_ALERT,"Please set FLRW_init_HL > 1 for tensor perturbations outside horizon. Initial choice of hdot=0 may not be valid.")
   endif
   lambda = boxlen              ! lambda^z only for motion in z-direction, others all zero
-  kz     = 2._dp * pi / lambda ! k^z for motion in only z-direction, others all zero
+  kz     = 2._dp * pi / lambda(3) ! k^z for motion in only z-direction, others all zero
   ki     = 0._dp
   ki(3)  = kz
   modk   = sqrt(ki(1)**2 + ki(2)**2 + ki(3)**2)
