@@ -21,9 +21,9 @@ module init_tools
        integer(C_INT32_T), intent(in) :: resol,num_ghosts,rseed
      end subroutine call_make_ics
   end interface
-  
+
 contains
-  
+
   subroutine set_logicals(lapse,dtlapse,shift,data,hydro)
     !
     ! a subroutine to set the logical parameters that are set by choices in the .par
@@ -75,8 +75,34 @@ contains
   end subroutine set_parameters
 
 
-  
-  
+
+  function hs(CCTK_ARGUMENTS,k,eta)
+      !
+      ! A function to return hs(eta,k) for the initial GW perturbation
+      !
+      CCTK_REAL :: k,eta,keta
+      CCTK_REAL :: num,hs
+
+      keta = k*eta
+      num = 3._dp * (sin(keta) - keta * cos(keta))
+      hs  = num / keta**3
+
+  end function hs
+
+  function hsdot(CCTK_ARGUMENTS,k,eta)
+      !
+      ! A function to return dt(hs(eta,k)) for the initial GW perturbation
+      !
+      CCTK_REAL :: k,eta,keta
+      CCTK_REAL :: num,hsdot
+
+      keta  = k*eta
+      num   = 3._dp * (keta**2 - 3._dp) * sin(keta) + 9._dp * keta * cos(keta)
+      hsdot = num / (keta**3 * eta)
+
+  end function hsdot
+
+
   subroutine check_metric()
     !
     ! a subroutine to check the metric, something that we do at the end of each initial data routine
@@ -84,13 +110,13 @@ contains
     implicit none
     DECLARE_CCTK_FUNCTIONS
     DECLARE_CCTK_PARAMETERS
-    
+
     if (CCTK_EQUALS (metric_type, "physical")) then
        ! do nothing
     else
        call CCTK_WARN (0, "Unknown value of ADMBase::metric_type -- FLRW only set-up for metric_type = physical")
     endif
   end subroutine check_metric
-  
+
 
 end module init_tools
