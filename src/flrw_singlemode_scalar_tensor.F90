@@ -23,7 +23,7 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
 
   CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
   CCTK_REAL :: lambda(3),kx,ky,kz,modk,perturb_rho0,perturb_v0
-  CCTK_REAL :: nfac,hxx,hxy,hyy
+  CCTK_REAL :: nfac,hxx,hxy,hyy,tnow,hsval,hsdotval
   CCTK_REAL :: dphi1,dphi2,dphi3,kvalue,coskx,sinkx,lambda_hij(3)
   CCTK_REAL :: kx_hij,ky_hij,kz_hij,modk_hij,ksq_hij,ki_hij(3)
   CCTK_REAL :: phi_ijk,deltaijk,delta_velijk(3)
@@ -41,44 +41,49 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
 
   !
   ! set logicals that are specific to this single mode case only
-  !perturb_x = .False.; perturb_y = .False.
-  !perturb_z = .False.; perturb_all = .False.
-
-  !perturb_x   = CCTK_EQUALS (FLRW_perturb_direction, "x")
-  !perturb_y   = CCTK_EQUALS (FLRW_perturb_direction, "y")
-  !perturb_z   = CCTK_EQUALS (FLRW_perturb_direction, "z")
-  !perturb_all = CCTK_EQUALS (FLRW_perturb_direction, "all")
+  !       --> SCALAR only
   !
-  !if (perturb_x) then
-    ! call CCTK_INFO("    Perturbing in the x-direction ONLY ... ")
-  !elseif (perturb_y) then
-    ! call CCTK_INFO("    Perturbing in the y-direction ONLY ... ")
-  !elseif (perturb_z) then
-    ! call CCTK_INFO("    Perturbing in the z-direction ONLY ... ")
-  !elseif (perturb_all) then
-    ! call CCTK_INFO("    Perturbing in all directions ... ")
-  !else
-    ! call CCTK_INFO( "    Perturbing in no directions? " )
-  !endif
+  perturb_x = .False.; perturb_y = .False.
+  perturb_z = .False.; perturb_all = .False.
+
+  perturb_x   = CCTK_EQUALS (FLRW_perturb_direction, "x")
+  perturb_y   = CCTK_EQUALS (FLRW_perturb_direction, "y")
+  perturb_z   = CCTK_EQUALS (FLRW_perturb_direction, "z")
+  perturb_all = CCTK_EQUALS (FLRW_perturb_direction, "all")
+  !
+  if (perturb_x) then
+     call CCTK_INFO("    Perturbing in the x-direction ONLY ... ")
+  elseif (perturb_y) then
+     call CCTK_INFO("    Perturbing in the y-direction ONLY ... ")
+  elseif (perturb_z) then
+     call CCTK_INFO("    Perturbing in the z-direction ONLY ... ")
+  elseif (perturb_all) then
+     call CCTK_INFO("    Perturbing in all directions ... ")
+  else
+     call CCTK_INFO( "    Perturbing in no directions? " )
+  endif
 
   !
   ! set some parameters used in setting the background
   call set_parameters(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
 
   !
-  ! Set the wavevector for h_ij based on box size. Need k/H<1 for modes outside horizon
+  ! Set the tensor wavevector based on box size
   !    -- note: this assumes the k(plus) = k(cross) (i.e. wavenumbers of 2 polarisations are equal)
   !    -- but does not assume the amplitudes of these are the same
   !
-  if (FLRW_init_HL <= 1._dp) then
-     call CCTK_WARN(CCTK_WARN_ALERT,"Please set FLRW_init_HL > 1 for tensor perturbations outside horizon. Initial choice of hdot=0 may not be valid.")
-  endif
   lambda_hij = boxlen                  ! lambda^z only for motion in z-direction, others all zero
   kz_hij     = 2._dp * pi / lambda_hij(3) ! k^z for motion in only z-direction, others all zero
   ki_hij     = 0._dp
   ki_hij(3)  = kz_hij
   modk_hij   = sqrt(ki_hij(1)**2 + ki_hij(2)**2 + ki_hij(3)**2)
-  kx_hij     = ki_hij(1); ky_hij = ki_hij(2)!; kz_hij = ki_hij(3)
+  kx_hij     = ki_hij(1); ky_hij = ki_hij(2)
+  !
+  ! Initial time as set by user
+  tnow     = cctk_initial_time
+  ! get functions hs(eta,k) and hsdot(eta,k) for h_ij and h'_ij
+  hsval    = hs(modk_hij,tnow)
+  hsdotval = hsdot(modk_hij,tnow)
 
   !
   ! wavenumbers for phi perturbation in each direction
@@ -92,8 +97,7 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
   perturb_rho0 = - kx**2 / (4._dp * pi * rho0 * asq) - 2._dp
   perturb_v0   = - sqrt(a0 / ( 6._dp * pi * rhostar )) / a0
   !
-  ! rough check of the amplitude of the perturbs, and warn if larger
-  !
+  ! rough check of the amplitude of scalar perturbs, and warn if larger
   delta_test = abs( perturb_rho0 * phi_amplitude )
   dvel_test  = abs( perturb_v0 * kx * phi_amplitude )
   if (delta_test > perturb_size_tol .or. dvel_test > perturb_size_tol .or. phi_amplitude > perturb_size_tol) then
@@ -116,34 +120,18 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
            phi_ijk = 0._dp; delta_velijk = 0._dp; deltaijk = 0._dp
 
            if (perturb_x) then
-
               phi_ijk = phi_amplitude * sin(kx * x(i,j,k) - phi_phase_offset)
               dphi1   = phi_amplitude * kx * cos(kx * x(i,j,k) - phi_phase_offset)
               delta_velijk(1) = perturb_v0 * dphi1
-
-              !coskx = cos(kx_hij * x(i,j,k))
-              !sinkx = sin(kx_hij * x(i,j,k))
-
            elseif (perturb_y) then
-
               phi_ijk = phi_amplitude * sin(ky * y(i,j,k) - phi_phase_offset)
               dphi2   = phi_amplitude * ky * cos(ky * y(i,j,k) - phi_phase_offset)
               delta_velijk(2) = perturb_v0 * dphi2
-
-              !coskx = cos(ky_hij * y(i,j,k))
-              !sinkx = sin(ky_hij * y(i,j,k))
-
            elseif (perturb_z) then
-
               phi_ijk = phi_amplitude * sin(kz * z(i,j,k) - phi_phase_offset)
               dphi3   = phi_amplitude * kz * cos(kz * z(i,j,k) - phi_phase_offset)
               delta_velijk(3) = perturb_v0 * dphi3
-
-              !coskx = cos(kz_hij * z(i,j,k))
-              !sinkx = sin(kz_hij * z(i,j,k))
-
            elseif (perturb_all) then
-
               phi_ijk = phi_amplitude * (sin(kx * x(i,j,k) - phi_phase_offset) + &
                    sin(ky * y(i,j,k) - phi_phase_offset) + sin(kz * z(i,j,k) - phi_phase_offset))
               dphi1   = phi_amplitude * kx * cos(kx * x(i,j,k) - phi_phase_offset)
@@ -152,18 +140,22 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
               delta_velijk(1) = perturb_v0 * dphi1
               delta_velijk(2) = perturb_v0 * dphi2
               delta_velijk(3) = perturb_v0 * dphi3
-
-              !coskx = cos(kx_hij * x(i,j,k) + ky_hij * y(i,j,k) + kz_hij * z(i,j,k))
-              !sinkx = sin(kx_hij * x(i,j,k) + ky_hij * y(i,j,k) + kz_hij * z(i,j,k))
-
            endif
            deltaijk = perturb_rho0 * phi_ijk
 
-           coskx = cos(kx_hij * x(i,j,k) + ky_hij * y(i,j,k) + kz_hij * z(i,j,k))
-           sinkx = sin(kx_hij * x(i,j,k) + ky_hij * y(i,j,k) + kz_hij * z(i,j,k))
-           hxx = 0.5_dp * hplus_amplitude * coskx + 0.5_dp * hcross_amplitude * coskx
+           !
+           ! Set components of h_ij and dt_hij
+           !
+           coskx = cos(kx * x(i,j,k) + ky * y(i,j,k) + kz * z(i,j,k))
+           sinkx = sin(kx * x(i,j,k) + ky * y(i,j,k) + kz * z(i,j,k))
+           !endif
+           hxx = 0.5_dp * hsval * (hplus_amplitude + hcross_amplitude) * coskx
            hyy = - hxx
-           hxy = 0.5_dp * hplus_amplitude * sinkx + 0.5_dp * hcross_amplitude * sinkx
+           hxy = 0.5_dp * hsval * (hcross_amplitude - hplus_amplitude) * sinkx
+
+           dthxx = 0.5_dp * hsdotval * (hplus_amplitude + hcross_amplitude) * coskx
+           dthyy = - dthxx
+           dthxy = 0.5_dp * hsdotval * (hcross_amplitude - hplus_amplitude) * sinkx
 
            !
            ! set up metric, extrinsic curvature, lapse and shift
@@ -195,10 +187,10 @@ subroutine FLRW_SingleMode_Scalar_Tensor (CCTK_ARGUMENTS)
               gzz(i,j,k) = asq * (1._dp - 2._dp * phi_ijk)
 
               kvalue     = - adot * a0 / alp(i,j,k)
-              kxx(i,j,k) = kvalue * (1._dp + hxx - 2._dp * phi_ijk)
-              kxy(i,j,k) = kvalue * hxy
+              kxx(i,j,k) = kvalue * (1._dp + hxx - 2._dp * phi_ijk) - 0.5_dp * a0 * dthxx
+              kxy(i,j,k) = kvalue * hxy - 0.5_dp * a0 * dthxy
               kxz(i,j,k) = 0._dp
-              kyy(i,j,k) = kvalue * (1._dp + hyy - 2._dp * phi_ijk)
+              kyy(i,j,k) = kvalue * (1._dp + hyy - 2._dp * phi_ijk) - 0.5_dp * a0 * dthyy
               kyz(i,j,k) = 0._dp
               kzz(i,j,k) = kvalue * (1._dp - 2._dp * phi_ijk)
 

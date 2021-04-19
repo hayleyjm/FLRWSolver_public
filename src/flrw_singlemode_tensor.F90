@@ -43,9 +43,6 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
   !    -- note: this assumes the k(plus) = k(cross) (i.e. wavenumbers of 2 polarisations are equal)
   !    -- but does not assume the amplitudes of these are the same
   !
-  !if (FLRW_init_HL <= 1._dp) then
-    ! call CCTK_WARN(CCTK_WARN_ALERT,"Please set FLRW_init_HL > 1 for tensor perturbations outside horizon. Initial choice of hdot=0 may not be valid.")
-  !endif
   lambda = boxlen              ! lambda^z only for motion in z-direction, others all zero
   kz     = 2._dp * pi / lambda(3) ! k^z for motion in only z-direction, others all zero
   ki     = 0._dp
@@ -70,8 +67,6 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
            !
            ! Set components of h_ij and dt_hij
            !
-
-
            coskx = cos(kx * x(i,j,k) + ky * y(i,j,k) + kz * z(i,j,k))
            sinkx = sin(kx * x(i,j,k) + ky * y(i,j,k) + kz * z(i,j,k))
            !endif
