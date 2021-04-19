@@ -57,8 +57,8 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
   ! Initial time as set by user
   tnow     = cctk_initial_time
   ! get functions hs(eta,k) and hsdot(eta,k)
-  hsval    = hs(CCTK_ARGUMENTS,modk,tnow)
-  hsdotval = hsdot(CCTK_ARGUMENTS,modk,tnow)
+  hsval    = hs(modk,tnow)
+  hsdotval = hsdot(modk,tnow)
 
   !
   ! spatial loop over *local* grid size for this processor
@@ -75,18 +75,13 @@ subroutine FLRW_SingleMode_Tensor (CCTK_ARGUMENTS)
            coskx = cos(kx * x(i,j,k) + ky * y(i,j,k) + kz * z(i,j,k))
            sinkx = sin(kx * x(i,j,k) + ky * y(i,j,k) + kz * z(i,j,k))
            !endif
-           hxx = 0.5_dp * hplus_amplitude * hsval * coskx + &
-           & 0.5_dp * hcross_amplitude * hsval * coskx
+           hxx = 0.5_dp * hsval * (hplus_amplitude + hcross_amplitude) * coskx
            hyy = - hxx
-           hxy = 0.5_dp * hplus_amplitude * hsval * sinkx + &
-           & 0.5_dp * hcross_amplitude * hsval * sinkx
+           hxy = 0.5_dp * hsval * (hcross_amplitude - hplus_amplitude) * sinkx
 
-           dthxx = 0.5_dp * hplus_amplitude * hsdotval * coskx + &
-           & 0.5_dp * hcross_amplitude * hsdotval * coskx
+           dthxx = 0.5_dp * hsdotval * (hplus_amplitude + hcross_amplitude) * coskx
            dthyy = - dthxx
-           dthxy = 0.5_dp * hplus_amplitude * hsdotval * sinkx + &
-           & 0.5_dp * hcross_amplitude * hsdotval * sinkx
-
+           dthxy = 0.5_dp * hsdotval * (hcross_amplitude - hplus_amplitude) * sinkx
 
            !
            ! set up metric, extrinsic curvature, lapse and shift

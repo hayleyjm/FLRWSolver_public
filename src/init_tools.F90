@@ -76,7 +76,7 @@ contains
 
 
 
-  function hs(CCTK_ARGUMENTS,k,eta)
+  function hs(k,eta)
       !
       ! A function to return hs(eta,k) for the initial GW perturbation
       !
@@ -89,7 +89,7 @@ contains
 
   end function hs
 
-  function hsdot(CCTK_ARGUMENTS,k,eta)
+  function hsdot(k,eta)
       !
       ! A function to return dt(hs(eta,k)) for the initial GW perturbation
       !
