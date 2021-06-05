@@ -54,6 +54,9 @@ STRING FLRW_powerspectrum_file "Path to (and name of) text file specifying the P
  " " :: "Any string containing the path to the powerspectrum file"
 } ""
 
+BOOLEAN FLRW_exact_ICs "Make exact ICs using the constraints? If yes, will first set up linear phi from delta P(k), then correct these via constraint eqns. If false, linearised ICs."
+{
+} "no"
 
 CCTK_INT FLRW_random_seed "Random seed for generating the Gaussian random density perturbation from the power spectrum given in FLRW_powerspectrum_file."
 {

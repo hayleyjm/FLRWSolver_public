@@ -24,7 +24,7 @@ module init_tools
 
 contains
 
-  subroutine set_logicals(lapse,dtlapse,shift,data,hydro)
+  subroutine set_logicals(lapse,dtlapse,shift,data,hydro,callmesc)
     !
     ! a subroutine to set the logical parameters that are set by choices in the .par
     !   file that we use to create initial data in all (or >1) cases
@@ -32,11 +32,11 @@ contains
     implicit none
     DECLARE_CCTK_PARAMETERS
     DECLARE_CCTK_FUNCTIONS
-    logical, intent(out) :: lapse,dtlapse,shift,data,hydro
+    logical, intent(out) :: lapse,dtlapse,shift,data,hydro,callmesc
     !
     ! initialise
     lapse = .False.; dtlapse = .False.; shift = .False.
-    data  = .False.; hydro   = .False.
+    data  = .False.; hydro   = .False.; callmesc = .False.
     !
     ! check what user has set in the parameter file
     lapse   = CCTK_EQUALS (initial_lapse, "flrw")
@@ -44,6 +44,11 @@ contains
     shift   = CCTK_EQUALS (initial_shift, "flrw")
     data    = CCTK_EQUALS (initial_data,  "flrw")
     hydro   = CCTK_EQUALS (initial_hydro, "flrw")
+    !
+    ! if callmesc is true we want to call MEscaline routines to
+    !      take linear phi and generate an exact density, velocity
+    ! if false; we just want linear.
+    callmesc = CCTK_Equals(FLRW_exact_ICs, "yes")
 
   end subroutine set_logicals
 
