@@ -190,7 +190,7 @@ FLRWSolver::FLRW_perturb	  = "yes"
 FLRWSolver::FLRW_perturb_type     = "powerspectrum"
 
 # below for perturb_type = powerspectrum 
-FLRWSolver::FLRW_powerspectrum_file = "/Users/hayleymac/Documents/codes/flrwsolver/powerspectra/FLRW_matterpower_z1100.dat"
+FLRWSolver::FLRW_powerspectrum_file = "/Users/hayleymac/Documents/codes/flrwsolver/powerspectra/camb/FLRW_matterpower_z1100.dat"
 FLRWSolver::FLRW_random_seed        = 10
 FLRWSolver::FLRW_boxlength          = 1000.0
 

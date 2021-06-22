@@ -21,7 +21,7 @@ c2raytools
 
 ------------------------------------------------------------------
 
-FLRWSolver files included used for Python linking:
+FLRWSolver/src/ files included used for Python linking:
 
 ------------------------------------------------------------------
 
@@ -64,7 +64,7 @@ Linking + compiling instructions:
 
 0. Ensure all required Python dependencies are installed via pip (or similar), and c2raytools is un-tarred.
 
-1. Open builder.py and follow the instructions around line 40 for including your own paths to FLRWSolver src/ directory and c2raytools directory.
+1. Move to FLRWSolver/src/ and open builder.py and follow the instructions around line 40 for including your own paths to FLRWSolver src/ directory and c2raytools directory.
     
 2. Build the static library:
 
