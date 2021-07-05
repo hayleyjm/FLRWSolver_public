@@ -156,15 +156,29 @@ This thorn was first presented in \cite{macpherson2017}, and used further in \ci
 \subsection{FLRW spacetime \& background for perturbations} \label{sec:FLRWinit}
 
 The FLRW line element in conformal time, $\eta$, is given by
-\begin{equation}
+\begin{equation}\label{eq:FLRWmetric}
 	ds^2 = a^2(\eta) \left( - d\eta^2 + \delta_{ij}dx^i dx^j \right)
 \end{equation}
 where $a(\eta)$ is the scale factor describing the size of the Universe at time $\eta$. To initialise this spacetime, the user simply needs to specify \texttt{FLRW\_perturb} = ``no''. 
 
-The user chooses the initial value of $\mathcal{H}L$, i.e. the ratio of the initial Hubble horizon $d_H(z_{\rm init})\equiv c/\mathcal{H}(z_{\rm init})$ to the comoving length of the box $L$ in physical units. Since this quantity is dimensionless, this is also the ratio of the Hubble parameter to the box length in code units. This is controlled using the parameter \texttt{FLRW\_init\_HL}. 
-This choice of $\mathcal{H}L$ sets the initial background density in code units via the Friedmann equations. The initial value for the scale factor $a$ is controlled with \texttt{FLRW\_init\_a}, and the initial lapse by \texttt{FLRW\_lapse\_value}, both of which default to 1. 
+The user chooses the initial value of $\mathcal{H}L$, i.e. the ratio of the initial Hubble horizon $d_H(z_{\rm init})\equiv c/\mathcal{H}(z_{\rm init})$ to the comoving length of the box $L$ in physical units. Since this quantity is dimensionless, this is the same ratio of the Hubble parameter to the box length in code units. This is controlled using the parameter \texttt{FLRW\_init\_HL}. 
+This choice of $\mathcal{H}L$, along with the size of the box set in code units via \texttt{CoordBase}, sets the initial Hubble rate, $\mathcal{H}_{\rm ini}$, and therefore the initial background density in code units via the Friedmann equations, namely
+\begin{equation}
+	\mathcal{H}_{\rm ini} = \sqrt{\frac{8\pi \rho_{\rm ini} a_{\rm ini}^2}{3}},
+\end{equation}
+where the initial value for the scale factor, $a_{\rm ini}$, is set via \texttt{FLRW\_init\_a}. The initial lapse is set via \texttt{FLRW\_lapse\_value}. The user should also ensure the initial coordinate time is consistent with the above, i.e. for EdS $t_{\rm ini} = 2/\mathcal{H}_{\rm ini}$.
 
-When setting pure FLRW or single-mode perturbations to FLRW (see Section~\ref{sec:singlemode_ics} below), the physical side of the box (or the initial redshift $z_{\rm init}$) is not necessary for creating initial data and therefore is only relevant when physically interpreting the results. However, setting a powerspectrum of initial data does require knowledge of the physical length of the box at the initial time, see Section~\ref{sec:pspec_ics}.
+When setting pure FLRW or single-mode perturbations to FLRW (see Section~\ref{sec:singlemode_ics} below), the physical side of the box (or, equivalently, the initial redshift $z_{\rm init}$) is not necessary for creating initial data. However, setting a powerspectrum of initial data does require knowledge of the physical length of the box at the initial time, see Section~\ref{sec:pspec_ics}.
+
+\subsubsection{Gauge}
+
+We note here that a useful gauge for an EdS background is the ``harmonic-type'' gauge specified by
+\begin{equation}
+	\partial_t \alpha = f \alpha^n K,
+\end{equation}
+where $K$ is the trace of the extrinsic curvature. This is the form of lapse evolution implemented in \texttt{ML\_BSSN}, and the parameters $f$ and $n$ are controlled using \texttt{ML\_BSSN::harmonicF} and \texttt{ML\_BSSN::harmonicN}, respectively.
+
+Setting $f=1/3$ and $n=2$ in the above yields $\partial_t \alp = \partial_t a$, where $a$ is the EdS scale factor. This translates to $t=\eta$, i.e. our coordinate time of the simulation is the conformal time in the metric \eqref{eq:FLRWmetric}. This is valid at all times for a pure-FLRW evolution, and within the linear regime for the case of linear initial perturbations. Once any perturbations grow nonlinearly this connection is no longer valid. 
 
 %Physical units can then be achieved using the length unit, $L_{unit}$, defined by
 %\begin{equation}
@@ -232,14 +246,14 @@ The wavelength, $\lambda$, of the perturbation is controlled by \texttt{single\_
 We can instead choose the initial conditions to be a power spectrum of fluctuations, to better mimic the early state of the Universe (see \cite{macpherson2019}). 
 These fluctuations are still assumed to be linear perturbations to an EdS background. 
 
-This is implemented by reading in a two-column text file with the 3-dimensional matter power spectrum $P(k)$ (with units Mpc/$h)^3$, where the wavenumber is $k=\sqrt{k_x^2+k_y^2+k_z^2}$ (with units $h$/Mpc). Here $h$ is defined such that $H_0 = 100 h$km/s/Mpc. It is assumed the text file is the same format as the matter power spectrum output from CAMB\footnote{\url{https://camb.info}} or CLASS\footnote{\url{https://class-code.net}}, i.e. a text file with two columns $k, P(k)$.
+This is implemented by reading in a two-column text file with the 3-dimensional matter power spectrum $P(k)$ (with units Mpc/$h)^3$, where the wavenumber is $k=\sqrt{k_x^2+k_y^2+k_z^2}$ (with units $h$/Mpc). Here $h$ is defined such that $H_0 = 100 h$km/s/Mpc. It is assumed the text file is the same format as the matter power spectrum output from CAMB\footnote{\url{https://camb.info}} or CLASS\footnote{\url{https://class-code.net}}, i.e. a text file with two columns $k, P(k)$. We note the $h$ in the dimensions of the power spectrum (and therefore in the length units of the simulation) is the $h$ set in the CAMB/CLASS options when generating the initial power spectrum.
 
-Using the \texttt{c2raytools}\footnote{\url{https://github.com/hjens/c2raytools}} Python package translated to Python 3, \texttt{FLRWSolver}\ generates a Gaussian random field that follows the given power spectrum. This field is centred around zero and sets the density perturbation to the EdS background. The code then uses equations \eqref{eqs:linear_solnsg0} to find the corresponding velocity and metric perturbations for this density perturbation in Fourier space.
+Using the \texttt{c2raytools}\footnote{\url{https://github.com/hjens/c2raytools}} Python package (translated to Python 3 and included in this repository), \texttt{FLRWSolver}\ generates a Gaussian random field that follows the given power spectrum. This field is centred around zero and represents the initial (dimensionless) density perturbation to the EdS background. The code then uses equations \eqref{eqs:linear_solnsg0} to find the corresponding velocity and metric perturbations for this density perturbation in Fourier space.
 
-This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. Set the FLRW background according to Section~\ref{sec:FLRWinit}, and set the path to (and name of) the text file containing the matter power spectrum using \texttt{FLRW\_powerspectrum\_file}\footnote{Note that sometimes if this string is too long the code will crash, if so, move the file somewhere else with a shorter path.}. The Gaussian random field will be drawn with seed corresponding to \texttt{FLRW\_random\_seed}, so keep this constant to draw the same field more than once. You also must specify the size of the domain in comoving Mpc (Mpc$/h$) using \texttt{FLRW\_boxlength}, which is required to draw the appropriate scales from the power spectrum.
+This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. Set the FLRW background according to Section~\ref{sec:FLRWinit}, and set the path to (and name of) the text file containing the matter power spectrum using \texttt{FLRW\_powerspectrum\_file}\footnote{Note that sometimes if this string is too long the code will crash, if so, move the file somewhere else with a shorter path.}. The Gaussian random field will be drawn with seed corresponding to \texttt{FLRW\_random\_seed}, so keep this constant to draw the same field more than once. You also must specify the size of the domain in comoving Mpc (Mpc$/h$) using \texttt{FLRW\_boxlength}, which is required to draw the appropriate scales from the power spectrum. We note that this choice of physical length of the box is equivalent to choosing physical units of time for the simulation.
 %as physical units are required to generate the dimensionless perturbations from the power spectrum. 
 
-We provide a Python script in \texttt{tools/get\_init\_HL.py} to translate a given resolution, comoving box length in Gpc$/h$ (i.e. the proper length at $z=0$), and initial redshift to the appropriate values of initial $\mathcal{H}L$ and initial coordinate time. The script will also output the final time corresponding to a particular (approximate; based on the EdS prediction) increase in volume (scale factor), and intermediate times corresponding to particular redshifts (again, approximate, and based on EdS predictions) to help with, e.g., restarting simulations at a particular late time with increased 3D output frequency. This script assumes the user is interested in approximating the EdS Hubble horizon at $z=0$ of $d_{H_0}=c/H_0\approx 6.6{\rm Gpc}$ (however in practise this is easily changed). We emphasise again that this is just an approximation for the initial data and does not ensure the simulation will be close to EdS at any time.
+We provide a Python script in \texttt{tools/get\_init\_HL.py} to take a chosen resolution, comoving box length in Gpc$/h$ (i.e. the proper length at $z=0$), and initial redshift and translate these to the corresponding consistent initial $\mathcal{H}L$ and initial coordinate time. The script will also output the final time corresponding to a particular (approximate; based on the EdS prediction) scale factor, and intermediate times corresponding to particular redshifts (again, approximate, and based on EdS predictions) to help with, e.g., restarting simulations at a particular late time with increased 3D output frequency. Please check the parameters in this script carefully to ensure they are consistent with your simulation parameters. This script assumes the user is interested in approximating the EdS Hubble horizon at $z=0$ of $d_{H_0}=c/H_0\approx 6.6{\rm Gpc}$ (however in practise this is easily changed). We emphasise again that this is just an approximation for the initial data and does not ensure the simulation will be close to EdS at any time.
 
 
 

@@ -7,7 +7,12 @@ A script to get the proper initial HL for use with FLRWSolver
     USAGE:
     python get_init_HL.py res boxL_z0(Gpc) zini
 
+    e.g. for a 32^3, 1Gpc box initialised at z=1000, run:
+      python get_init_HL.py 32 1.0 1000.0
+
     (mainly adapted from my scribblings in Projects/ImprovedAveraging/translate_phys_units.ipynb)
+
+       -- H MAC
 '''
 import numpy as np
 from astropy import units
@@ -15,20 +20,11 @@ from astropy import constants as const
 import sys
 
 '''
-Define some functions for FLRW-stuff
+Define some functions for FLRW analytic scale factor, redshift, evolution
 '''
-def xi(eta,rhostar,ainit,etainit):
-    return 1 + np.sqrt(2.*np.pi*rhostar/(3.*ainit)) * (eta - etainit)
 
-def aflrw(xival,ainit):
-    return ainit * xival**2
-
-def rhoflrw(xival,rhostar,ainit):
-    return rhostar / aflrw(xival,ainit)**3
-
-def hubflrw(eta,rhostar,ainit,etainit):
-    xival = xi(eta,rhostar,ainit,etainit)
-    return aflrw(xival,ainit) * np.sqrt(8.*np.pi*rhoflrw(xival,rhostar,ainit)/3.)
+def aflrw(etaval,ainit,etainit):
+    return ainit * (etaval/etainit)**2
 
 def get_z(aval,zinit):
     return (1.+zinit)/aval - 1.
@@ -36,16 +32,15 @@ def get_z(aval,zinit):
     
 '''
 Define the initial params you want for the simulation
-    -- use sys.argv, note sys.argv[0] is the name of script
+    -- use sys.argv (note sys.argv[0] is the name of script)
 ====================================================================================
 '''
-# Proper/comoving length of box at redshift z=0
+# Desired proper/comoving length of box at redshift z=0
 Lz0 = float(sys.argv[2]) * units.Gpc
 #
 # Initial redshift, scale factor, time (latter should stay the same)
 zini  = float(sys.argv[3])
 ainit = 1.0
-# tinit = 1.0
 #
 # Simulation (code units) box size, dtfac, res, etc
 res   = int(sys.argv[1])
@@ -55,7 +50,7 @@ dx    = boxL / res
 dt    = dtfac * dx
 #
 # Redshift after which you'd like to increase freq of 3D output
-zinc = 3.0
+zinc = 1.0
 '''
 ====================================================================================
 '''
@@ -87,6 +82,7 @@ Scale HL(z=0) back to desired initial redshift
 '''
 HL_zini = HLz0 * np.sqrt(1. + zini)
 Lz0mpc = Lz0.to('Mpc')
+print(f"H_zini = {(const.c*HL_zini/Lz0mpc).to('km/s Mpc')}")
 
 '''
 Find settings for final time, etc
@@ -94,14 +90,13 @@ Find settings for final time, etc
     -- set up array of conformal times, translate to a_flrw
     -- then we can find final_time in conformal time to run to
 '''
-afinal      = ainit + zini # final scale factor we want to run to
+afinal      = 1. + zini # final scale factor we want to run to
 Hinit       = HL_zini / boxL
-tinit       = 2./(3.*Hinit)
-print(f'      tinit = 2/3Hinit = {tinit}')
+tinit       = 2./Hinit # conformal time (2/3 is for proper time)
+print(f'      tinit = 2/Hinit = {tinit}')
 rhostarinit = Hinit**2 * 3. * ainit / (8.*np.pi)
-etatest     = np.arange(tinit,1e5,dt)
-xitest      = xi(etatest,rhostarinit,ainit,tinit)
-aflrwval    = aflrw(xitest,ainit)
+etatest     = np.arange(tinit,1e2,dt)
+aflrwval    = aflrw(etatest,ainit,tinit)
 zvals       = get_z(aflrwval,zini)
 aidx_fin    = np.where(aflrwval>afinal)[0][0]
 zidx_inc    = np.where(zvals<zinc)[0][0] # index where z<1 for the first time, when to increase output
@@ -109,7 +104,7 @@ eta_inc     = etatest[zidx_inc]          # time at which we want to then increas
 etafinal    = etatest[aidx_fin]
 itfinal     = (etafinal-tinit)/dt
 itz1        = (etatest[zidx_inc]-tinit)/dt  # iteration where z=1
-print(f' running from a = {ainit} to a = {afinal} will take {int(itfinal)} iterations')
+print(f' running from a = {ainit} to a = {aflrwval[aidx_fin]} will take {int(itfinal)} iterations')
 print(f'    and FYI you will reach z={zvals[zidx_inc]:.4f} at eta = {etatest[zidx_inc]:.4f} after {int(itz1)} iterations')
 
 
