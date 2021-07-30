@@ -15,9 +15,9 @@ module init_tools
   CCTK_REAL, parameter :: pi = 4._dp * atan(1._dp)
 
   interface
-     subroutine call_make_ics(a_init,rhostar,box_size,resol,num_ghosts,rseed) bind(c)
+     subroutine call_make_ics(a_init,rhostar,box_size,bsize_code,resol,num_ghosts,rseed) bind(c)
        import
-       real(c_double), intent(in) :: a_init,rhostar,box_size
+       real(c_double), intent(in) :: a_init,rhostar,box_size,bsize_code
        integer(C_INT32_T), intent(in) :: resol,num_ghosts,rseed
      end subroutine call_make_ics
   end interface

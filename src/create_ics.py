@@ -21,7 +21,7 @@ from c2raytools3.power_spectrum import _get_dims, _get_k, power_spectrum_1d
 from scipy.interpolate import interp1d
 from astropy.cosmology import WMAP9
 
-def make_ics(a_init,rhostar,box_size,resol,num_ghosts,rseed):
+def make_ics(a_init,rhostar,box_size,bsize_code,resol,num_ghosts,rseed):
     '''
     Make Gaussian random initial conditions for FLRWSolver (called from FLRWSolver)
 
@@ -30,6 +30,7 @@ def make_ics(a_init,rhostar,box_size,resol,num_ghosts,rseed):
     resol      : numerical resolution of the simulation
     num_ghosts : number of ghost cells in each dimension
     box_size   : physical size of each side of the box in comoving Mpc/h
+    bsize_code : size of the box in CODE units (needed to translate rhostar to physical units)
     rseed      : random seed to use to generate the Gaussian random field for density perturb
 
     '''
@@ -40,8 +41,13 @@ def make_ics(a_init,rhostar,box_size,resol,num_ghosts,rseed):
     c = const.c.to('Mpc/s')                                  # speed of light in Mpc/s
     G = const.G.to('Mpc^3/kg s^2')                           # gravitational constant in Mpc^3/(kg s^2)
 
-    C1 = a_init / ( 4. * np.pi * G * rhostar)                         # constants C1, C3 from Macpherson et al. 2016
-    C3 = - np.sqrt( a_init / ( 6. * np.pi * G * rhostar ) ) / a_init  # in physical units
+    # rhostar is passed in code units; need to translate this to physical units
+    Lunit       = box_size * unit.Mpc / bsize_code
+    Tunit       = Lunit / c
+    Grhostar    = rhostar / Tunit**2 # G=1 in code units
+    
+    C1 = a_init / ( 4. * np.pi * Grhostar)                         # constants C1, C3 from Macpherson et al. 2016
+    C3 = - np.sqrt( a_init / ( 6. * np.pi * Grhostar ) ) / a_init  # in physical units
     # note C3 = Hub / (4 pi G rhostar)
 
     #
