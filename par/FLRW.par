@@ -22,12 +22,12 @@ CartGrid3D::avoid_origin = "no"
 CoordBase::xmin = 0.0
 CoordBase::ymin = 0.0
 CoordBase::zmin = 0.0
-CoordBase::xmax = 1000.0
-CoordBase::ymax = 1000.0
-CoordBase::zmax = 1000.0
-CoordBase::dx   = 31.25
-CoordBase::dy   = 31.25
-CoordBase::dz   = 31.25
+CoordBase::xmax = 1.0
+CoordBase::ymax = 1.0
+CoordBase::zmax = 1.0
+CoordBase::dx   = 0.03125
+CoordBase::dy   = 0.03125
+CoordBase::dz   = 0.03125
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -77,8 +77,8 @@ ActiveThorns = "Time MoL StaticConformal NaNChecker SymBase"
 ActiveThorns = "Constants LocalReduce aeilocalinterp LoopControl"
 
 Cactus::terminate           = "time"
-Cactus::cctk_initial_time   = 1
-Cactus::cctk_final_time     = 32.25
+Cactus::cctk_initial_time   = 0.42113481526141333
+Cactus::cctk_final_time     = 13.324259815261367
 time::dtfac                 = 0.1
 
 MoL::ODE_Method             = "rk4"
@@ -181,7 +181,7 @@ ADMBase::initial_dtshift         = "zero"
 
 # some options for the background FLRW spacetime
 FLRWSolver::FLRW_lapse_value     = 1.0
-FLRWSolver::FLRW_init_HL         = 2.0
+FLRWSolver::FLRW_init_HL         = 4.7490730462608015
 FLRWSolver::FLRW_init_a          = 1.0
 
 # choose some things regarding perturbations

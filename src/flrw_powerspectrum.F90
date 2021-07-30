@@ -12,14 +12,13 @@
 
 subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   USE init_tools
-  USE exact_ICs, only:mescaline_ics
   implicit none
   DECLARE_CCTK_ARGUMENTS
   DECLARE_CCTK_FUNCTIONS
   DECLARE_CCTK_PARAMETERS
 
   integer   :: i,j,k
-  logical   :: lapse,dtlapse,shift,data,hydro,callmesc
+  logical   :: lapse,dtlapse,shift,data,hydro
   CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
   CCTK_REAL :: phi_ijk,kvalue
   !
@@ -31,22 +30,17 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   CCTK_REAL, dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3))   :: phi, delta
   CCTK_REAL, dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
   !
-  ! arrays for corrected ICs, if we want them
-  CCTK_REAL, dimension(:,:,:), allocatable :: rhoR_gs,vel1_gs,vel2_gs,vel3_gs
-  CCTK_REAL, dimension(:,:,:), allocatable :: rhoR,vel1,vel2,vel3
-
-  !
   CCTK_INT :: ncells(3)
-  character(len=200) :: pkfilename!,deltafile,vel1file,vel2file,vel3file,phifile,ics_dir
+  character(len=200) :: pkfilename
   integer :: dr_unit,dv_unit1,dv_unit2,dv_unit3,p_unit
-  integer :: il,jl,kl,iu,ju,ku,pkunit,pklen!,ics_dir_len
+  integer :: il,jl,kl,iu,ju,ku,pkunit,pklen
 
   call CCTK_INFO("Initialising a POWER SPECTRUM of perturbations to an FLRW spacetime")
 
   !
   ! set logicals that tell us whether we want to use FLRWSolver to set ICs
   !
-  call set_logicals(lapse,dtlapse,shift,data,hydro,callmesc)
+  call set_logicals(lapse,dtlapse,shift,data,hydro)
 
   !
   ! set parameters used in setting metric, matter parameters
@@ -74,7 +68,7 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   call CCTK_INFO("Calling create_ics for initial conditions...")
   if (ncells(1)/=ncells(2)) call CCTK_WARN(CCTK_WARN_ALERT,"non-uniform grid")
 
-  call call_make_ics(a0,FLRW_boxlength,ncells(1),2*cctk_nghostzones(1),FLRW_random_seed)
+  call call_make_ics(a0,rhostar,FLRW_boxlength,ncells(1),2*cctk_nghostzones(1),FLRW_random_seed)
   call CCTK_INFO("Done making initial conditions.")
 
   !
@@ -108,30 +102,6 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   close(dv_unit2); close(dv_unit3); close(p_unit)
 
   !
-  ! If we want only linear perturbations; carry on from here
-  ! If we want to CORRECT for the linear perturbs; call mesc routines here
-  !
-  if (callmesc) then
-      call CCTK_INFO("Correcting initial data to satisfy constraints exactly")
-      ! allocate memory we need -- first global, then local arrays
-      allocate(rhoR_gs(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)),&
-        & vel1_gs(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)),&
-        & vel2_gs(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)),&
-        & vel3_gs(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)))
-
-      allocate(rhoR(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)),&
-        & vel1(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)),&
-        & vel2(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)),&
-        & vel3(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)))
-
-      ! call mesc routines here - send in phi and get back rho, vels
-      call mescaline_ics(a0,asq,adot,phi_gs,rhoR_gs,vel1_gs,vel2_gs,vel3_gs)
-  else
-      ! do nothing
-      call CCTK_INFO("Initial data correct to linear order only - be wary of constraint violations!")
-  endif
-
-  !
   ! indices for lower bound of local (processor) grid within global grid
   !
   il = cctk_lbnd(1) + 1
@@ -147,17 +117,9 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   ! extract local part of global grid i.e. part this processor is using and store it
   !
   phi = phi_gs(il:iu, jl:ju, kl:ku)
-  if (callmesc) then
-      ! set up exact rho,vel vars
-      rhoR = rhoR_gs(il:iu, jl:ju, kl:ku)
-      vel1 = vel1_gs(il:iu, jl:ju, kl:ku)
-      vel2 = vel1_gs(il:iu, jl:ju, kl:ku)
-      vel3 = vel1_gs(il:iu, jl:ju, kl:ku)
-  else
-      ! set up local grid, linear delta, vel perturbations
-      delta     = delta_gs(il:iu, jl:ju, kl:ku)
-      delta_vel = delta_vel_gs(il:iu, jl:ju, kl:ku, :)
-  endif
+  ! set up local grid, linear delta, vel perturbations
+  delta     = delta_gs(il:iu, jl:ju, kl:ku)
+  delta_vel = delta_vel_gs(il:iu, jl:ju, kl:ku, :)
 
   do k = 1, cctk_lsh(3)
      do j = 1, cctk_lsh(2)
@@ -210,17 +172,10 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
                  ! perturb the matter
                  press(i,j,k) = 0._dp ! pressure will be overwritten by EOS_Omni anyway
                  eps(i,j,k)   = 0._dp
-                 if (callmesc) then
-                     ! set up exact matter data
-                     rho(i,j,k)   = rhoR(i,j,k)
-                     vel(i,j,k,1) = vel1(i,j,k)
-                     vel(i,j,k,2) = vel2(i,j,k)
-                     vel(i,j,k,3) = vel3(i,j,k)
-                 else
-                     ! set up linear matter data
-                     rho(i,j,k)   = rho0 * (1._dp + delta(i,j,k))
-                     vel(i,j,k,:) = delta_vel(i,j,k,:)
-                 endif
+                 ! set up linearly-perturbed matter data
+                 rho(i,j,k)   = rho0 * (1._dp + delta(i,j,k))
+                 vel(i,j,k,:) = delta_vel(i,j,k,:)
+                 
               endif
 
            endif
@@ -228,7 +183,6 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
         enddo
      enddo
   enddo
-  if (callmesc) deallocate(rhoR_gs,vel1_gs,vel2_gs,vel3_gs,rhoR,vel1,vel2,vel3)
 
   !
   ! make sure the metric type is physical (not conformal)

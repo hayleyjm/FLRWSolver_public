@@ -21,27 +21,28 @@ from c2raytools3.power_spectrum import _get_dims, _get_k, power_spectrum_1d
 from scipy.interpolate import interp1d
 from astropy.cosmology import WMAP9
 
-def make_ics(a_init,box_size,resol,num_ghosts,rseed):
+def make_ics(a_init,rhostar,box_size,resol,num_ghosts,rseed):
     '''
     Make Gaussian random initial conditions for FLRWSolver (called from FLRWSolver)
 
     a_init     : initial FLRW background scale factor
+    rhostar    : FLRW conserved mass
     resol      : numerical resolution of the simulation
     num_ghosts : number of ghost cells in each dimension
     box_size   : physical size of each side of the box in comoving Mpc/h
     rseed      : random seed to use to generate the Gaussian random field for density perturb
 
     '''
-    
+
     #
     # Set some constants. We need length units in Mpc since our k's and P(k) are in units of Mpc^-1.
     #
     c = const.c.to('Mpc/s')                                  # speed of light in Mpc/s
     G = const.G.to('Mpc^3/kg s^2')                           # gravitational constant in Mpc^3/(kg s^2)
-    rhostar = WMAP9.critical_density0.to('kg / Mpc^3')       # conserved FLRW density in kg/Mpc^3
 
-    C1 = a_init / ( 4. * np.pi * G * rhostar)                # constants C1, C3 from Macpherson et al. 2016
-    C3 = - np.sqrt( a_init / ( 6. * np.pi * G * rhostar ) )  # in physical units
+    C1 = a_init / ( 4. * np.pi * G * rhostar)                         # constants C1, C3 from Macpherson et al. 2016
+    C3 = - np.sqrt( a_init / ( 6. * np.pi * G * rhostar ) ) / a_init  # in physical units
+    # note C3 = Hub / (4 pi G rhostar)
 
     #
     # Names of IC's files to be written and then read in by FLRWSolver
@@ -163,9 +164,6 @@ def make_ics(a_init,box_size,resol,num_ghosts,rseed):
     vel2_file  = open(vel2file,"w")
     vel3_file  = open(vel3file,"w")
 
-    #print("velx = ",velx_2d[40,:])
-    #print("vely = ",vely_2d[40,:])
-    #print("velz = ",velz_2d[40,:])
     np.savetxt(delta_file,delta_2d)
     np.savetxt(phi_file,phi_2d)
     np.savetxt(vel1_file,velx_2d)
@@ -177,15 +175,3 @@ def make_ics(a_init,box_size,resol,num_ghosts,rseed):
     vel1_file.close()
     vel2_file.close()
     vel3_file.close()
-
-    #print("re-loading data...")
-    #v1file = open(vel1file)
-    #v1data = v1file.read()#.rstrip()
-    #print("v1data = ",v1data)
-    #v1file.close()
-    #v1data = np.loadtxt(vel1file)
-    #v2data = np.loadtxt(vel2file)
-    #v3data = np.loadtxt(vel3file)
-    #print("re-loaded v1 = ",v1data)
-    #print("re-loaded v2 = ",v2data)
-    #print("re-loaded v3 = ",v3data)

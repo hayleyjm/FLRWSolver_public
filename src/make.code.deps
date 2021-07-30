@@ -3,4 +3,4 @@
 #
 
 # Flags we need for Python linking - found using python-config --cflags
-CFLAGS+=-I/cosma/local/Python/3.6.5/include/python3.6m -I/cosma/local/Python/3.6.5/include/python3.6m  -Wno-unused-result -Wsign-compare  -DNDEBUG -g -fwrapv -O3 -Wall -Wstrict-prototypes
+CFLAGS+=-I/usr/local/Cellar/python@3.8/3.8.5/Frameworks/Python.framework/Versions/3.8/include/python3.8 -I/usr/local/Cellar/python@3.8/3.8.5/Frameworks/Python.framework/Versions/3.8/include/python3.8 -Wno-unused-result -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -fwrapv -O3 -Wall -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk -I/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers

@@ -3,14 +3,9 @@
 
 # Source files in this directory
 SRCS = pspec_ics.c \
-       mesc_helpers.F90 \
        init_tools.F90 \
-       constraint_violation_ICs.F90 \
-       exact_ICs.F90 \
        flrw_noperturb.F90 \
        flrw_singlemode.F90 \
-       flrw_singlemode_tensor.F90 \
-       flrw_singlemode_scalar_tensor.F90 \
        flrw_powerspectrum.F90 \
        flrw_fileread.F90
 

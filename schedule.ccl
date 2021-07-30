@@ -16,22 +16,6 @@ if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"singl
   } "Sets up initial data for a single-mode perturbation to FLRW spacetime"
 }
 
-else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"single_mode_tensor")) )
-{
-  schedule FLRW_SingleMode_Tensor IN HydroBase_Initial
-  {
-    LANG: Fortran
-  } "Sets up initial data for a single-mode TENSOR perturbation to FLRW spacetime"
-}
-
-else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"single_mode_scalar_tensor")) )
-{
-  schedule FLRW_SingleMode_Scalar_Tensor IN HydroBase_Initial
-  {
-    LANG: Fortran
-  } "Sets up initial data for BOTH a single-mode SCALAR and TENSOR perturbation to FLRW spacetime"
-}
-
 else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"powerspectrum")) )
 {
   schedule FLRW_Powerspectrum IN HydroBase_Initial

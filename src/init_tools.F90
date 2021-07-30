@@ -15,16 +15,16 @@ module init_tools
   CCTK_REAL, parameter :: pi = 4._dp * atan(1._dp)
 
   interface
-     subroutine call_make_ics(a_init,box_size,resol,num_ghosts,rseed) bind(c)
+     subroutine call_make_ics(a_init,rhostar,box_size,resol,num_ghosts,rseed) bind(c)
        import
-       real(c_double), intent(in) :: a_init, box_size
+       real(c_double), intent(in) :: a_init,rhostar,box_size
        integer(C_INT32_T), intent(in) :: resol,num_ghosts,rseed
      end subroutine call_make_ics
   end interface
 
 contains
 
-  subroutine set_logicals(lapse,dtlapse,shift,data,hydro,callmesc)
+  subroutine set_logicals(lapse,dtlapse,shift,data,hydro)
     !
     ! a subroutine to set the logical parameters that are set by choices in the .par
     !   file that we use to create initial data in all (or >1) cases
@@ -32,11 +32,11 @@ contains
     implicit none
     DECLARE_CCTK_PARAMETERS
     DECLARE_CCTK_FUNCTIONS
-    logical, intent(out) :: lapse,dtlapse,shift,data,hydro,callmesc
+    logical, intent(out) :: lapse,dtlapse,shift,data,hydro
     !
     ! initialise
     lapse = .False.; dtlapse = .False.; shift = .False.
-    data  = .False.; hydro   = .False.; callmesc = .False.
+    data  = .False.; hydro   = .False.
     !
     ! check what user has set in the parameter file
     lapse   = CCTK_EQUALS (initial_lapse, "flrw")
@@ -44,11 +44,6 @@ contains
     shift   = CCTK_EQUALS (initial_shift, "flrw")
     data    = CCTK_EQUALS (initial_data,  "flrw")
     hydro   = CCTK_EQUALS (initial_hydro, "flrw")
-    !
-    ! if callmesc is true we want to call MEscaline routines to
-    !      take linear phi and generate an exact density, velocity
-    ! if false; we just want linear.
-    callmesc = CCTK_Equals(FLRW_exact_ICs, "yes")
 
   end subroutine set_logicals
 
@@ -78,34 +73,6 @@ contains
     hubdot  = -4._dp * pi * rho0 * asq / 3._dp    ! H' from derivative of Friedmann eqns
 
   end subroutine set_parameters
-
-
-
-  function hs(k,eta)
-      !
-      ! A function to return hs(eta,k) for the initial GW perturbation
-      !
-      CCTK_REAL :: k,eta,keta
-      CCTK_REAL :: num,hs
-
-      keta = k*eta
-      num = 3._dp * (sin(keta) - keta * cos(keta))
-      hs  = num / keta**3
-
-  end function hs
-
-  function hsdot(k,eta)
-      !
-      ! A function to return dt(hs(eta,k)) for the initial GW perturbation
-      !
-      CCTK_REAL :: k,eta,keta
-      CCTK_REAL :: num,hsdot
-
-      keta  = k*eta
-      num   = 3._dp * (keta**2 - 3._dp) * sin(keta) + 9._dp * keta * cos(keta)
-      hsdot = num / (keta**3 * eta)
-
-  end function hsdot
 
 
   subroutine check_metric()

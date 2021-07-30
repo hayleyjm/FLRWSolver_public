@@ -19,7 +19,7 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
   integer   :: i,j,k
   logical   :: lapse,dtlapse,shift,data,hydro
   logical   :: perturb_x,perturb_y,perturb_z,perturb_all
-  
+
   CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
   CCTK_REAL :: lambda(3),kx,ky,kz,modk,perturb_rho0,perturb_v0
   CCTK_REAL :: dphi1,dphi2,dphi3,kvalue
@@ -30,8 +30,8 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
   character(len=400) :: warn_message
 
   call CCTK_INFO("Initialising a linearly-perturbed FLRW spacetime with a SINGLE-MODE perturbation")
-  
-  ! 
+
+  !
   ! set logicals that tell us whether we want to use FLRWSolver to set ICs
   !
   call set_logicals(lapse,dtlapse,shift,data,hydro)
@@ -57,7 +57,7 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
   else
      call CCTK_INFO( "    Perturbing in no directions? " )
   endif
-  
+
   !
   ! set some parameters used in setting the background
   call set_parameters(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
@@ -72,7 +72,7 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
 
   ! factors for the density and velocity perturbations, respectively: eqns. (28),(29) in Macpherson+(2017)
   perturb_rho0 = - kx**2 / (4._dp * pi * rho0 * asq) - 2._dp
-  perturb_v0   = - sqrt(a0 / ( 6._dp * pi * rhostar )) / a0
+  perturb_v0   = - hub / ( 4._dp * pi * rhostar )
   !
   ! rough check of the amplitude of the perturbs, and warn if larger
   !
@@ -84,7 +84,7 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
      call CCTK_WARN(CCTK_WARN_ALERT,warn_message)
      call CCTK_WARN(CCTK_WARN_ALERT,"Please REDUCE phi_amplitude or INCREASE FLRW_init_HL to reduce perturbation sizes")
   endif
-     
+
   !
   ! spatial loop over *local* grid size for this processor
   !
@@ -120,16 +120,16 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
               delta_velijk(3) = perturb_v0 * dphi3
            endif
            deltaijk = perturb_rho0 * phi_ijk
-           
+
            !
            ! set up metric, extrinsic curvature, lapse and shift
            !
            if (data) then
-              
+
               if (lapse) then
                  alp(i,j,k) = FLRW_lapse_value * sqrt(1._dp + 2._dp * phi_ijk)
               endif
-              
+
               ! time deriv of lapse -- evolution of this is specified in ADMBase.
               if (dtlapse) then
                  dtalp(i,j,k) = 0._dp

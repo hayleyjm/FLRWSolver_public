@@ -24,7 +24,7 @@ if (static==False):
 # these particular integer types correspond to the DEFAULT Cactus integer type.
 #
 header = """
-extern void call_make_ics(double *a_init, double *box_size, int32_t *resol, int32_t *num_ghosts, int32_t *rseed);
+extern void call_make_ics(double *a_init, double* rhostar, double *box_size, int32_t *resol, int32_t *num_ghosts, int32_t *rseed);
 """
 
 #
@@ -47,22 +47,24 @@ extern void call_make_ics(double *a_init, double *box_size, int32_t *resol, int3
 module = """
 from ics_plugin import ffi
 import sys
-sys.path.insert(0, "/Users/hayleymac/Documents/codes/flrwsolver/src/")
-sys.path.insert(1, "/Users/hayleymac/software/c2raytools3/src/")
-sys.path.insert(2, "/Users/hayleymac/software/c2raytools3/src/c2raytools3/")
+sys.path.insert(0, "/cosma/home/dp002/dc-macp1/software/flrwsolver/src/")
+sys.path.insert(1, "/cosma/home/dp002/dc-macp1/software/flrwsolver/c2raytools3/src/")
+sys.path.insert(2, "/cosma/home/dp002/dc-macp1/software/flrwsolver/c2raytools3/src/c2raytools3/")
 import create_ics
 import convert_types
 
 @ffi.def_extern()
-def call_make_ics(a_init,box_size,resol,num_ghosts,rseed):
-    
+def call_make_ics(a_init,rhostar,box_size,resol,num_ghosts,rseed):
+
     a_init     = convert_types.asnum(ffi,a_init)
+    rhostar    = convert_types.asnum(ffi,rhostar)
     box_size   = convert_types.asnum(ffi,box_size)
     resol      = convert_types.asnum(ffi,resol)
     num_ghosts = convert_types.asnum(ffi,num_ghosts)
     rseed      = convert_types.asnum(ffi,rseed)
-    
+
     create_ics.make_ics(a_init,box_size,resol,num_ghosts,rseed)
+
 """
 
 with open("plugin.h", "w") as f:
