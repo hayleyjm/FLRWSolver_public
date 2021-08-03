@@ -47,9 +47,9 @@ extern void call_make_ics(double *a_init, double *rhostar, double *box_size, dou
 module = """
 from ics_plugin import ffi
 import sys
-sys.path.insert(0, "/Users/hayleymac/Documents/codes/flrwsolver_public/src/")
-sys.path.insert(1, "/Users/hayleymac/Documents/codes/flrwsolver/c2raytools3/src/")
-sys.path.insert(2, "/Users/hayleymac/Documents/codes/flrwsolver/c2raytools3/src/c2raytools3/")
+sys.path.insert(0, "/path/to/flrwsolver/src/")
+sys.path.insert(1, "/path/to/flrwsolver/c2raytools3/src/")
+sys.path.insert(2, "/path/to/flrwsolver/c2raytools3/src/c2raytools3/")
 import create_ics
 import convert_types
 
