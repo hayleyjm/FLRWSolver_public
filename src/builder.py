@@ -36,20 +36,24 @@ extern void call_make_ics(double *a_init, double *rhostar, double *box_size, dou
 # ==================================================================================
 #        USER INFO:
 #
-# In "module", please change the THREE paths added to sys.path below to correspond to:
+# In "module", please change 'flrwsolverpath' to correspond to where you have installed the FLRWSolver top directory
 #
-# 0, YOUR path to FLRWSolver src code (for, e.g., ``import create_ics'' statement)
-# 1, YOUR path to c2raytools src code (for ``import c2raytools'' statement)
-# 2, YOUR path to c2raytools MAIN src/ directory (for c2raytools __init__.py import statements)
+# Note:
+#    1. Ensure you INCLUDE the trailing slash '/' in the FLRWSolver path
+#    2. We assume you have used the un-tarred c2raytools3 included in this repo
 #
 # ==================================================================================
 
 module = """
 from ics_plugin import ffi
 import sys
-sys.path.insert(0, "/path/to/flrwsolver/src/")
-sys.path.insert(1, "/path/to/flrwsolver/c2raytools3/src/")
-sys.path.insert(2, "/path/to/flrwsolver/c2raytools3/src/c2raytools3/")
+# --------- change path below ------------
+flrwsolverpath="/path/to/flrwsolver/"
+# ----------------------------------------
+
+sys.path.insert(0, flrwsolverpath + "src/")
+sys.path.insert(1, flrwsolverpath + "c2raytools3/src/")
+sys.path.insert(2, flrwsolverpath + "c2raytools3/src/c2raytools3/")
 import create_ics
 import convert_types
 
