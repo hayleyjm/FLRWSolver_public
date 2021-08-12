@@ -51,24 +51,40 @@ import sys
 flrwsolverpath="/path/to/flrwsolver/"
 # ----------------------------------------
 
-sys.path.insert(0, flrwsolverpath + "src/")
-sys.path.insert(1, flrwsolverpath + "c2raytools3/src/")
-sys.path.insert(2, flrwsolverpath + "c2raytools3/src/c2raytools3/")
-import create_ics
-import convert_types
+sys.path.insert(0, flrwsolverpath + 'src/')
+sys.path.insert(1, flrwsolverpath + 'c2raytools3/src/')
+sys.path.insert(2, flrwsolverpath + 'c2raytools3/src/c2raytools3/')
+
+# filename for errors to be read in by F90 code
+ierr_fname = 'create_ics.err'
+try:
+    import create_ics
+    import convert_types
+    imp_err = 0 # execution OK
+except:
+    imp_err = 1 # execution FAILED
+#
+# Below is a workaround to write two lines to a file without using newline,
+#     since this module is a giant comment, that doesn't work
+#
+original_stdout = sys.stdout # Save a reference to the original standard output
+with open(ierr_fname, 'w') as f:
+    sys.stdout = f # Change the standard output to the file we created.
+    print(imp_err)
+    sys.stdout = original_stdout # Reset the standard output to its original value
 
 @ffi.def_extern()
-def call_make_ics(a_init,rhostar,box_size,bsize_code,resol,num_ghosts,rseed):
+def call_make_ics(a_init,Hini,box_size,bsize_code,resol,num_ghosts,rseed,ierrfile=ierr_fname):
 
     a_init     = convert_types.asnum(ffi,a_init)
-    rhostar    = convert_types.asnum(ffi,rhostar)
+    Hini       = convert_types.asnum(ffi,Hini)
     box_size   = convert_types.asnum(ffi,box_size)
     bsize_code = convert_types.asnum(ffi,bsize_code)
     resol      = convert_types.asnum(ffi,resol)
     num_ghosts = convert_types.asnum(ffi,num_ghosts)
     rseed      = convert_types.asnum(ffi,rseed)
 
-    create_ics.make_ics(a_init,rhostar,box_size,bsize_code,resol,num_ghosts,rseed)
+    create_ics.make_ics(a_init,Hini,box_size,bsize_code,resol,num_ghosts,rseed,ierrfile=ierr_fname)
 
 """
 

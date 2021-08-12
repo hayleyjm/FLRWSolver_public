@@ -32,7 +32,9 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   !
   CCTK_INT :: ncells(3)
   character(len=200) :: pkfilename
+  character(len=200), parameter :: ierrfile = "create_ics.err" ! needs to match that set in builder.py
   integer :: dr_unit,dv_unit1,dv_unit2,dv_unit3,p_unit
+  integer :: imp_ierr,pk_ierr,file_ierr,iunit,ierr
   integer :: il,jl,kl,iu,ju,ku,pkunit,pklen
 
   call CCTK_INFO("Initialising a POWER SPECTRUM of perturbations to an FLRW spacetime")
@@ -68,7 +70,24 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   call CCTK_INFO("Calling create_ics for initial conditions...")
   if (ncells(1)/=ncells(2)) call CCTK_WARN(CCTK_WARN_ALERT,"non-uniform grid")
 
-  call call_make_ics(a0,rhostar,FLRW_boxlength,boxlen(1),ncells(1),2*cctk_nghostzones(1),FLRW_random_seed)
+  call call_make_ics(a0,hub,FLRW_boxlength,boxlen(1),ncells(1),2*cctk_nghostzones(1),FLRW_random_seed)
+  ! Check the error file exists, to check for errors in Python code (these don't show up nicely in CCTK output as is)
+  inquire(file=ierrfile,iostat=ierr)
+  if (ierr/=0) then
+      call CCTK_WARN(CCTK_WARN_ALERT,"ierrorfile does not exist. Check consistency between builder.py and ierrfile. Some errors may be missing.")
+  else
+      ! Read in the error flags and produce relevant warnings
+      !    -- order of reading here matches writing order in builder.py and create_ics.py
+      open(action='read',file=ierrfile,newunit=iunit)
+      read(iunit,*) imp_ierr
+      ! add this warning first; because if imp_ierr/=0 then we couldn't call create_ics --> ierrfile has only one line
+      if (imp_ierr/=0) call CCTK_WARN(CCTK_WARN_ABORT,"ERROR: Could not import create_ics/convert_types. ACTION: Check 'flrwsolverpath' in builder.py & check c2raytools3 directory exists at defined path.")
+      read(iunit,*) pk_ierr
+      read(iunit,*) file_ierr
+      if (pk_ierr/=0)  call CCTK_WARN(CCTK_WARN_ABORT,"ERROR: Could not load powerspectrum file. ACTION: Check path in parameter file.")
+      if (file_ierr/=0)  call CCTK_WARN(CCTK_WARN_ABORT,"ERROR: Could not save initial data to files.")
+      close(iunit)
+  endif
   call CCTK_INFO("Done making initial conditions.")
 
   !
@@ -175,7 +194,7 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
                  ! set up linearly-perturbed matter data
                  rho(i,j,k)   = rho0 * (1._dp + delta(i,j,k))
                  vel(i,j,k,:) = delta_vel(i,j,k,:)
-                 
+
               endif
 
            endif
