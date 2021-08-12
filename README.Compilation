@@ -6,23 +6,24 @@ Instructions for compiling the ET with FLRWSolver
 
 0. Follow the download instructions for the ET here: http://einsteintoolkit.org/download.html
 
-1. Clone the FLRWSolver repository:
+1. Clone & setup the FLRWSolver repository:
+        cd Cactus/arrangements/EinsteinInitialData/
+        git clone git@github.com:hayleyjm/FLRWSolver_public.git
 
-   	     cd Cactus/arrangements/EinsteinInitialData/
-             git clone https://USERNAME@bitbucket.org/hayleymac/flrwsolver.git
+        Re-name the directory:
 
-	 replacing USERNAME with your bitbucket username.
+            mv flrwsolver_public/ flrwsolver/
 
-	 Add FLRWSolver to the thornlist (manifest/einsteintoolkit.th) by adding the line below other EinsteinInitialData thorns:
+        Add FLRWSolver to the thornlist (manifest/einsteintoolkit.th) by adding the line below other EinsteinInitialData thorns:
 
-	     EinsteinInitialData/flrwsolver
+            EinsteinInitialData/flrwsolver
 
 2. Add the location of your Python libraries for linking ans build the static library:
 
 	The powerspectrum perturbations part of FLRWSolver requires Python for linking.
 	For this you need to specify the path to these libraries.
 
-	** Detailed instructions in README.Python. **
+	** Follow the detailed instructions in README.Python. **
 
 3. Navigate to your Cactus/ directory
 
@@ -33,18 +34,18 @@ Instructions for compiling the ET with FLRWSolver
 	and follow the prompts.
 
 5. Configuration files for the build are in simfactory/mdb/optionlists/, which is the default directory that Cactus looks in when specified below.
-	
-	Choose one appropriate for the machine you're using and make any necessary edits.
+
+    Choose one appropriate for the machine you're using and make any necessary edits.
 
 6. Build Cactus with:
 
 		./simfactory/bin/sim build --thornlist=manifest/einsteintoolkit.th --optionlist=my-config-file.cfg
 
-	--> my-config-file.cfg is your chosen configuration file (to clean the previous build, add --clean to the above command, before --thornlist).
-	
-	--> manifest/einsteintoolkit.th (the thornlist) contains the list of the thorns to be compiled (make sure you have added FLRWSolver to this).
+        --> my-config-file.cfg is your chosen configuration file (to clean the previous build, add --clean to the above command, before --thornlist).
 
-	Compilation can take a long time ( >1 hour is normal for a first-time build). Be patient...
+        --> manifest/einsteintoolkit.th (the thornlist) contains the list of the thorns to be compiled (make sure you have added FLRWSolver to this).
+
+        Compilation can take a long time ( >1 hour is normal for a first-time build). Be patient...
 
 --------------------------------------------------
 
@@ -54,12 +55,12 @@ Configuration file notes:
 
 --> On MacOS Catalina 10.15.5 we have tested using osx-homebrew.cfg with a few changes to library/binary locations (different for each machine).
 
---> On M3 (at MASSIVE at Monash University) we use debian-intel.cfg (Paul has a config on massive: massive.cfg). 
+--> On M3 (at MASSIVE at Monash University) we use debian-intel.cfg (Paul has a config on massive: massive.cfg).
 
 --> On Magnus at the Pawsey Supercomputing Centre in Perth, WA, we use our own config file magnus.cfg (included in this repository).
 
 --> Many other widely-used machines (that have been compiled and tested with Cactus) are already included in simfactory/mdb/optionlists/ as a part of Cactus.
-		Try compiling with the default values before changing anything.
+        Try compiling with the default values before changing anything.
 
 --> Note: you may need to load various modules to make the compilation work (For MASSIVE Paul's are in modules.lasky in this repository).
 
@@ -71,19 +72,19 @@ Some known issues when compiling and/or linking:
 
 
 --> Common errors can arise from Meudon portions of the code.  If so, go into manifest/einsteintoolkit.th
-	and comment out the following (using #) 
+    and comment out the following (using #)
 
-		# EinsteinInitialData/Meudon_Bin_BH
-		# EinsteinInitialData/Meudon_Bin_NS
-		# EinsteinInitialData/Meudon_Mag_NS
+        # EinsteinInitialData/Meudon_Bin_BH
+        # EinsteinInitialData/Meudon_Bin_NS
+        # EinsteinInitialData/Meudon_Mag_NS
 
-		# ExternalLibraries/LORENE
+        # ExternalLibraries/LORENE
 
 --> Generally, if you have a nontrivial error with a particular thorn, first try removing that thorn from the thornlist and re-compile.
-	The code will complain if other thorns on your thornlist depend on the thorn you have just removed. You can also remove some of these if they are not important.
-	If it turns out a thorn you really need has a dependency on that thorn, ONLY THEN spend the time debugging.
-	
-	
+    The code will complain if other thorns on your thornlist depend on the thorn you have just removed. You can also remove some of these if they are not important.
+    If it turns out a thorn you really need has a dependency on that thorn, ONLY THEN spend the time debugging.
+
+
 --> At the final linking stage, you might get a whole lot of "Undefined symbols for architecture", e.g. something like:
 
 	  Undefined symbols for architecture x86_64:
@@ -101,11 +102,9 @@ Some known issues when compiling and/or linking:
 		make[1]: *** [/Users/hayleymac/software/Cactus/exe/cactus_sim] Error 1
 		make: *** [sim] Error 2
 
-	This means the code has not found your Python library (e.g. Python.h). 
+	This means the code has not found your Python library (e.g. Python.h).
 	Check that your LDFLAGS (in your chosen configuration file) match the output of:
-	
+
 		python-config --ldflags
 
 	And double check these are in your .cfg file itself and NOT in the make.code.deps of FLRWSolver (as per README.Python).
-	
-
