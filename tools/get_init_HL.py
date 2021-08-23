@@ -7,7 +7,7 @@ A script to get the proper initial HL for use with FLRWSolver
     USAGE:
     python get_init_HL.py res boxL_z0(Gpc) zini
 
-    e.g. for a 32^3, 1Gpc box initialised at z=1000, run:
+    e.g. for a 32^3, 1Gpc/h box initialised at z=1000, run:
       python get_init_HL.py 32 1.0 1000.0
 
     (mainly adapted from my scribblings in Projects/ImprovedAveraging/translate_phys_units.ipynb)
@@ -36,7 +36,7 @@ Define the initial params you want for the simulation
 ====================================================================================
 '''
 # Desired proper/comoving length of box at redshift z=0
-Lz0 = float(sys.argv[2]) * units.Gpc
+Lz0 = float(sys.argv[2]) * units.Gpc # in Gpc/h
 #
 # Initial redshift, scale factor, time (latter should stay the same)
 zini  = float(sys.argv[3])
@@ -60,17 +60,17 @@ zinc = 1.0
 print(f' Hello! finding initial HL for: ')
 print('')
 print(f'                   res = {res}')
-print(f'    box length (z = 0) = {Lz0}')
+print(f'    box length (z = 0) = {Lz0} Gpc/h')
 print(f'    box length  (code) = {boxL}')
 print(f'       initial reshift = {zini}')
 
 print(f'')
 
 '''
-Assume EdS model -- i.e. H_0 ~ 45 km/s Mpc
+Assume generic H0 in h km/s/Mpc
     & find HL at z=0
 '''
-H0    = 45. * units.km / (units.s * units.Mpc)
+H0    = 100. * units.km / (units.s * units.Mpc)
 dH_z0 = (const.c/H0).to('Mpc')
 HLz0  = (H0*Lz0/const.c).to('')
 
@@ -127,5 +127,8 @@ print(f' Cactus::cctk_final_time   = {eta_inc}')
 print(f'   time::dtfac             = {dtfac} ')
 
 print('')
-print('--- RESTART PARAMS ---')
+print('Parameters for restart par file:')
+print('')
 print(f' Cactus::cctk_final_time   = {etafinal}')
+print('')
+print('Done.')
