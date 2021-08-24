@@ -5,6 +5,8 @@
 #
 # A sample parameter file to run an FLRW spacetime
 #
+#  -- 32^3, 1 Gpc/h box, initial z=1000
+#      (see tools/get_init_HL.py to change these consistently)
 
 
 ########################################
@@ -77,8 +79,8 @@ ActiveThorns = "Time MoL StaticConformal NaNChecker SymBase"
 ActiveThorns = "Constants LocalReduce aeilocalinterp LoopControl"
 
 Cactus::terminate           = "time"
-Cactus::cctk_initial_time   = 0.42113481526141333
-Cactus::cctk_final_time     = 13.324259815261367
+Cactus::cctk_initial_time   = 0.18951066686763596
+Cactus::cctk_final_time     = 4.2426356668676215     # z~1
 time::dtfac                 = 0.1
 
 MoL::ODE_Method             = "rk4"
@@ -160,7 +162,7 @@ GRHydro::GRHydro_stencil           = 3
 GRHydro::bound                     = "none"
 GRHydro::rho_abs_min               = 1.e-30
 
-EOS_Omni::poly_k		   = 1.e-15
+EOS_Omni::poly_k		   = 1.e-20
 EOS_Omni::poly_gamma		   = 2.0
 
 
@@ -181,7 +183,7 @@ ADMBase::initial_dtshift         = "zero"
 
 # some options for the background FLRW spacetime
 FLRWSolver::FLRW_lapse_value     = 1.0
-FLRWSolver::FLRW_init_HL         = 4.7490730462608015
+FLRWSolver::FLRW_init_HL         = 10.553495658357338
 FLRWSolver::FLRW_init_a          = 1.0
 
 # choose some things regarding perturbations

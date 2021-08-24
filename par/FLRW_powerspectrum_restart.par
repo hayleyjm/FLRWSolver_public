@@ -1,7 +1,7 @@
 # /*@@
 #   @file      test_recover.par (adapted)
 #   @date      Thu Oct 12 2000
-#   @author    Thomas Radke (Hayley Macpherson for FLRWSolver)
+#   @author    Thomas Radke (revised by Hayley Macpherson for FLRWSolver)
 #   @version   $Id: test_recover.par,v 1.1.1.1 2006/01/26 00:40:13 kelly Exp $
 # @@*/
 
@@ -26,7 +26,7 @@ IOUtil::recover       = "auto"
 IO::recover_file  = "checkpoint.chkpt"
 
 # checkpoint files to be found in directory:
-IOUtil::recover_dir    = "FLRW/"
+IOUtil::recover_dir    = "FLRW_powerspectrum/"
 
 # Note that this parameter is restored to "yes" during parameter recovery.
 # Since we don't need to checkpoint twice it is explicitely disabled here.
@@ -39,6 +39,9 @@ IO::out_fileinfo = "none"
 # do not use the new scheme for names of output files
 IO::new_filename_scheme = "no"
 
+# change the final time (this is z~0 for 32^3, 1.0 Gpc/h box)
+Cactus::cctk_final_time = 5.998885666867616
+
 IOScalar::outScalar_vars  = "
  HydroBase::rho
  HydroBase::vel
@@ -47,6 +50,8 @@ IOScalar::outScalar_vars  = "
  ADMBase::curv
 "
 
+# and maybe change the frequency of 3D output for low z
+IOHDF5::out3d_every     = 20
 IOHDF5::out3D_vars	= "
  HydroBase::vel
  HydroBase::rho

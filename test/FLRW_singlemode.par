@@ -4,11 +4,11 @@
 
 #
 # A sample parameter file to run an FLRW spacetime
-#  with a single-mode perturbation
+#  with a single-mode, sine-wave perturbation
 #
-#  -- 32^3, 1 Gpc/h box, initial z=1000
-#      (see tools/get_init_HL.py to change these consistently)
-
+# This is a toy for the test case run by Cactus.
+# See flrwsolver/par/ for some examples of physically interesting runs.
+#
 
 ########################################
 # grid parameters
@@ -28,9 +28,9 @@ CoordBase::zmin = 0.0
 CoordBase::xmax = 1.0
 CoordBase::ymax = 1.0
 CoordBase::zmax = 1.0
-CoordBase::dx   = 0.03125
-CoordBase::dy   = 0.03125
-CoordBase::dz   = 0.03125
+CoordBase::dx   = 0.1
+CoordBase::dy   = 0.1 # 10^3 for test case
+CoordBase::dz   = 0.1
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -80,8 +80,8 @@ ActiveThorns = "Time MoL StaticConformal NaNChecker SymBase"
 ActiveThorns = "Constants LocalReduce aeilocalinterp LoopControl"
 
 Cactus::terminate           = "time"
-Cactus::cctk_initial_time   = 0.18951066686763596
-Cactus::cctk_final_time     = 4.2426356668676215     # z~1
+Cactus::cctk_initial_time   = 1.0
+Cactus::cctk_final_time     = 1.01  # 1 timestep -- only care about ICs for test
 time::dtfac                 = 0.1
 
 MoL::ODE_Method             = "rk4"
@@ -184,7 +184,7 @@ ADMBase::initial_dtshift         = "zero"
 
 # some options for the background FLRW spacetime
 FLRWSolver::FLRW_lapse_value     = 1.0
-FLRWSolver::FLRW_init_HL         = 10.553495658357338
+FLRWSolver::FLRW_init_HL         = 1.0
 FLRWSolver::FLRW_init_a          = 1.0
 
 # choose some things regarding perturbations
@@ -213,9 +213,16 @@ ActiveThorns = "CarpetIOASCII CarpetIOScalar CarpetIOHDF5 CarpetIOBasic"
 #IOBasic::outInfo_every      = 1
 #IOBasic::outInfo_vars       = "HydroBase::rho ADMBase::lapse"
 
-IO::out_dir      = $parfile
+IO::out_dir       = $parfile
+IO::out_fileinfo  = "axis labels"
+IO::parfile_write = "no"
 
-IOScalar::outScalar_every    = 1
+# below may make the output independent of the number of processors (when using 1 or 2)
+CarpetIOASCII::compact_format = yes
+CarpetIOASCII::output_ghost_points = no
+
+IOScalar::outScalar_every    = 10   # IC only
+IOScalar::outScalar_reductions = "minimum maximum average"
 IOScalar::one_file_per_group = no
 IOScalar::outScalar_vars  = "
  HydroBase::rho
@@ -223,21 +230,21 @@ IOScalar::outScalar_vars  = "
  ADMBase::alp
  ADMBase::metric
  ADMBase::curv
- ML_ADMConstraints::ML_Ham
- ML_ADMConstraints::ML_mom
 "
 
-IOHDF5::out3d_every	= 200
-IOHDF5::out3d_vars 	= "
-  HydroBase::rho
-  ADMBase::metric
-  ADMBase::curv
-  ADMBase::alp
-  HydroBase::vel
- "
-
-IO::out_mode      = "onefile"  
-IO::out_unchunked = "yes"
+# output 1D data (x-only) for test case
+#   -- 1D sufficient for single mode
+IOASCII::out1D_every     = 10    # IC only
+IOASCII::out1D_d         = "no"
+IOASCII::out1D_y         = "no"
+IOASCII::out1D_z         = "no"
+IOASCII::out1D_vars      = "
+ HydroBase::rho
+ HydroBase::vel
+ ADMBase::alp
+ ADMBase::metric
+ ADMBase::curv
+"
 
 IOHDF5::checkpoint                  = no
 # IO::checkpoint_dir                  = $parfile

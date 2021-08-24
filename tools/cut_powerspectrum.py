@@ -6,19 +6,23 @@ to the desired minimum wavelength (maximum k)
         -- note most of this just cut + paste from old create_ics.py
 
 Author: Hayley Macpherson
-  Date: 29/10/2020
+  Date: 24/08/2021
 
 '''
 import numpy as np
 
-# ------------------------------------
+# ------------------------------------------------------
 #
 # User to change these settings below
 #
 
-# Name + location of power spectrum file
-pspecfile = "/Users/hayleymac/Documents/codes/flrwsolver/powerspectra/FLRW_matterpower_z1100.dat"
+# Physical box size (Mpc/h), initial redshift and resolution (number of grid cells in each dimension)
+boxL = 1000.0
+zini = 1000.0
+res  = 32
 
+# Name + location of power spectrum file
+pspecfile = f"/Users/hayleymac/Documents/codes/flrwsolver/powerspectra/camb/FLRW_matterpower_z{int(zini)}.dat"
 # Number of rows to skip, if you have a header in the file set this to 1
 nskip = 1
 
@@ -26,11 +30,7 @@ nskip = 1
 #      --> minimum wavelength = cutfac * dx = 2pi/kmax
 cutfac = 10.0
 
-# Physical box size (cMpc) and resolution (number of grid cells in each dimension)
-boxL = 1000.0
-res  = 32
-
-# ------------------------------------
+# ------------------ end user changes ------------------
 
 print(f"  ~~~ CUTTING POWER SPECTRUM ~~~   ")
 print("")

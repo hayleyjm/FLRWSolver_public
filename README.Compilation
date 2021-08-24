@@ -18,12 +18,20 @@ Instructions for compiling the ET with FLRWSolver
 
             EinsteinInitialData/flrwsolver
 
-2. Add the location of your Python libraries for linking ans build the static library:
+2. Add the location of your Python libraries for linking and build the static library:
 
-	The powerspectrum perturbations part of FLRWSolver requires Python for linking.
+	The powerspectrum perturbations part of FLRWSolver requires linking to Python.
 	For this you need to specify the path to these libraries.
 
-	** Follow the detailed instructions in README.Python. **
+    Main steps:
+        a) CLFAGS: run 'python-config --cflags' and copy the flags into flrwsolver/src/make.code.deps
+            (delete anything that's already there)
+        b) LDFLAGS: run 'python-config --ldflags' and copy this into your config file
+            (if there is no LDFLAGS= line, then add one)
+        c) Go to flrwsolver/src, open builder.py and change 'flrwsolverpath' to wherever the code is located on your machine
+        d) run 'python builder.py' to generate the static library for linking
+        
+    See README.Python for a more detailed explanation.
 
 3. Navigate to your Cactus/ directory
 

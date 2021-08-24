@@ -81,7 +81,7 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
       open(action='read',file=ierrfile,newunit=iunit)
       read(iunit,*) imp_ierr
       ! add this warning first; because if imp_ierr/=0 then we couldn't call create_ics --> ierrfile has only one line
-      if (imp_ierr/=0) call CCTK_WARN(CCTK_WARN_ABORT,"ERROR: Could not import create_ics/convert_types. ACTION: Check 'flrwsolverpath' in builder.py & check c2raytools3 directory exists at defined path.")
+      if (imp_ierr/=0) call CCTK_WARN(CCTK_WARN_ABORT,"ERROR: Could not import create_ics (and/or) convert_types. ACTION: Check 'flrwsolverpath' in builder.py")
       read(iunit,*) pk_ierr
       read(iunit,*) file_ierr
       if (pk_ierr/=0)  call CCTK_WARN(CCTK_WARN_ABORT,"ERROR: Could not load powerspectrum file. ACTION: Check path in parameter file.")

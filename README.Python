@@ -1,4 +1,5 @@
-Instructions on how to link your Python libraries to FLRWSolver for the powerspectrum perturbations code. Please read this carefully to ensure a smooth compilation.
+
+More detailed instructions on how to link your Python libraries to FLRWSolver for the powerspectrum perturbations code. Please read this carefully to ensure a smooth compilation.
 
     NOTE 1: you need to do this even if you don't want to use the powerspectrum part of the code, since this is required for compilation.
     NOTE 2: we assume you have successfully completed steps 0. and 1. of README.Compilation
@@ -12,12 +13,8 @@ Required Python packages:
 cffi
 numpy
 scipy
-c2raytools
-    --> includes the functions for generating the Gaussian random field from a power spectrum
-    --> original code is here: https://github.com/hjens/c2raytools (Python 2 version)
-    --> this repo includes c2raytools3.tar: a version that has been translated to Python 3.8
 
-* This linking has only been tested with Python 3.8. Keep this in mind if trying with earlier versions.
+* This linking has only been tested with Python 3.8. Keep this in mind if trying with other versions.
 
 ------------------------------------------------------------------
 
@@ -25,9 +22,9 @@ Linking + compiling instructions:
 
 ------------------------------------------------------------------
 
-0. Ensure all required Python dependencies are installed via pip (or similar), and c2raytools3 is un-tarred.
+0. Ensure all required Python dependencies are installed via pip (or similar)
 
-1. Move to flrwsolver/src/ and open builder.py and change the 'flrwsolverpath' variable to where you have flrwsolver/ placed
+1. Move to flrwsolver/src/ and open builder.py and change the 'flrwsolverpath' variable to where flrwsolver/ is located on your machine
 
 2. Build the static library:
 
@@ -38,6 +35,7 @@ Linking + compiling instructions:
 3. Determine the appropriate CFLAGS and LDFLAGS for linking Python to C.
 
     3a. CFLAGS
+        Run:
 
             python-config --cflags
 
@@ -48,6 +46,7 @@ Linking + compiling instructions:
         (note: I have found that including these CFLAGS directly into the .cfg file doesn't work)
 
     3b. LDFLAGS
+        Run:
 
             python-config --ldflags
 
@@ -67,7 +66,7 @@ Description of FLRWSolver/src/ files used for Python linking:
     The Python 3 script that generates the Gaussian-random density field that follows the given powerspectrum, along with the
     corresponding velocity and metric perturbations.
 
-    * You should not need to change this file. But - if you do, please note you DO NOT need to recompile the ET, since this is called only at runtime.
+    * You do not need to change this file, but may want to if you're changing the initial data itself.
 
 - builder.py
 
@@ -77,18 +76,24 @@ Description of FLRWSolver/src/ files used for Python linking:
 
 - convert_types.py
 
-    This provides a function to convert C pointers to the corresponding Python type. It is called by builder.py. Do not change this file.
+    This provides a function to convert C pointers to the corresponding Python type. It is called by builder.py.
+
+    * Do not change this file.
 
 - plugin.h, pspec_ics.c
 
-    The files generated when running builder.py (instructions below).
+    The files generated when running builder.py.
 
-    ** DO NOT change these files.
+    * Do not change these files.
 
 - flrw_powerspectrum.F90
 
-    The FLRWSolver code that calls create_ics.py via the C code pspec_ics.c. Do not change this code.
+    The FLRWSolver code that calls create_ics.py via the C code pspec_ics.c.
+
+    * You do not need to change this file, but may want to if you're changing the initial data itself.
 
 - init_tools.F90
 
-    FLRWsolver code that contains the C interface required for linking. Do not change this code.
+    FLRWsolver code that contains the C interface required for linking (among other routines called by all FLRWSolver codes).
+
+    * Do not change this file.

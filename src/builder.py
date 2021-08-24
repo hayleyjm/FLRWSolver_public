@@ -38,9 +38,7 @@ extern void call_make_ics(double *a_init, double *rhostar, double *box_size, dou
 #
 # In "module", please change 'flrwsolverpath' to correspond to where you have installed the FLRWSolver top directory
 #
-# Note:
-#    1. Ensure you INCLUDE the trailing slash '/' in the FLRWSolver path
-#    2. We assume you have used the un-tarred c2raytools3 included in this repo
+# Note: Ensure you INCLUDE the trailing slash '/' in the FLRWSolver path
 #
 # ==================================================================================
 
@@ -52,8 +50,6 @@ flrwsolverpath="/path/to/flrwsolver/"
 # ----------------------------------------
 
 sys.path.insert(0, flrwsolverpath + 'src/')
-sys.path.insert(1, flrwsolverpath + 'c2raytools3/src/')
-sys.path.insert(2, flrwsolverpath + 'c2raytools3/src/c2raytools3/')
 
 # filename for errors to be read in by F90 code
 ierr_fname = 'create_ics.err'

@@ -4,7 +4,6 @@
  Based on Equations (26) from Macpherson et al. 2017 (linear perturbations to FLRW)
 
     --> This version works embedded in FLRWSolver using CFFI (i.e. this module is "called" from Fortran via C...)
-    --> NOTE: changes to this file DO NOT require a Cactus re-compile!
 
   Author: Hayley J. Macpherson
  Created: 07/12/2016
@@ -13,9 +12,7 @@
 '''
 import time
 import numpy as np
-import c2raytools3 # there is a local (.tar) copy of this included in the repo
 from scipy import fftpack
-from c2raytools3.power_spectrum import _get_dims, _get_k, power_spectrum_1d
 from scipy.interpolate import interp1d
 
 def make_ics(a_init,Hini,box_size,bsize_code,resol,num_ghosts,rseed,ierrfile='ierrs.txt'):
@@ -62,46 +59,65 @@ def make_ics(a_init,Hini,box_size,bsize_code,resol,num_ghosts,rseed,ierrfile='ie
     matterpower_filename = pkfile.read().rstrip()
     pkfile.close()
     try:
-        matterpower_file = np.loadtxt(matterpower_filename,skiprows=1)
+        matterpower_file = np.loadtxt(matterpower_filename,skiprows=4)
         pk_ierr          = 0 # execution OK
     except:
         matterpower_file = np.zeros([10,2]) # dummy array
         pk_ierr          = 1 # execution FAILED
     ifile.write(f'{pk_ierr}\n')
 
-    # Note k and P are dimensionfull -- needed for call to c2raytools3
+    # Note k and P are dimensionfull
     k = matterpower_file[:,0]                 # |k| values (in h/Mpc)
     P = matterpower_file[:,1]                 # P(k) values (in (Mpc/h)^3)
 
     res     = resol + num_ghosts              # resolution including ghost cells
     box_res = [resol,resol,resol]             # dimensions of 3-D arrays
 
-    bsize   = [box_size,box_size,box_size]    # dimension of box in cMpc
+    bsize   = [box_size,box_size,box_size]    # dimension of box in Mpc/h
     spacing = bsize_code / resol              # grid spacing in code units
+    spacing_phys = box_size / resol           # grid spacing in Mpc/h
 
     #
-    # 1. Create kx,ky,kz arrays in code units
-    # 2. Add in zero frequency to |k| and P(k)
-    # 3. Interpolate power spectrum
+    # 0. Create kx,ky,kz arrays in physical units
+    #     because we need modk in physical units to interpolate power spectrum
+    kx1_phys    = 2. * np.pi * np.fft.fftfreq(resol,d=spacing_phys)
+    kxp,kyp,kzp = np.meshgrid(kx1_phys,kx1_phys,kx1_phys)
+    modk_phys   = np.sqrt(kxp**2 + kyp**2 + kzp**2)
+
     #
+    # 1. Create kx,ky,kz arrays in code units for delta --> phi,vel
     kx1      = 2. * np.pi * np.fft.fftfreq(resol,d=spacing)
     kx,ky,kz = np.meshgrid(kx1,kx1,kx1)
     modk2    = kx**2 + ky**2 + kz**2                  # calculate modk^2 in the grid
 
+    #
+    # 2. Add in zero frequency to |k| and P(k)
     k_new = np.insert(k,0,0)                          # add zero frequency and power to arrays
     P_new = np.insert(P,0,0)
+    # 3. Interpolate power spectrum
     P_interp = interp1d(k_new,P_new)                  # interpolate using multi-mode power spectrum
 
     #
-    # 1. Calculate Gaussian random field (delta) from P(k)
-    # 2. Calculate phi & delta_vel using FFT in code units
-    # 3. Add zero value ghost cells
+    # 4. Calculate Gaussian random field (delta) from P(k)
     #
-
-    # This call may fail if powerspectrum doesn't sample full k range needed -- could add a flag
+    # The below may fail if powerspectrum doesn't sample full k range needed -- could add a flag
     if (pk_ierr==0):
-        # if powerspectrum file was read ok; make random field
-        random = c2raytools3.gaussian_random_field.make_gaussian_random_field(box_res, box_size, P_interp, random_seed=rseed)
+        # a) Generate random realisation in k-space
+        Re_random_ft = np.random.normal(size=box_res) # real part
+        Im_random_ft = np.random.normal(size=box_res) # imaginary part
+        random_ft    = Re_random_ft + 1j*Im_random_ft
+
+        # b) Define scale factor to make P(k) dimensionless
+        volume = np.product(bsize)   # volume of the domain in Mpc/h
+        dV     = spacing_phys**3     # volume element, i.e. dx^3, in Mpc/h
+        scale  = dV**2/volume
+
+        # Scale random to power spectrum
+        Pkscale    = P_interp(modk_phys)/scale   # Scaled (dimensionless) power spectrum
+        random_ft *= np.sqrt(Pkscale)            # Scale random field by sqrt(P)
+
+        # Inverse FT and take real part to get random
+        random = np.real(np.fft.ifftn(random_ft))
     else:
         # powerspectrum file wasn't read properly; set random to zero so we can carry on nicely
         random = np.zeros([resol,resol,resol])
@@ -110,7 +126,11 @@ def make_ics(a_init,Hini,box_size,bsize_code,resol,num_ghosts,rseed,ierrfile='ie
     delta    = random - random.mean()
     delta_ft = np.fft.fftn(delta)
 
-    # constants C1, C3 from Macpherson et al. 2017 in code units
+    #
+    # 5. Calculate phi & delta_vel using FFT in code units
+    #
+
+    # Define constants C1, C3 from Macpherson et al. 2017 in code units
     C1 = 2. / (3. * Hini**2)            # equiv to: a_init / ( 4. * np.pi * Grhostar)
     C3 = - 2. / (3. * a_init * Hini)    # equiv to: - np.sqrt( a_init / ( 6. * np.pi * Grhostar ) ) / a_init
 
@@ -127,7 +147,7 @@ def make_ics(a_init,Hini,box_size,bsize_code,resol,num_ghosts,rseed,ierrfile='ie
     velz    = np.real(np.fft.ifftn(velz_ft))
 
     #
-    # Put data into arrays including ghost cells
+    # 5. Put data into arrays including ghost cells
     # (the ghost values are here set to zero. Cactus fills these out for us after FLRWSolver is called.)
     #
     delta_gh = np.zeros([res,res,res])
