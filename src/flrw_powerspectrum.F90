@@ -67,29 +67,34 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   !
   ! this makes the ICs and puts them into files with corresponding names as below
   !
-  call CCTK_INFO("Calling create_ics for initial conditions...")
-  if (ncells(1)/=ncells(2)) call CCTK_WARN(CCTK_WARN_ALERT,"non-uniform grid")
+  ! We only need to call this from one processor; save potential issues with MPI
+  if (CCTK_MyProc(cctkGH)==0) then
+      call CCTK_INFO("Calling create_ics for initial conditions...")
+      if (ncells(1)/=ncells(2)) call CCTK_WARN(CCTK_WARN_ALERT,"non-uniform grid")
 
-  call call_make_ics(a0,hub,FLRW_boxlength,boxlen(1),ncells(1),2*cctk_nghostzones(1),FLRW_random_seed)
-  ! Check the error file exists, to check for errors in Python code (these don't show up nicely in CCTK output as is)
-  inquire(file=ierrfile,iostat=ierr)
-  if (ierr/=0) then
-      call CCTK_WARN(CCTK_WARN_ALERT,"ierrorfile does not exist. Check consistency between builder.py and ierrfile. Some errors may be missing.")
-  else
-      ! Read in the error flags and produce relevant warnings
-      !    -- order of reading here matches writing order in builder.py and create_ics.py
-      open(action='read',file=ierrfile,newunit=iunit)
-      read(iunit,*) imp_ierr
-      ! add this warning first; because if imp_ierr/=0 then we couldn't call create_ics --> ierrfile has only one line
-      if (imp_ierr/=0) call CCTK_WARN(CCTK_WARN_ABORT,"ERROR: Could not import create_ics (and/or) convert_types. ACTION: Check 'flrwsolverpath' in builder.py")
-      read(iunit,*) pk_ierr
-      read(iunit,*) file_ierr
-      if (pk_ierr/=0)  call CCTK_WARN(CCTK_WARN_ABORT,"ERROR: Could not load powerspectrum file. ACTION: Check path in parameter file.")
-      if (file_ierr/=0)  call CCTK_WARN(CCTK_WARN_ABORT,"ERROR: Could not save initial data to files.")
-      close(iunit)
+      call call_make_ics(a0,hub,FLRW_boxlength,boxlen(1),ncells(1),2*cctk_nghostzones(1),FLRW_random_seed)
+      ! Check the error file exists, to check for errors in Python code (these don't show up nicely in CCTK output as is)
+      inquire(file=ierrfile,iostat=ierr)
+      if (ierr/=0) then
+          call CCTK_WARN(CCTK_WARN_ALERT,"ierrorfile does not exist. Check consistency between builder.py and ierrfile. Some errors may be missing.")
+      else
+          ! Read in the error flags and produce relevant warnings
+          !    -- order of reading here matches writing order in builder.py and create_ics.py
+          open(action='read',file=ierrfile,newunit=iunit)
+          read(iunit,*) imp_ierr
+          ! add this warning first; because if imp_ierr/=0 then we couldn't call create_ics --> ierrfile has only one line
+          if (imp_ierr/=0) call CCTK_WARN(CCTK_WARN_ABORT,"ERROR: Could not import create_ics (and/or) convert_types. ACTION: Check 'flrwsolverpath' in builder.py")
+          read(iunit,*) pk_ierr
+          read(iunit,*) file_ierr
+          if (pk_ierr/=0)  call CCTK_WARN(CCTK_WARN_ABORT,"ERROR: Could not load powerspectrum file. ACTION: Check path in parameter file.")
+          if (file_ierr/=0)  call CCTK_WARN(CCTK_WARN_ABORT,"ERROR: Could not save initial data to files.")
+          close(iunit)
+      endif
+      call CCTK_INFO("Done making initial conditions.")
   endif
-  call CCTK_INFO("Done making initial conditions.")
-
+  ! All other processors wait here until we've made the ICs
+  call CCTK_Barrier(ierr,cctkGH)
+  
   !
   ! read in perturbations from files
   !

@@ -59,7 +59,7 @@ def make_ics(a_init,Hini,box_size,bsize_code,resol,num_ghosts,rseed,ierrfile='ie
     matterpower_filename = pkfile.read().rstrip()
     pkfile.close()
     try:
-        matterpower_file = np.loadtxt(matterpower_filename,skiprows=4)
+        matterpower_file = np.loadtxt(matterpower_filename,skiprows=1)
         pk_ierr          = 0 # execution OK
     except:
         matterpower_file = np.zeros([10,2]) # dummy array
@@ -122,20 +122,28 @@ def make_ics(a_init,Hini,box_size,bsize_code,resol,num_ghosts,rseed,ierrfile='ie
         # powerspectrum file wasn't read properly; set random to zero so we can carry on nicely
         random = np.zeros([resol,resol,resol])
 
-    # Ensure delta is centered around zero (still follows P(k))
-    delta    = random - random.mean()
-    delta_ft = np.fft.fftn(delta)
-
-    #
-    # 5. Calculate phi & delta_vel using FFT in code units
-    #
+    # Ensure delta is centered around zero (still follows P(k)) & transform to Fourier space
+    delta_sync    = random - random.mean()
+    delta_sync_ft = np.fft.fftn(delta_sync)
 
     # Define constants C1, C3 from Macpherson et al. 2017 in code units
     C1 = 2. / (3. * Hini**2)            # equiv to: a_init / ( 4. * np.pi * Grhostar)
     C3 = - 2. / (3. * a_init * Hini)    # equiv to: - np.sqrt( a_init / ( 6. * np.pi * Grhostar ) ) / a_init
 
-    phi_ft   = - delta_ft / (C1 * modk2 + 2.)
-    phi      = np.real(np.fft.ifftn(phi_ft))
+    #
+    # 5. a) calculate phi from synchronous density
+    #        we have a k=0 point at [0,0,0] in modk2;
+    #        this will give phi-->NaN,inf and give a warning when we divide by zero
+    #        but for now we just set it to zero directly afterwards
+    phi_ft           = np.zeros(box_res) + 1j * np.zeros(box_res)
+    phi_ft[1:,1:,1:] = - delta_sync_ft[1:,1:,1:] / (C1 * modk2[1:,1:,1:])
+    phi              = np.real(np.fft.ifftn(phi_ft))
+
+    #
+    # 5. Calculate delta_long & delta_vel from phi
+    #
+    delta_ft = - phi_ft * (C1 * modk2 + 2.)
+    delta    = np.real(np.fft.ifftn(delta_ft))
 
     velx_ft = C3 * 1j * kx * phi_ft
     velx    = np.real(np.fft.ifftn(velx_ft))
@@ -202,7 +210,6 @@ def make_ics(a_init,Hini,box_size,bsize_code,resol,num_ghosts,rseed,ierrfile='ie
             vel1_file.close()
             vel2_file.close()
             vel3_file.close()
-
         file_ierr = 0 # execution OK
     except:
         file_ierr = 1 # execution FAILED

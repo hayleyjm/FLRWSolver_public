@@ -47,7 +47,7 @@ KEYWORD FLRW_perturb_type "Add perturbation of the following type"
 } "single_mode"
 
 
-STRING FLRW_powerspectrum_file "Path to (and name of) text file specifying the P(k) to be used to generate perturbations if perturb_type=powerspectrum is chosen. File is assume to be in CAMB format, i.e. two column with k, P(k) for 3D power spectrum. Assumed no k=0 data point, this is added when generating ICs."
+STRING FLRW_powerspectrum_file "Path to (and name of) text file specifying the matter P(k) (in synchronous gauge) to be used to generate scalar perturbations if perturb_type=powerspectrum is chosen."
 {
  " " :: "Any string containing the path to the powerspectrum file"
 } ""
