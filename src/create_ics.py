@@ -133,11 +133,20 @@ def make_ics(a_init,Hini,box_size,bsize_code,resol,num_ghosts,rseed,ierrfile='ie
     #
     # 5. a) calculate phi from synchronous density
     #        we have a k=0 point at [0,0,0] in modk2;
-    #        this will give phi-->NaN,inf and give a warning when we divide by zero
+    #        this will give phi-->NaN (or inf) and give a warning when we divide by zero
     #        but for now we just set it to zero directly afterwards
-    phi_ft           = np.zeros(box_res) + 1j * np.zeros(box_res)
-    phi_ft[1:,1:,1:] = - delta_sync_ft[1:,1:,1:] / (C1 * modk2[1:,1:,1:])
-    phi              = np.real(np.fft.ifftn(phi_ft))
+    phi_ft   = - delta_sync_ft / (C1*k2)
+    if (True in (abs(np.real(phi_ft))==np.inf)):
+        # there are infs
+        infidxs = np.where(abs(np.real(phi_ft))==np.inf)
+        phi_ft[infidxs] = 0. + 0. * 1j
+    if (True in (np.real(phi_ft)!=np.real(phi_ft))):
+        # there are NaNs
+        nanidxs = np.where(np.real(phi_ft)!=np.real(phi_ft))
+        phi_ft[nanidxs] = 0. + 0. * 1j
+    #
+    # Transform back to real space
+    phi  = np.real(np.fft.ifftn(phi_ft))
 
     #
     # 5. Calculate delta_long & delta_vel from phi
