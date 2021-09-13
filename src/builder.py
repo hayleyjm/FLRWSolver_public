@@ -12,6 +12,7 @@
 '''
 
 import cffi
+import os
 ffibuilder = cffi.FFI()
 
 static = True # if False; make dynamic library
@@ -46,10 +47,10 @@ module = """
 from ics_plugin import ffi
 import sys
 # --------- change path below ------------
-flrwsolverpath="/path/to/flrwsolver/"
+flrwsolverpath=os.environ["FLRW_SRCDIR"]
 # ----------------------------------------
 
-sys.path.insert(0, flrwsolverpath + 'src/')
+sys.path.insert(0, flrwsolverpath)
 
 # filename for errors to be read in by F90 code
 ierr_fname = 'create_ics.err'

@@ -72,6 +72,8 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
       call CCTK_INFO("Calling create_ics for initial conditions...")
       if (ncells(1)/=ncells(2)) call CCTK_WARN(CCTK_WARN_ALERT,"non-uniform grid")
 
+      call FLRW_SetPythonModulePath()
+
       call call_make_ics(a0,hub,FLRW_boxlength,boxlen(1),ncells(1),2*cctk_nghostzones(1),FLRW_random_seed)
       ! Check the error file exists, to check for errors in Python code (these don't show up nicely in CCTK output as is)
       inquire(file=ierrfile,iostat=ierr)
