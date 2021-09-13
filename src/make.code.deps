@@ -3,4 +3,4 @@
 #
 
 # Add your flags for Python linking: output of 'python-config --cflags'
-CFLAGS+=$(shell python3-config --cflags) -DFLRW_SRCDIR='"$(PWD)"'
+CFLAGS+=$(shell python3-config --cflags) -DFLRW_SRCDIR='"$(SRCDIR)"'
