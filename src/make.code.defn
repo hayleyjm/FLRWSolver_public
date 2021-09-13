@@ -7,7 +7,8 @@ SRCS = pspec_ics.c \
        flrw_noperturb.F90 \
        flrw_singlemode.F90 \
        flrw_powerspectrum.F90 \
-       flrw_fileread.F90
+       flrw_fileread.F90 \
+       glue.c
 
 # Subdirectories containing source files
 SUBDIRS =

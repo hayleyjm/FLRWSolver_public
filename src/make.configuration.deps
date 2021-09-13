@@ -1,0 +1,3 @@
+LDFLAGS+=$(shell python3-config --ldflags --embed)
+# twice b/c of static linking
+LIBS+=$(patsubst -l%,%,$(shell python3-config --libs --embed))
