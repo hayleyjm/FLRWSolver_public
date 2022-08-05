@@ -9,6 +9,7 @@
 #include "cctk_Parameters.h"
 
 module init_tools
+  use, intrinsic :: iso_c_binding    
   implicit none
   integer,   parameter :: dp = 8
   CCTK_REAL, parameter :: pi = 4._dp * atan(1._dp)
