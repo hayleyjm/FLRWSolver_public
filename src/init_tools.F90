@@ -24,7 +24,6 @@ contains
     DECLARE_CCTK_PARAMETERS
     DECLARE_CCTK_FUNCTIONS
     logical, intent(out) :: lapse,dtlapse,shift,data,hydro
-    logical, intent(out), optional :: callmesc
     !
     ! initialise
     lapse = .False.; dtlapse = .False.; shift = .False.
