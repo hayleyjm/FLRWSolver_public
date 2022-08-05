@@ -34,7 +34,6 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   CCTK_REAL, dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
   !
   CCTK_INT :: ncells(3)
-  integer :: iunit,ierr
   integer :: il,jl,kl,iu,ju,ku
 
   call CCTK_INFO("Initialising a power spectrum of perturbations to an EdS spacetime")
