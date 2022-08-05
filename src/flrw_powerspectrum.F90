@@ -42,7 +42,7 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   !
   ! set logicals that tell us whether we want to use FLRWSolver to set ICs
   !
-  call set_logicals(lapse,dtlapse,shift,data,hydro,callmesc)
+  call set_logicals(lapse,dtlapse,shift,data,hydro)
 
   !
   ! set parameters used in setting metric, matter parameters

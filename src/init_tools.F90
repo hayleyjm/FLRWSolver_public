@@ -9,18 +9,9 @@
 #include "cctk_Parameters.h"
 
 module init_tools
-  use, intrinsic :: iso_c_binding
   implicit none
   integer,   parameter :: dp = 8
   CCTK_REAL, parameter :: pi = 4._dp * atan(1._dp)
-
-  interface
-     subroutine call_make_ics(a_init,Hini,box_size,bsize_code,resol,num_ghosts,rseed) bind(c)
-       import
-       real(c_double), intent(in) :: a_init,Hini,box_size,bsize_code
-       integer(C_INT32_T), intent(in) :: resol,num_ghosts,rseed
-     end subroutine call_make_ics
-  end interface
 
 contains
 
@@ -33,6 +24,7 @@ contains
     DECLARE_CCTK_PARAMETERS
     DECLARE_CCTK_FUNCTIONS
     logical, intent(out) :: lapse,dtlapse,shift,data,hydro
+    logical, intent(out), optional :: callmesc
     !
     ! initialise
     lapse = .False.; dtlapse = .False.; shift = .False.
@@ -61,8 +53,8 @@ contains
     CCTK_REAL, intent(inout) :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
     CCTK_INT, intent(out) :: ncells(3)
 
-    ncells  = cctk_gsh - 2 * cctk_nghostzones      ! Number of grid cells, resolution
-    boxlen  = ncells * cctk_delta_space            ! Length of box in code units
+    ncells    = cctk_gsh - 2 * cctk_nghostzones      ! Number of grid cells, resolution
+    boxlen    = ncells * cctk_delta_space            ! Length of box in code units
 
     a0      = FLRW_init_a                         ! Initial scale factor
     asq     = a0*a0                               ! Scale factor squared
@@ -73,6 +65,66 @@ contains
     hubdot  = -4._dp * pi * rho0 * asq / 3._dp    ! H' from derivative of Friedmann eqns
 
   end subroutine set_parameters
+
+
+  ! --------------------------------------------------------------------------------
+  !          ROUTINES COPIED FROM MESCALINE IN MARCH 2022 AND AMENDED SLIGHTLY
+  !      These have been modified only for the specific purposes we need them here
+  ! --------------------------------------------------------------------------------
+
+  !
+  ! A subroutine to take in an array and do linear interpolation to a point
+  !    *new and based on our needs to hide some ugly stuff
+  !
+  subroutine array_interp1Dlin(xi,nx,xvals,func,func_interp)
+      integer, intent(in) :: nx        ! the size of the array
+      CCTK_REAL, intent(in) :: xi ! the point of interpolation
+      CCTK_REAL, intent(in) :: xvals(nx),func(nx) ! xvals must be increasing
+      CCTK_REAL, intent(out) :: func_interp ! interpolated point
+      CCTK_REAL :: xl,xu,xvi
+      integer :: i,il,iu
+
+      ! We assume that xi lies somewhere in the range xvals(1:)
+      !    but check anyway
+      if (xi<xvals(1) .or. xi>xvals(nx)) then
+          call CCTK_WARN(CCTK_WARN_ALERT,"k value out of interpolation range")
+      endif
+
+      ! Find the xl and xu values to use to interpolate
+      i = 1
+      do while(xvals(i)<=xi)
+          ! loop thru xvals until we have passed xi
+          i = i + 1
+      enddo
+      ! note we will be 1 step *past* where we want to be, so need to -1 off indices we want
+      il = i-1; iu = i
+      xl = xvals(il)  ! lower limit
+      xu = xvals(iu)  ! upper limit
+      ! do the interpolation
+      call interp1Dlin(xi,xl,xu,(/func(il),func(iu)/),func_interp)
+
+  end subroutine array_interp1Dlin
+
+
+  !
+  ! a subroutine to perform 1D linear interpolation
+  !   --> taken from mescaline raytracer interpolate.f90 (NOT amended)
+  !
+  subroutine interp1Dlin(xinterp,xl,xu,func,func_interp)
+    CCTK_REAL, intent(in) :: xl,xu   ! x-values at lower and upper points
+    CCTK_REAL, intent(in) :: xinterp ! 1D point to interpolate to
+    CCTK_REAL, intent(in) :: func(2)
+    CCTK_REAL, intent(out) :: func_interp
+    ! func = (/ func(xl), func(xu) /)
+    CCTK_REAL :: xdl,xdu
+    !
+    ! distance of interp point from edges
+    xdl = (xinterp - xl) / (xu - xl)
+    xdu = (xu - xinterp) / (xu - xl)
+
+    func_interp = func(1) * xdu + func(2) * xdl
+
+  end subroutine interp1Dlin
 
 
   subroutine check_metric()

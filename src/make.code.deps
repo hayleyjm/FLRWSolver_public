@@ -2,5 +2,5 @@
 # Added dependencies for FLRWSolver
 #
 
-# Add the path to your FFTW3 include directory here
-F90FLAGS+=
+# Add the path to your FFTW3 include directory here (keep the leading -I)
+F90FLAGS+=-I/path/to/fftw3/include
