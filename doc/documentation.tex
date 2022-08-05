@@ -48,11 +48,11 @@
 %    	   \includegraphics[width=6cm]{MyArrangement_MyThorn_MyFigure}
 % 	\end{center}
 % 	\caption{Illustration of this and that}
-% 	\label{MyArrangement_MyThorn_MyLabel}
+% 	\label{EinsteinInitialData_flrwsolver_MyArrangement_MyThorn_MyLabel}
 %    \end{figure}
 %
 % Example of using a label:
-%   \label{MyArrangement_MyThorn_MyLabel}
+%   \label{EinsteinInitialData_flrwsolver_MyArrangement_MyThorn_MyLabel}
 %
 % Example of a citation:
 %    \cite{MyArrangement_MyThorn_Author99}
@@ -74,22 +74,18 @@
 % (Automatically used from Cactus distribution, if you have a
 %  thorn without the Cactus Flesh download this from the Cactus
 %  homepage at www.cactuscode.org)
-%\usepackage{../../../../doc/latex/cactus}
-\usepackage{cactus}
+\usepackage{../../../../doc/latex/cactus}
+%\usepackage{cactus}
 \usepackage{latexsym}
 \usepackage{amssymb}
 \usepackage{amsfonts}
 \usepackage{amsmath}
 
 
-\newcommand{\alp}{\alpha}
-\newcommand{\flrwsolver}{\texttt{FLRWSolver}}
-
-
 \begin{document}
 
 % The author of the documentation
-\author{H. ~J. Macpherson \textless h.macpherson@damtp.cam.ac.uk \textgreater,\\
+\author{H. ~J. Macpherson \textless hayleyjmacpherson@gmail.com \textgreater,\\
  P.~D. Lasky, \\
  D.~J. Price} 
 
@@ -111,27 +107,26 @@
 %   \def\mydef etc
 
 \begin{abstract}
-  This thorn provides cosmological initial conditions based on a Friedmann-Lemaitre-Robertson-Walker (FLRW) spacetime, with and without small perturbations. 
+  This thorn provides cosmological initial conditions based on a Friedmann-Lemaitre-Robertson-Walker (FLRW) spacetime, either with or without small (linear) perturbations. 
 \end{abstract}
 
 
 %---------------------
 \section{Introduction}
-\label{sec:intro}
 %---------------------
 
 FLRW spacetime is a homogeneous, isotropic, expanding solution to Einstein's equations. This solution is the basis for the current standard cosmological model; $\Lambda$CDM.
 The spatially-flat FLRW spacetime sourced by pure-dust with no cosmological constant is the Einstein-de Sitter (EdS) spacetime. 
 
-Here we provide a thorn to give initial conditions for cosmology using the Einstein Toolkit (ET). Currently, \flrwsolver\ only implements the EdS solution. We provide pure-EdS spacetime (no perturbations), and linearly-perturbed EdS spacetime (for various kinds of perturbations). Currently this thorn implements only a linearly-accurate solution of the constraint equations, so there is a second-order error in the solution from the beginning of the simulation. %This can be removed by implementing exact solutions to the constraint equations; which can be added in the future. 
+Here we provide a thorn to give initial conditions for cosmology using the Einstein Toolkit (ET). Currently, \texttt{FLRWSolver}\ only implements the EdS solution. We provide pure-EdS spacetime (no perturbations), and linearly-perturbed EdS spacetime for various kinds of perturbations. Namely, you can choose a single (3-dimensional) sine-wave perturbation, a powerspectrum of perturbations, or your own perturbations read in from files. 
+Currently this thorn implements only a linearly-accurate solution of the constraint equations, so there is a second-order violation in the constraints in the solution from the beginning of the simulation. %This can be removed by implementing exact solutions to the constraint equations; which can be added in the future. 
 
-Links to detailed tutorials on setting up, compiling, and running simple simulations using \flrwsolver\ with the ET can be found in \texttt{doc/tutorials/}.
+Links to detailed tutorials on setting up, compiling, and running simple simulations using \texttt{FLRWSolver}\ with the ET can be found in \texttt{doc/tutorials/}.
 
 In this documentation we have set $G=c=1$.
 
 %--------------------------
 \section{Use of this thorn}
-\label{sec:use}
 %--------------------------
 
 To use this thorn to provide initial data for the {\tt ADMBase} variables $\alpha$, $\beta$, $g_{ij}$ and $K_{ij}$, and {\tt HydroBase} variables $\rho$, $v^i$ activate the thorn and set the following parameters: 
@@ -145,22 +140,20 @@ To use this thorn to provide initial data for the {\tt ADMBase} variables $\alph
 \end{itemize}
 
 Template parameter files for a pure-FLRW, single-mode perturbation, and powerspectrum of perturbations to FLRW spacetime are provided in the {\tt par/} directory. 
-%Specific test parameter files for the cases presented in Section~\ref{sec:tests} are located in the {\tt par/tests/} directory. 
 
-This thorn was first presented in \cite{macpherson2017}, and used further in \cite{macpherson2019}. It is written for use with {\tt GRHydro} (see Section~\ref{sec:note}) and {\tt EOS\_Omni}. At the time of writing, neither of these thorns can handle a pure dust description, i.e. $P=0$. Instead we use a polytropic EOS and ensure $P\ll\rho$ by setting the polytropic constant accordingly. In \cite{macpherson2017} this was shown to be sufficient to match a dust FLRW evolution. 
+This thorn was first presented in \cite{EinsteinInitialData_flrwsolver_macpherson2017}, and used further in \cite{EinsteinInitialData_flrwsolver_macpherson2019}. It is written for use with {\tt GRHydro} (see Section~\ref{EinsteinInitialData_flrwsolver_sec:note}) and {\tt EOS\_Omni}. At the time of writing, neither of these thorns can handle a pure dust description, i.e. $P=0$. Instead we use a polytropic EOS and ensure $P\ll\rho$ by setting the polytropic constant accordingly. In \cite{EinsteinInitialData_flrwsolver_macpherson2017} this was shown to be sufficient to match a dust FLRW evolution.
 
 
 
 
 %------------------
 \section{Choosing initial conditions}
-\label{sec:eqn}
 %------------------
 
-\subsection{FLRW spacetime \& background for perturbations} \label{sec:FLRWinit}
+\subsection{FLRW spacetime \& background for perturbations} \label{EinsteinInitialData_flrwsolver_sec:FLRWinit}
 
 The FLRW line element in conformal time, $\eta$, is given by
-\begin{equation}\label{eq:FLRWmetric}
+\begin{equation}\label{EinsteinInitialData_flrwsolver_eq:FLRWmetric}
 	ds^2 = a^2(\eta) \left( - d\eta^2 + \delta_{ij}dx^i dx^j \right)
 \end{equation}
 where $a(\eta)$ is the scale factor describing the size of the Universe at time $\eta$. To initialise this spacetime, the user must specify \texttt{FLRW\_perturb} = ``no''. 
@@ -172,37 +165,30 @@ This choice of $\mathcal{H}L$, along with the size of the box set in code units 
 \end{equation}
 where the initial value for the scale factor, $a_{\rm ini}$, is set via \texttt{FLRW\_init\_a}. The initial lapse is set via \texttt{FLRW\_lapse\_value}. The user should also ensure the initial coordinate time (\texttt{Cactus::cctk\_initial\_time}) is consistent, i.e. for EdS we have $\eta_{\rm ini} = 2/\mathcal{H}_{\rm ini}$.
 
-When setting pure FLRW or single-mode perturbations to FLRW (see Section~\ref{sec:singlemode_ics} below), the physical side of the box (or, equivalently, the initial redshift $z_{\rm init}$) is not necessary for creating initial data. However, setting a powerspectrum of initial data does require the physical length of the box at the initial time, see Section~\ref{sec:pspec_ics}.
+When setting pure FLRW or single-mode perturbations to FLRW (see Section~\ref{EinsteinInitialData_flrwsolver_sec:singlemode_ics} below), the physical side of the box (or, equivalently, the initial redshift $z_{\rm init}$) is not necessary for creating initial data. However, setting a powerspectrum of initial data does require the physical length of the box at the initial time, see Section~\ref{EinsteinInitialData_flrwsolver_sec:pspec_ics}.
 
-The Python script \texttt{tools/get\_init\_HL.py} can assist in ensuring all relevant parameters are set consistently. Given a numerical resolution, comoving box length in Gpc$/h$ (i.e. the proper length at $z=0$), and initial redshift, it will give the corresponding initial $\mathcal{H}L$ and coordinate time. The script will also output the final time corresponding to a particular (approximate; based on the EdS prediction) scale factor, and intermediate times corresponding to particular redshifts (again, approximate, and based on EdS predictions) to help with, e.g., restarting simulations. First, please check the parameters in this script carefully to ensure they are consistent with your simulation parameters. The script assumes an EdS evolution for $\mathcal{H}$ in translating $H_0=100 h$ km/s/Mpc back to an initial value of $\mathcal{H}_{\rm ini}$ (though in practise this is easily changed).
+The Python script \texttt{tools/get\_init\_HL.py} can assist in ensuring all relevant parameters are set consistently. Given a numerical resolution, comoving box length in Gpc$/h$ (i.e. the proper length at $z=0$), and initial redshift, it will give the corresponding initial $\mathcal{H}L$ and conformal time in code units. The script will also output the final time corresponding to a particular (approximate; based on the EdS prediction) scale factor, and intermediate times corresponding to particular redshifts (again based on EdS predictions) to assist with restarting simulations for increased output frequency. 
+First, please check the parameters in this script carefully to ensure they are consistent with your simulation parameters. The script assumes an EdS evolution for $\mathcal{H}$ in scaling $H_0=100 h$ km/s/Mpc back to an initial value of $\mathcal{H}_{\rm ini}$.
 
-
-%Physical units can then be achieved using the length unit, $L_{unit}$, defined by
-%\begin{equation}
-%	L_{code} \times L_{unit} = L_{phys},
-%\end{equation}
-%(easily translated to a time unit using the convention $c=1$) which can be used to translate $H(z)$ at any time, in code units, back to a physical $H(z)$ in $km/s Mpc$.
-
-%The parameters described here all still need to be set to describe the FLRW background if choosing \texttt{FLRW\_perturb} = ``yes''.
 
 \subsection{Linear perturbations to FLRW spacetime}
 
 Including scalar only perturbations to the FLRW metric in the longitudinal gauge gives
-\begin{equation}\label{eq:perturbed_metric}
+\begin{equation}\label{EinsteinInitialData_flrwsolver_eq:perturbed_metric}
 	ds^2 = a^2(\eta) \left[ - \left(1 + 2\psi\right) d\eta^2 + \left(1 - 2\phi \right) \delta_{ij}dx^i dx^j \right],
 \end{equation}
-where $\phi,\psi$ coincide with the Bardeen potentials \cite{bardeen1980} in this gauge. Assuming $\phi,\psi\ll1$ allows us to solve Einstein's equations using linear perturbation theory, giving the system of equations \cite{macpherson2017,macpherson2019}
- \begin{subequations} \label{eqs:perturbed_einstein}
+where $\phi,\psi$ coincide with the Bardeen potentials \cite{EinsteinInitialData_flrwsolver_bardeen1980} in this gauge. Assuming $\phi,\psi\ll1$ allows us to solve Einstein's equations using linear perturbation theory, giving the system of equations \cite{EinsteinInitialData_flrwsolver_macpherson2017,EinsteinInitialData_flrwsolver_macpherson2019}
+ \begin{subequations} \label{EinsteinInitialData_flrwsolver_eqs:perturbed_einstein}
 	\begin{align}
-		\nabla^{2}\phi - 3 \mathcal{H}\left(\frac{\phi'}{c^2} + \frac{\mathcal{H} \phi}{c^2}\right) &= 4\pi G \bar{\rho}\,\delta a^{2}, \label{eq:einstein_1} \\ 
-		\mathcal{H} \partial_{i}\phi + \partial_{i}\phi' &= -4\pi G\bar{\rho} \,a^{2} \delta_{ij}v^{j}, \label{eq:einstein_2} \\ 
-		\phi'' + 3\mathcal{H}\phi' &=0, \label{eq:einstein_3}
+		\nabla^{2}\phi - 3 \mathcal{H}\left(\frac{\phi'}{c^2} + \frac{\mathcal{H} \phi}{c^2}\right) &= 4\pi G \bar{\rho}\,\delta a^{2}, \label{EinsteinInitialData_flrwsolver_eq:einstein_1} \\ 
+		\mathcal{H} \partial_{i}\phi + \partial_{i}\phi' &= -4\pi G\bar{\rho} \,a^{2} \delta_{ij}v^{j}, \label{EinsteinInitialData_flrwsolver_eq:einstein_2} \\ 
+		\phi'' + 3\mathcal{H}\phi' &=0, \label{EinsteinInitialData_flrwsolver_eq:einstein_3}
 	\end{align}	
 \end{subequations}
-and $\phi=\psi$, and we have left $G, c\neq 1$ in the above for clarity of physical units. The perturbed rest-mass density is $\rho = \bar{\rho} \left(1 + \delta \right)$, with $\bar{\rho}$ the background FLRW density. We have $v^i = \delta v^i$, since $\bar{v}^i = 0$ for FLRW. In the above, $\mathcal{H}\equiv a'/a$ is the conformal Hubble parameter, where $'\equiv \partial/\partial\eta$ and $\partial_i \equiv \partial/\partial x^i$. Solving the above system, choosing \emph{only} the growing mode (see \cite{macpherson2019} for more details), gives
-%\begin{subequations} \label{eqs:linear_solnsg0}
+and $\phi=\psi$, and we have left $G, c\neq 1$ in the above for clarity of physical units. The perturbed rest-mass density is $\rho = \bar{\rho} \left(1 + \delta \right)$, with $\bar{\rho}$ the background FLRW density. We have $v^i = \delta v^i$, since $\bar{v}^i = 0$ for FLRW. In the above, $\mathcal{H}\equiv a'/a$ is the conformal Hubble parameter, where $'\equiv \partial/\partial\eta$ and $\partial_i \equiv \partial/\partial x^i$. Solving the above system, choosing \emph{only} the growing mode (see \cite{EinsteinInitialData_flrwsolver_macpherson2019} for more details), gives
+%\begin{subequations} \label{EinsteinInitialData_flrwsolver_eqs:linear_solnsg0}
 %    \begin{align}
-%    	\phi &= f(x^{i}), \label{eq:linear_phi}\\
+%    	\phi &= f(x^{i}), \label{EinsteinInitialData_flrwsolver_eq:linear_phi}\\
 %     	\delta &= \frac{a_{\mathrm{init}}}{4\pi\rho^{*}} \xi^{2}\, \nabla^{2}f(x^{i}) - 2 \,f(x^{i}), \\
 %     	v^{i} &= -\sqrt{\frac{a_{\mathrm{init}}}{6\pi\rho^{*}}} \xi\, \partial^{i}f(x^{i}),
 %    \end{align}
@@ -212,9 +198,9 @@ and $\phi=\psi$, and we have left $G, c\neq 1$ in the above for clarity of physi
 %	\xi \equiv 1 + \sqrt{\frac{2\pi\rho^{*}}{3\,a_\mathrm{init}}}\eta,
 %\end{equation}
 %for simplicity. 
-\begin{subequations} \label{eqs:linear_solnsg0}
+\begin{subequations} \label{EinsteinInitialData_flrwsolver_eqs:linear_solnsg0}
     \begin{align}
-    	\phi &= f(x^{i}), \label{eq:linear_phi}\\
+    	\phi &= f(x^{i}), \label{EinsteinInitialData_flrwsolver_eq:linear_phi}\\
      	%\delta &= \frac{a}{4\pi G\rho^{*}} \nabla^{2}f(x^{i}) - \frac{2 \,f(x^{i})}{c^2}, \\
      	%v^{i} &= -\frac{\mathcal{H}}{4\pi G\rho^{*}} \partial^{i}f(x^{i}),
      	\delta &= \frac{2}{3\mathcal{H}^2} \nabla^{2}f(x^{i}) - 2 f(x^i) \\ %\frac{2 \,f(x^{i})}{c^2}, \\
@@ -223,51 +209,49 @@ and $\phi=\psi$, and we have left $G, c\neq 1$ in the above for clarity of physi
 \end{subequations}
 %where $\rho^*\equiv\bar{\rho}a^3$ is a constant, 
 %and we note the dimensions of $\phi$ are $L^2/T^2$, and we have left $c$ in the equation for $\delta$ for clarity of units.
-where we have the freedom to choose the form of $f(x^i)$, so long as it has amplitude such that $\phi\ll1$. Equations \eqref{eqs:linear_solnsg0} denote the standard form of linear perturbations implemented in this thorn, with $a\rightarrow a_{\rm init}$ and $\mathcal{H}\rightarrow\mathcal{H}_{\rm init}$. See \cite{macpherson2019} for more details on the derivation of these relations. 
+where we have the freedom to choose the form of $f(x^i)$, so long as it has amplitude such that $\phi\ll1$. Equations \eqref{EinsteinInitialData_flrwsolver_eqs:linear_solnsg0} denote the standard form of linear perturbations implemented in this thorn, with $a\rightarrow a_{\rm init}$ and $\mathcal{H}\rightarrow\mathcal{H}_{\rm init}$. See \cite{EinsteinInitialData_flrwsolver_macpherson2019} for more details on the derivation of these relations. 
 
-The user must still specify the FLRW background as in Section~\ref{sec:FLRWinit}.
+The user must still specify the FLRW background as in Section~\ref{EinsteinInitialData_flrwsolver_sec:FLRWinit}.
 
 Below we outline several different choices for perturbations, and how to set these using the thorn parameters.
 
 %----------------
-\subsubsection{Single-mode perturbation}\label{sec:singlemode_ics}
+\subsubsection{Single-mode perturbation}\label{EinsteinInitialData_flrwsolver_sec:singlemode_ics}
 %----------------
 
-This initial condition sets $\phi$ as a sine-wave function, and the corresponding density and velocity perturbations set using \eqref{eqs:linear_solnsg0}. Choose \texttt{FLRW\_perturb\_type}=``single\_mode''. The parameter \texttt{FLRW\_perturb\_direction} controls in which spatial dimension to apply the perturbation, and will set either $\phi=f(x^1),f(x^2),f(x^3)$, or $f(x^i)$ depending on the choice. For example, choosing \texttt{FLRW\_perturb\_direction}=``all'' we have
-\begin{equation}\label{eq:phi}
+This initial condition sets $\phi$ as a sine-wave function, and the corresponding density and velocity perturbations are set using \eqref{EinsteinInitialData_flrwsolver_eqs:linear_solnsg0}. Choose \texttt{FLRW\_perturb\_type}=``single\_mode''. The parameter \texttt{FLRW\_perturb\_direction} controls in which spatial dimension to apply the perturbation, and will set either $\phi=f(x^1),f(x^2),f(x^3)$, or $f(x^i)$ depending on the choice. For example, choosing \texttt{FLRW\_perturb\_direction}=``all'' we have
+\begin{equation}\label{EinsteinInitialData_flrwsolver_eq:phi}
 	\phi = \phi_{0} \sum_{i=1}^{3} \mathrm{sin}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right),
 \end{equation}
-where $\lambda$ is the wavelength of the perturbation, $\theta$ is some phase offset, and $\phi_0\ll1$. This gives the density and velocity perturbation as, respectively, \cite{macpherson2017}
+where $\lambda$ is the wavelength of the perturbation, $\theta$ is some phase offset, and $\phi_0\ll1$. This gives the density and velocity perturbation as, respectively, \cite{EinsteinInitialData_flrwsolver_macpherson2017}
 \begin{align} 
-	\delta &= - \left[ \left(\frac{2\pi}{\lambda}\right)^{2} \frac{a_{\mathrm{init}}}{4\pi\rho^{*}} + 2\right] \phi_{0} \sum_{i=1}^{3} \mathrm{sin}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right),\label{eq:initial_delta}\\
-	%v^{i} &= \frac{2\pi}{\lambda}\sqrt{\frac{a_{\mathrm{init}}}{6\pi\rho^{*}}}\, \phi_{0}\, \mathrm{cos}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right). \label{eq:initial_delt	av}
-	v^{i} &= -\left(\frac{2\pi}{\lambda}\right)\frac{\mathcal{H}_{\rm init}}{4\pi\rho^{*}}\, \phi_{0}\, \mathrm{cos}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right). \label{eq:initial_deltav}
+	\delta &= - \left[ \left(\frac{2\pi}{\lambda}\right)^{2} \frac{a_{\mathrm{init}}}{4\pi\rho^{*}} + 2\right] \phi_{0} \sum_{i=1}^{3} \mathrm{sin}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right),\label{EinsteinInitialData_flrwsolver_eq:initial_delta}\\
+	%v^{i} &= \frac{2\pi}{\lambda}\sqrt{\frac{a_{\mathrm{init}}}{6\pi\rho^{*}}}\, \phi_{0}\, \mathrm{cos}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right). \label{EinsteinInitialData_flrwsolver_eq:initial_delt	av}
+	v^{i} &= -\left(\frac{2\pi}{\lambda}\right)\frac{\mathcal{H}_{\rm init}}{4\pi\rho^{*}}\, \phi_{0}\, \mathrm{cos}\left(\frac{2\pi x^{i}}{\lambda} - \theta \right). \label{EinsteinInitialData_flrwsolver_eq:initial_deltav}
 \end{align}
-The wavelength, $\lambda$, of the perturbation is controlled by \texttt{single\_perturb\_wavelength}, given as a fraction of the total box length.
+The wavelength, $\lambda$, of the perturbation is controlled by \texttt{single\_perturb\_wavelength}, given relative to the total box length.
  %(to ensure periodicity is satisfied). 
  The phase offset $\theta$ is controlled by {\tt phi\_phase\_offset}, and the amplitude is set by \texttt{phi\_amplitude}, which must be set such that $\phi_0\ll1$
  %, and $\lambda, \rho^*$ must also be chosen 
- to ensure that the corresponding density and velocity perturbations are also small enough to satisfy the linear approximation. The code will produce a warning if either the density or velocity perturbations have amplitude $> 10^{-5}$. 
+ to ensure that the corresponding density and velocity perturbations are also small enough to satisfy the linear approximation. The code will produce a warning if either of the (dimensionless) density or velocity perturbations have amplitude $> 10^{-5}$. 
 
 %----------------
-\subsubsection{Power spectrum of perturbations}\label{sec:pspec_ics}
+\subsubsection{Power spectrum of perturbations}\label{EinsteinInitialData_flrwsolver_sec:pspec_ics}
 %----------------
 
-We can instead choose the initial conditions to be a power spectrum of fluctuations, to better mimic the early state of the Universe (see \cite{macpherson2019}). 
-These fluctuations are still assumed to be linear perturbations to an EdS background. Stay tuned for initial data that solves the constraints exactly (coming soon).
+We can instead choose the initial conditions to be a power spectrum of fluctuations, to better mimic the early state of the Universe (see \cite{EinsteinInitialData_flrwsolver_macpherson2019}). 
+These fluctuations are still assumed to be linear perturbations to an EdS background. 
 
-This is implemented by reading in a text file containing the 3-dimensional matter power spectrum $P(k)$ in the \textit{synchronous gauge}, (with units Mpc/$h)^3$, and the wavenumber $k=\sqrt{k_x^2+k_y^2+k_z^2}$ (with units $h$/Mpc). Here $h$ is defined such that $H_0 = 100 h$ km/s/Mpc. It is assumed the text file is the same format as the matter power spectrum output from CAMB\footnote{\url{https://camb.info}} or CLASS\footnote{\url{https://class-code.net}}, i.e. a text file with two columns $k, P(k)$ and no $k=0$ value (this is added by the code). 
+The initial data are generated from a user-specified 3-dimensional matter power spectrum, $P(k)$ (in units of (Mpc/$h)^3)$, in the \textit{synchronous gauge} at the chosen initial redshift, where the wavenumber $k=\sqrt{k_x^2+k_y^2+k_z^2}$ (in units of $h$/Mpc). Here, $h$ is defined such that $H_0 = 100 h$ km/s/Mpc. It is assumed the text file is the same format as the matter power spectrum output from CAMB\footnote{\url{https://camb.info}} or CLASS\footnote{\url{https://class-code.net}}, i.e. a text file with two columns $k, P(k)$ and no entry for $k=0$ (this is added by the code). 
 
-\texttt{FLRWSolver}\ then generates a Gaussian random field and scales it to the given power spectrum. This field is centred around zero and represents the initial (dimensionless) density perturbation to the EdS background in synchronous gauge, $\delta_s$. We choose to first calculate $\delta_s$ because CAMB/CLASS by default output $P(k)$ in the synchronous gauge, and there is some translation required to get $P(k)$ directly in longitudinal gauge. After generating $\delta_s$ we calculate the gauge-invariant Bardeen potential using the Poisson equation, namely,
-\begin{equation}
+\texttt{FLRWSolver}\ then generates a Gaussian random field and scales it to the given power spectrum. This field is centred around zero and represents the initial (dimensionless) density perturbation to the EdS background in synchronous gauge, $\delta_s$. We choose to first calculate $\delta_s$ because CAMB/CLASS by default output $P(k)$ in the synchronous gauge. We calculate the gauge-invariant Bardeen potential from $\delta_s$ with the Poisson equation
+\begin{equation}\label{EinsteinInitialData_flrwsolver_eq:poisson}
 	\nabla^2 \Phi = \frac{3\mathcal{H}^2}{2}\delta_s,
 \end{equation}
-and the metric perturbation in longitudinal gauge is $\phi=\Phi$. We then use equations \eqref{eqs:linear_solnsg0} in Fourier space to find the corresponding density and velocity perturbations in the longitudinal gauge (to linear order), which are then inverse transformed back to give the real-space perturbations.
+and the metric perturbation in longitudinal gauge is $\phi=\Phi$. We use equations \eqref{EinsteinInitialData_flrwsolver_eqs:linear_solnsg0} and \eqref{EinsteinInitialData_flrwsolver_eq:poisson} in Fourier space to find the corresponding density and velocity perturbations in the longitudinal gauge, which are then inverse Fourier transformed back to give the perturbations in real space.
 
-This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. Set the FLRW background according to Section~\ref{sec:FLRWinit}, and set the path to (and name of) the text file containing the matter power spectrum using \texttt{FLRW\_powerspectrum\_file}\footnote{Note that sometimes if this string is too long the code will crash, if so, move the file somewhere else with a shorter path.}. The Gaussian random field will be drawn with seed corresponding to \texttt{FLRW\_random\_seed}, so keep this constant to draw the same field more than once. You also must specify the size of the domain in comoving Mpc$/h$ via \texttt{FLRW\_boxlength}, which is required to draw the appropriate scales from the power spectrum. We note that this choice of physical length of the box is equivalent to choosing physical units of time for the simulation.
+This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. Set the FLRW background according to Section~\ref{EinsteinInitialData_flrwsolver_sec:FLRWinit}, and set the path to (including the name of) the text file containing the matter power spectrum using \texttt{FLRW\_powerspectrum\_file}. The Gaussian random field will be drawn with seed from \texttt{FLRW\_random\_seed}, so keep this constant to draw the same realisation more than once. You also must specify the size of the domain in comoving Mpc$/h$ using \texttt{FLRW\_boxlength}, which is required to use the correct physical scales from the power spectrum. 
 
-
-This part of \flrwsolver\ is the code where things are most likely to go wrong. This is because failures in the Python part of the code sometimes does not give any error when running with \texttt{simfactory}. We have implemented a rough workaround to alleviate this. If you find the code fails for \textit{any} reason and you do not get a nice error, please email me and I will add another error flag.
 
 
 
@@ -275,94 +259,17 @@ This part of \flrwsolver\ is the code where things are most likely to go wrong. 
 \subsubsection{Linear perturbations from user-specified files}
 %----------------
 
-There is also a possibility for you to set up your own initial conditions and read them in to \texttt{FLRWSolver}. These must be in ascii format, and the 3D data must be stored in a specific way.
+There is also an option for you to set up your own initial conditions and read them in to \texttt{FLRWSolver}. These must be in ascii format, and the 3D data must be stored in a specific way.
+Namely, the data must be written in 2D $N\times N$ slices of the $x-y$ plane, with the $z$ index increasing every $N$ rows, where $N=n+n_{\rm gh}$ is the resolution ($n$) including the total number of boundary zones in each dimension ($n_{\rm gh}=2\times\texttt{driver::ghost\_size}$). Therefore, the columns are the $x$ indices, and the rows are the $y$ indices, repeating every $N$ rows. The files must include boundary zones, although these may be set to zero, since your chosen boundary conditions will be applied after \texttt{FLRWSolver}\ is called.
 
-The data is assumed to be stored in 2D $N\times N$ slices of the $x-y$ plane, with the $z$ index increasing every $N$ rows, where $N=n+n_{\rm gh}$ is the resolution ($n$) including the total number of ghost cells in each dimension ($n_{\rm gh}=2\times\texttt{driver::ghost\_size}$). Therefore, the columns are the $x$ indices, and the rows are the $y$ indices, repeating every $N$ rows. The files must include ghost cells, although these may simply be set to zero, since the ET asserts periodic boundary conditions after \flrwsolver\ is called.
+To use this initial condition set \texttt{FLRW\_perturb\_type}=``fileread''. The files you must supply are the linear perturbations around an EdS background, and it is up to you to ensure these satisfy the constraint equations. You must set several string parameters containing the path to each file. 
+The parameter \texttt{FLRW\_deltafile} specifies the fractional density perturbation $\delta$, \texttt{FLRW\_phifile} for the metric perturbation $\phi/c^2$, and \texttt{FLRW\_velxfile}, \texttt{FLRW\_velyfile}, and \texttt{FLRW\_velzfile} for the components of the contravariant fluid three-velocity with respect to the Eulerian observer, $v^i/c$ (see \texttt{HydroBase} documentation for an explicit definition of $v^i$). 
 
-To use this kind of initial condition set \texttt{FLRW\_perturb\_type}=``fileread''. The files are assumed to correspond to linear perturbations around an EdS background. The parameter \texttt{FLRW\_deltafile} specifies the fractional density perturbation $\delta$, \texttt{FLRW\_phifile} for the metric perturbation $\phi/c^2$, and \texttt{FLRW\_velxfile}, \texttt{FLRW\_velyfile}, and \texttt{FLRW\_velzfile} for each component of the contravariant fluid three-velocity with respect to the Eulerian observer, $v^i/c$ (see \texttt{HydroBase} documentation for an explicit definition of $v^i$). %All quantities are assumed to be specified in code units (normalised by the speed of light, $c$, with $\delta$ already dimensionless).
-
-%This option is useful for, e.g., running test simulations with a controlled number of modes (but keeping the gradients the same between resolutions) that can be created using \texttt{tools/make\_test\_ics.py} alongside \texttt{tools/cut\_powerspectrum.py}.
-
-
-%%----------------
-%\subsection{Exact perturbation of metric}
-%%----------------
-%
-%{\bf NOTE: not yet implemented in FLRWSolver. Just a note here for now.}
-%
-%Instead of assuming linear perturbations (i.e. $\phi,\psi,\delta,\delta v^i \ll 1$), we can set a perturbation to the metric in the same way as \eqref{eq:perturbed_metric} and solve the Hamiltonian and momentum constraints exactly. The corresponding extrinsic curvature is
-%\begin{equation}
-%	K_{ij} = \frac{-a\dot{a}(1-2\phi)}{\alp} \delta_{ij},
-%\end{equation}
-%with trace
-%\begin{equation}
-%	K = - \frac{3\dot{a}}{a\alp}.
-%\end{equation}
-%
-%Using the Mathematica package Riemannian Geometry and Tensor Calculus (RGTC; add cite), we calculate the Ricci three-curvature scalar ${}^3 R$, and solve the Hamiltonian constraint
-%\begin{equation}
-%	{}^3 R + K^2 - K_{ij}K^{ij} = 16\pi\rho
-%\end{equation}
-%to get the ADM density $\rho \equiv T_{\mu\nu} n^\mu n^\nu$. We then solve the momentum constraint
-%\begin{equation}
-%	D_i \left( K^{ij} - \gamma^{ij} K \right) = 8\pi S^i
-%\end{equation}
-%to find the momentum density $S^i$. The rest-frame density $\rho_0$ can be calculated from the ADM density and the momentum density using
-%\begin{equation} \label{eq:rho0_fromADM}
-%	\rho_0 = \rho - \frac{S^i S_i}{\rho}.
-%\end{equation}
-%The momentum density is
-%\begin{align}
-%	S^i &= - n_\mu T^{i\mu}, \label{eq:Si}\\
-%	\Rightarrow S^i S_i &= \rho_0 \Gamma^2 u^i u_i,
-%\end{align}
-%and the ADM density can be written using its definition as
-%\begin{equation}
-%	\rho = \rho_0 \Gamma^2,
-%\end{equation}
-%and so \eqref{eq:rho0_fromADM} becomes
-%\begin{equation}
-%	\rho - \frac{S^i S_i}{\rho} = \rho_0 \Gamma^2 - u^i u_i.
-%\end{equation}
-%Now using the normalisation condition 
-%\begin{align}
-%	u_\mu u^\mu &= -1, \\
-%	u_0 u^0 + u_i u^i &= -1, \\
-%	\Rightarrow u_i u^i &= \Gamma^2 - 1.
-%\end{align}
-%\textbf{This somehow gives $\rho_0$. Need to confirm how...} We find
-%\begin{equation}
-%	\rho_0 = \frac{1}{16\pi} \rho_{\rm curv} - \frac{\dot{a}^2 \partial_i (\alp) \partial^i (\alp)}{\pi a^4 \alp^4 (1-2\phi) \rho_{\rm curv}}, 
-%\end{equation}
-%where, for convenience we have defined
-%\begin{align}
-%	\rho_{\rm curv} &= \frac{6\dot{a}^2}{a^2 \alp^2} - \frac{2a^4}{\gamma} \left[ (4\phi - 2) \nabla^2 \phi - 3\partial_i (\phi) \partial^i (\phi) \right], \\
-%	&= \frac{6\dot{a}^2}{a^2 \alp^2} + {}^3 R,
-%\end{align}
-%and $\gamma = a^6 (1-2\phi)^3$ is the determinant of the spatial metric. The fluid three-velocity w.r.t an Eulerian observer, $v^i$, can also be constructed from the momentum density and ADM density as follows, using \eqref{eq:Si},
-%\begin{align}
-%	\frac{S^i}{\rho} &= \frac{\alp T^{i0}}{\rho_0\Gamma^2}, \\
-%	&= \frac{\rho_0 \Gamma^2 v^i}{\rho_0\Gamma^2}, \\
-%	&= v^i.
-%\end{align}
-%Using this, we find
-%\begin{equation}
-%	v^i = \frac{- 4\dot{a}\partial^i (\alp)}{a^3 (1-2\phi) \alp^2 \rho_{\rm curv}}.
-%\end{equation}
-%
-%
-%
-%
-%%----------------
-%\subsection{More perturbations}
-%%----------------
-%Several test cases for initial conditions are also included in the current up-to-date version of this thorn, however since these are just tests and not intended for public use; they are not detailed here. These are in the files {\tt FLRW\_SynchComoving.F90} and {\tt FLRW\_FramedragTest.F90}. Don't worry 'bout it.
-%
 
 
 %--------------------------
 \section{Gauge}
-\label{sec:gauge}
+\label{EinsteinInitialData_flrwsolver_sec:gauge}
 %--------------------------
 %Evolution of lapse is set as usual using the chosen evolution thorn.
 
@@ -370,201 +277,36 @@ We note here that a useful gauge is the ``harmonic-type'' gauge specified by
 \begin{equation}
 	\partial_t \alpha = f \alpha^n K,
 \end{equation}
-where $K$ is the trace of the extrinsic curvature. This is implemented in \texttt{ML\_BSSN}, and the parameters $f$ and $n$ are controlled using \texttt{ML\_BSSN::harmonicF} and \texttt{ML\_BSSN::harmonicN}, respectively. The initial value of the lapse, $\alpha$ is set using \texttt{FLRW\_lapse\_value}. In a perturbed FLRW spacetime (using {\tt single\_mode} or {\tt powerspectrum}) this is the background value of the lapse, which is then perturbed according to \eqref{eq:perturbed_metric}. This thorn uses $\beta^i=0$ always.
+where $K$ is the trace of the extrinsic curvature. This is implemented in \texttt{ML\_BSSN}, and the parameters $f$ and $n$ are controlled using \texttt{ML\_BSSN::harmonicF} and \texttt{ML\_BSSN::harmonicN}, respectively. The initial value of the lapse, $\alpha$ is set using \texttt{FLRW\_lapse\_value}. In a perturbed FLRW spacetime (using {\tt single\_mode} or {\tt powerspectrum}) this is the background value of the lapse, which is then perturbed according to \eqref{EinsteinInitialData_flrwsolver_eq:perturbed_metric}. This thorn uses $\beta^i=0$.
 
-Setting $f=1/3$ and $n=2$ in the above yields $\partial_t \alp = \partial_t a$ (where $a$ is the EdS scale factor), i.e. we have $t=\eta$ and our coordinate time of the simulation is the conformal time in the metric \eqref{eq:FLRWmetric}. This is valid at all times for a pure-FLRW evolution, and within the linear regime for the case of linear initial perturbations. Once any perturbations grow nonlinearly this connection is no longer valid. See, e.g., \cite{macpherson2019} for a discussion about appropriate gauges for nonlinear structure formation. 
+Setting $f=1/3$ and $n=2$ in the above yields $\partial_t \alpha = \partial_t a$ for EdS (where $a$ is the scale factor), i.e. we have $t=\eta$ and our coordinate time of the simulation is the conformal time in the metric \eqref{EinsteinInitialData_flrwsolver_eq:FLRWmetric}. This is valid at all times for a pure-FLRW evolution, and within the linear regime for the case of linear initial perturbations. Once any perturbations grow nonlinearly this connection is no longer valid. See, e.g., \cite{EinsteinInitialData_flrwsolver_macpherson2019} for a discussion about appropriate gauges for nonlinear structure formation. 
 
 
 
 %--------------------------
 \section{Notes on using {\tt GRHydro} for cosmology}
-\label{sec:note}
+\label{EinsteinInitialData_flrwsolver_sec:note}
 %--------------------------
 
-The work done in \cite{macpherson2017} and \cite{macpherson2019} using this thorn used {\tt GRHydro} for the hydrodynamic evolution. Below we offer a few notes and suggestions on using this thorn for cosmological evolutions. 
+The work done in \cite{EinsteinInitialData_flrwsolver_macpherson2017} and \cite{EinsteinInitialData_flrwsolver_macpherson2019} using this thorn used {\tt GRHydro} for the hydrodynamic evolution. Below we offer a few notes and suggestions on using this thorn for cosmological evolutions. 
 
 %----------------
 \subsection{Equation of state}
 %----------------
 
-In deriving the initial conditions above, we assume a dust fluid in an FLRW spacetime, i.e. $P=0$. If using {\tt GRHydro} for the hydrodynamical evolution, it should be noted that this thorn does not work with an identically zero pressure. To compensate this, it is recommended to use a polytropic EOS, $P=K \rho^{\gamma}$ such that $P\ll\rho$. In \cite{macpherson2017} this is shown to be sufficient to match the evolution of a dust FLRW spacetime. 
+In deriving the initial conditions above, we assume a dust fluid in an FLRW spacetime, i.e. $P=0$. If using {\tt GRHydro} for the hydrodynamical evolution, it should be noted that this thorn does not work with an identically zero pressure. To compensate this, it is recommended to use a polytropic EOS, $P=K \rho^{\gamma}$ such that $P\ll\rho$. In \cite{EinsteinInitialData_flrwsolver_macpherson2017} this is shown to be sufficient to match the evolution of a dust FLRW spacetime. 
 
 The polytropic constant $K$ (set via \texttt{EOS\_Omni::poly\_k}) will need to be adjusted accordingly for different choices of initial $\mathcal{H}$ (since this directly sets the initial density, and larger $\mathcal{H}$ implies larger $\bar{\rho}$ in code units) to ensure $P\ll\rho$, otherwise the evolution \textit{will not} be close enough to a dust FLRW evolution. Currently no other evolution thorns or EOS choices have been tested with this thorn, but we invite users to explore this and let us know of any success or failures.
 
 
 
 %----------------
-\subsection{The atmosphere}
+\subsection{Potential issues with the atmosphere}
 %----------------
 
-In {\tt GRHydro}, the atmosphere is used to solve the problem that the majority of the computational domain is essentially vacuum (when simulating compact objects; see the relevant documentation). For cosmology, we do not need an atmosphere as the matter fluid is continuous across the whole domain (in the absence of shell-crossings). {\tt GRHydro} decides whether the position on the grid coincides with the atmosphere by checking several conditions. In some cases we have found that regions of the domain are flagged as being in ``the atmosphere'' for our cosmological simulations, whereas this not necessary. This causes these regions in the domain to be set automatically to the value of {\tt rho\_abs\_min} set in your parameter file (or, the default value). To avoid this, we have located the particular line that is causing this behaviour and commented it out. This will have no effect on the evolution as we know the purpose of the atmosphere is for simulations of compact objects, and not cosmology. 
+In {\tt GRHydro}, the atmosphere is used to solve the problem that part of the computational domain is essentially vacuum (when simulating compact objects; see the relevant documentation). For cosmology, we do not need an atmosphere as the matter fluid is continuous across the whole domain (in the absence of shell-crossings). {\tt GRHydro} decides whether the position on the grid coincides with the atmosphere by checking several conditions. In some cases we have found that regions of the domain are flagged as being in ``the atmosphere'' for our cosmological simulations when the value of density in code units is very small. This causes these regions in the domain to be overwritten to the value of {\tt GRHydro::rho\_abs\_min}. A way around this is to comment out the line which reliably causes this behaviour (as found in our cases). This will have no effect on the evolution as the purpose of the atmosphere is for simulations of compact objects, and not cosmology. 
 
-If you intend to use {\tt GRHydro} \textit{exclusively} for cosmology, in the code {\tt GRHydro/src/GRHydro\_UpdateMask.F90} comment out line 76 that sets {\tt atmosphere\_mask\_real(i,j,k) = 1}. If using {\tt GRHydro} for any simulations of compact objects, be sure to change this back to the distributed form (and recompile), as in these cases the atmosphere is required. 
-
-
-
-
-%
-%% --------------------------------------------
-%\section{Examples of initial conditions} \label{sec:tests}
-%% --------------------------------------------
-%
-%Here we present some example initial data using this thorn with various parameter choices. 
-%
-%
-%%----------------------------------------
-%\subsection{Single-mode linear perturbations}
-%%----------------------------------------
-%
-%Here we consider only initial perturbation containing a single-wavelength mode. These are initialised first by choosing \texttt{FLRWSolver::perturb} =``yes'' and \texttt{FLRWSolver::perturb\_type}=``single\_mode''. 
-%
-%
-%We also emphasise again that the polytropic constant \texttt{EOS\_Omni::poly\_k} must be chosen to be small enough such that $P \ll \rho$ if using \texttt{GRHydro} and a polytropic EOS. Note that currently no other evolution thorns or EOS choices have been tested with this thorn. For these tests we use \texttt{EOS\_Omni::poly\_k}=$10^{-5}$ and \texttt{EOS\_Omni::poly\_gamma}=$2$ unless otherwise stated.
-%
-%
-%%--------------------
-%\subsubsection{Test 1: FLRW\_singlemode\_AllDir\_L1\_phi1e-8} \label{sec:test1}
-%%--------------------
-%
-%For this test we consider a perturbation similar to that considered in \cite{macpherson2017}. The relevant parameters are:
-%
-%\begin{itemize}
-%	\item \texttt{FLRWSolver::perturb\_direction}=``all''
-%	\item \texttt{FLRWSolver::single\_perturb\_wavelength}=1
-%	\item \texttt{FLRWSolver::phi\_amplitude} = 1e-8
-%\end{itemize}
-%This means we will see a perturbation in all $x,y$, and $z$ directions as per \eqref{eq:phi} with wavelength equal to the box length, and the amplitude of the metric perturbation $\phi_0$ is $10^{-8}$. The resulting initial conditions are shown in Figure~\ref{fig:test1}. 
-%
-%\begin{figure}[h!]
-%	\begin{center}
-%	   \includegraphics[width=\textwidth]{/Users/hayleymac/simulations/notebooks/FLRWSolver_Tests_FLRW_singlemode_AllDir_L1_phi1e-8.pdf}
-%	\end{center}
-%	\caption{Top left to bottom right: lapse, metric component $g_{xx}$, extrinsic curvature component $K_{xx}$, rest-mass density, and velocity component $v^x$. Here we show an $x-y$ slice through the mid-plane of the Cactus HDF5 output data (which includes ghost cells) for the test described in Section~\ref{sec:test1}.}
-%	\label{fig:test1}
-%\end{figure}
-
-
-
-%%--------------------
-%\subsubsection{Test 2: FLRW\_singlemode\_AllDir\_L1\_phi1e-8\_offset} \label{sec:test2}
-%%--------------------
-%
-%For this test the relevant parameters we are considering are:
-%
-%\begin{itemize}
-%	\item \texttt{FLRWSolver::perturb\_direction}=``all''
-%	\item \texttt{FLRWSolver::single\_perturb\_wavelength}=1.0
-%	\item \texttt{FLRWSolver::phi\_phase\_offset}=1.5
-%	\item \texttt{FLRWSolver::phi\_amplitude} = 1e-8
-%\end{itemize}
-%This means we will see a perturbation in all $x,y$, and $z$ directions as per \eqref{eq:phi} with wavelength equal to the box length and a phase offset of $\theta=1.5$. The amplitude of the metric perturbation $\phi_0$ is $10^{-8}$. The resulting initial conditions are shown in Figure~\ref{fig:test2}.
-%
-%\begin{figure}[ht]
-%	\begin{center}
-%	   \includegraphics[width=\textwidth]{/Users/hayleymac/simulations/notebooks/FLRWSolver_Tests_FLRW_singlemode_AllDir_L1_phi1e-8_offset.pdf}
-%	\end{center}
-%	\caption{Top left to bottom right: lapse, metric component $g_{xx}$, extrinsic curvature component $K_{xx}$, rest-mass density, and velocity component $v^x$. Here we show an $x-y$ slice through the mid-plane of the Cactus HDF5 output data (which includes ghost cells) for the test described in Section~\ref{sec:test2}.}
-%	\label{fig:test2}
-%\end{figure}
-
-
-%%--------------------
-%\subsubsection{Test 3: FLRW\_singlemode\_AllDir\_L05\_phi1e-8} \label{sec:test3}
-%%--------------------
-%
-%For this test the relevant parameters we are considering are:
-%
-%\begin{itemize}
-%	\item \texttt{FLRWSolver::perturb\_direction}=``all''
-%	\item \texttt{FLRWSolver::single\_perturb\_wavelength}=0.5
-%	\item \texttt{FLRWSolver::phi\_amplitude} = 1e-8
-%\end{itemize}
-%This means we will see a perturbation in all $x,y$, and $z$ directions as per \eqref{eq:phi} with wavelength equal to half of the box length, and the amplitude of the metric perturbation $\phi_0$ is $10^{-8}$. The resulting initial conditions are shown in Figure~\ref{fig:test3}.
-%
-%\begin{figure}[ht]
-%	\begin{center}
-%	   \includegraphics[width=\textwidth]{/Users/hayleymac/simulations/notebooks/FLRWSolver_Tests_FLRW_singlemode_AllDir_L05_phi1e-8.pdf}
-%	\end{center}
-%	\caption{Top left to bottom right: lapse, metric component $g_{xx}$, extrinsic curvature component $K_{xx}$, rest-mass density, and velocity component $v^x$. Here we show an $x-y$ slice through the mid-plane of the Cactus HDF5 output data (which includes ghost cells) for the test described in Section~\ref{sec:test3}.}
-%	\label{fig:test3}
-%\end{figure}
-%
-%
-%%--------------------
-%\subsubsection{Test 4: FLRW\_singlemode\_xDir\_L1\_phi1e-8} \label{sec:test4}
-%%--------------------
-%
-%For this test the relevant parameters we are considering are:
-%
-%\begin{itemize}
-%	\item \texttt{FLRWSolver::perturb\_direction}=``x''
-%	\item \texttt{FLRWSolver::single\_perturb\_wavelength}=1.0
-%	\item \texttt{FLRWSolver::phi\_amplitude} = 1e-8
-%\end{itemize}
-%This means we will see a perturbation in the $x$ direction only, with wavelength equal to the box length, and the amplitude of the metric perturbation $\phi_0$ is $10^{-8}$. The resulting initial conditions are shown in Figure~\ref{fig:test4}. These initial conditions are trivially extended to other directions by choosing \texttt{FLRWSolver::perturb\_direction}=``y'' or ``z''. 
-%
-%\begin{figure}[ht]
-%	\begin{center}
-%	   \includegraphics[width=\textwidth]{/Users/hayleymac/simulations/notebooks/FLRWSolver_Tests_FLRW_singlemode_xDir_L1_phi1e-8.pdf}
-%	\end{center}
-%	\caption{Top left to bottom right: lapse, metric component $g_{xx}$, extrinsic curvature component $K_{xx}$, rest-mass density, and velocity component $v^x$. Here we show an $x-y$ slice through the mid-plane of the Cactus HDF5 output data (which includes ghost cells) for the test described in Section~\ref{sec:test4}.}
-%	\label{fig:test4}
-%\end{figure}
-%
-%
-%
-%%--------------------
-%\subsubsection{Test 5: FLRW\_singlemode\_AllDir\_L1\_phi1e-5\_HL10} \label{sec:test5}
-%%--------------------
-%
-%For this test we demonstrate the ability to initialise with a different background density value, so long as the EOS and perturbation amplitudes are set accordingly. The relevant parameters are:
-%
-%\begin{itemize}
-%	\item \texttt{FLRWSolver::perturb\_direction}=``all''
-%	\item \texttt{FLRWSolver::single\_perturb\_wavelength}=1
-%	\item \texttt{FLRWSolver::phi\_amplitude} = 1e-5
-%	\item \texttt{FLRWSolver::FLRW\_init\_HL} = 10
-%	\item \texttt{EOS\_Omni::poly\_k} = 1e-15
-%\end{itemize}
-%This means we will see a perturbation in all $x,y$, and $z$ directions as per \eqref{eq:phi} with wavelength equal to the box length, and the amplitude of the metric perturbation $\phi_0$ is $10^{-8}$. The resulting initial conditions are shown in Figure~\ref{fig:test5}. 
-%
-%\begin{figure}[ht]
-%	\begin{center}
-%	   \includegraphics[width=\textwidth]{/Users/hayleymac/simulations/notebooks/FLRWSolver_Tests_FLRW_singlemode_AllDir_L1_phi1e-5_largeHL.pdf}
-%	\end{center}
-%	\caption{Top left to bottom right: lapse, metric component $g_{xx}$, extrinsic curvature component $K_{xx}$, rest-mass density, and velocity component $v^x$. Here we show an $x-y$ slice through the mid-plane of the Cactus HDF5 output data (which includes ghost cells) for the test described in Section~\ref{sec:test5}.}
-%	\label{fig:test5}
-%\end{figure}
-%
-%
-%
-%
-%%----------------------------------------
-%\subsection{Multi-mode linear perturbations}
-%%----------------------------------------
-%
-%Here we show an example of initial conditions considering a power spectrum of density perturbations. Specifically, we show a low-resolution example of the initial conditions for the simulation presented in \cite{macpherson2019}. 
-%
-%%--------------------
-%\subsubsection{Test 6: FLRW\_32c\_1Gpc\_fullPk} \label{sec:test6}
-%%--------------------
-%
-%For this test the relevant parameters we are considering are:
-%
-%\begin{itemize}
-%	\item \texttt{FLRWSolver::perturb}=``yes''
-%	\item \texttt{FLRWSolver::perturb\_type}=``powerspectrum''
-%	\item \texttt{FLRWSolver::FLRW\_boxlength}=1000
-%\end{itemize}
-%Here we are considering a $32^3$ domain with 1 Gpc$^3$ box length. The minimum scale sampled is $\lambda_{\rm min} = 2 \Delta x$, i.e. the full power spectrum to the Nyquist frequency is sampled. The power spectrum used here is output from CAMB\footnote{https://camb.info} at redshift $z=1100$. The resulting initial conditions are shown in Figure~\ref{fig:test6}.
-%
-%\begin{figure}[ht]
-%	\begin{center}
-%	   \includegraphics[width=\textwidth]{/Users/hayleymac/simulations/notebooks/FLRWSolver_Tests_FLRW_32c_1Gpc_fullPk.pdf}
-%	\end{center}
-%	\caption{Top left to bottom right: lapse, metric component $g_{xx}$, extrinsic curvature component $K_{xx}$, rest-mass density, and velocity component $v^x$. Here we show an $x-y$ slice through the mid-plane of the Cactus HDF5 output data (which includes ghost cells) for the test described in Section~\ref{sec:test6}.}
-%	\label{fig:test6}
-%\end{figure}
+If you run into this problem, and if you intend to use {\tt GRHydro} \textit{exclusively} for cosmology, in the code {\tt GRHydro/src/GRHydro\_UpdateMask.F90} comment out line 76 that sets {\tt atmosphere\_mask\_real(i,j,k) = 1}. If using {\tt GRHydro} for any simulations of compact objects, be sure to change this back to the distributed form (and recompile), as in these cases the atmosphere is necessary. 
 
 
 
@@ -572,11 +314,11 @@ If you intend to use {\tt GRHydro} \textit{exclusively} for cosmology, in the co
 % ------------------------------------------------------------------------------------------------------------------------------
 \begin{thebibliography}{9}
 
-\bibitem{bardeen1980} J. M. Bardeen, Phys. Rev. D 22, 1882 (1980)
+\bibitem{EinsteinInitialData_flrwsolver_bardeen1980} J. M. Bardeen, Phys. Rev. D 22, 1882 (1980)
 
-\bibitem{macpherson2017} H. J. Macpherson, P. D. Lasky, and D. J. Price, Phys. Rev. D 95, 064028 (2017), arXiv:1611.05447
+\bibitem{EinsteinInitialData_flrwsolver_macpherson2017} H. J. Macpherson, P. D. Lasky, and D. J. Price, Phys. Rev. D 95, 064028 (2017), arXiv:1611.05447
 
-\bibitem{macpherson2019} H. J. Macpherson, D. J. Price, and P. D. Lasky, Phys. Rev. D99, 063522 (2019), arXiv:1807.01711
+\bibitem{EinsteinInitialData_flrwsolver_macpherson2019} H. J. Macpherson, D. J. Price, and P. D. Lasky, Phys. Rev. D99, 063522 (2019), arXiv:1807.01711
 
 \end{thebibliography}
 % ------------------------------------------------------------------------------------------------------------------------------

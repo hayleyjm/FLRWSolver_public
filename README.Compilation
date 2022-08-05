@@ -18,34 +18,19 @@ Instructions for compiling the ET with FLRWSolver
 
             EinsteinInitialData/flrwsolver
 
-2. Add the location of your Python libraries for linking and build the static library:
+2. In flrwsolver/src/make.code.deps add the path to your FFTW3 include directory
 
-	The powerspectrum perturbations part of FLRWSolver requires linking to Python.
-	For this you need to specify the path to these libraries.
-
-    Main steps:
-        a) CLFAGS: run 'python-config --cflags' and copy the flags into flrwsolver/src/make.code.deps
-            (delete anything that's already there)
-        b) LDFLAGS: run 'python-config --ldflags' and copy this into your config file
-            (if there is no LDFLAGS= line, then add one)
-        c) Go to flrwsolver/src, open builder.py and change 'flrwsolverpath' to wherever the code is located on your machine
-        d) run 'python builder.py' to generate the static library for linking
-        
-    See README.Python for a more detailed explanation.
-
-3. Navigate to your Cactus/ directory
-
-4. Set up simfactory for the particular machine you're using:
+3. Set up simfactory for the particular machine you're using:
 
 		./simfactory/bin/sim setup
 
 	and follow the prompts.
 
-5. Configuration files for the build are in simfactory/mdb/optionlists/, which is the default directory that Cactus looks in when specified below.
+4. Configuration files for the build are in simfactory/mdb/optionlists/, which is the default directory that Cactus looks in when specified below.
 
     Choose one appropriate for the machine you're using and make any necessary edits.
 
-6. Build Cactus with:
+5. Build Cactus with:
 
 		./simfactory/bin/sim build --thornlist=manifest/einsteintoolkit.th --optionlist=my-config-file.cfg
 
@@ -91,28 +76,3 @@ Some known issues when compiling and/or linking:
 --> Generally, if you have a nontrivial error with a particular thorn, first try removing that thorn from the thornlist and re-compile.
     The code will complain if other thorns on your thornlist depend on the thorn you have just removed. You can also remove some of these if they are not important.
     If it turns out a thorn you really need has a dependency on that thorn, ONLY THEN spend the time debugging.
-
-
---> At the final linking stage, you might get a whole lot of "Undefined symbols for architecture", e.g. something like:
-
-	  Undefined symbols for architecture x86_64:
-		"_PyCapsule_Type", referenced from:
-		  __cffi_start_python in pspec_ics.c.o
-		"_PyDict_GetItemString", referenced from:
-		  __cffi_start_python in pspec_ics.c.o
-		"_PyDict_New", referenced from:
-		  __cffi_start_python in pspec_ics.c.o
-		"_PyDict_SetItemString", referenced from:
-		  __cffi_start_python in pspec_ics.c.o
-		... < more missing symbols > ...
-		ld: symbol(s) not found for architecture x86_64
-		collect2: error: ld returned 1 exit status
-		make[1]: *** [/Users/hayleymac/software/Cactus/exe/cactus_sim] Error 1
-		make: *** [sim] Error 2
-
-	This means the code has not found your Python library (e.g. Python.h).
-	Check that your LDFLAGS (in your chosen configuration file) match the output of:
-
-		python-config --ldflags
-
-	And double check these are in your .cfg file itself and NOT in the make.code.deps of FLRWSolver (as per README.Python).

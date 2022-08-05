@@ -2,5 +2,5 @@
 # Added dependencies for FLRWSolver
 #
 
-# Add your flags for Python linking: output of 'python-config --cflags'
-CFLAGS+=
+# Add the path to your FFTW3 include directory here
+F90FLAGS+=

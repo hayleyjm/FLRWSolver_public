@@ -3,10 +3,10 @@ Author:	Hayley Macpherson
 
 ------------------------------------------------
 
-The files in this directory were made for the GR simulations in cosmology workshop (QMUL / Zoom) in September 2020.
+The tutorials below were made for the GR simulations in cosmology workshop (QMUL / Zoom) in September 2020.
 
-See tutorial notes here:
-https://docs.google.com/document/d/1qqNSuu2oN68BoO0pQ0-uJpXU5VxXrC1Ea2tqv59J_2s/edit?usp=sharing
-https://docs.google.com/document/d/11NlnlStmQzeJKBN9mUez9PfJokwU0juiKPuEQTscBw8/edit?usp=sharing
+Compilation:  https://docs.google.com/document/d/1qqNSuu2oN68BoO0pQ0-uJpXU5VxXrC1Ea2tqv59J_2s/edit?usp=sharing
+Tutorial:     https://docs.google.com/document/d/11NlnlStmQzeJKBN9mUez9PfJokwU0juiKPuEQTscBw8/edit?usp=sharing
 
-The Python notebook details how to read in and visualise the (split) HDF5 data using Python.
+The Python notebook in this directory gives an example of how to read in and visualise the (split) HDF5 data using Python.
+See the tutorial for how to create the split files. 

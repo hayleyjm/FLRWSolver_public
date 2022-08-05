@@ -21,7 +21,7 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
   logical   :: perturb_x,perturb_y,perturb_z,perturb_all
 
   CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
-  CCTK_REAL :: lambda(3),kx,ky,kz,modk,perturb_rho0,perturb_v0
+  CCTK_REAL :: lambda(3),kval,kx,ky,kz,perturb_rho0,perturb_v0
   CCTK_REAL :: dphi1,dphi2,dphi3,kvalue
   CCTK_REAL :: phi_ijk,deltaijk,delta_velijk(3)
   CCTK_REAL :: delta_test,dvel_test
@@ -63,16 +63,18 @@ subroutine FLRW_SingleMode (CCTK_ARGUMENTS)
   call set_parameters(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
 
   !
-  ! wavenumbers for each direction
+  ! wavenumber is the same in each direction
   lambda = single_perturb_wavelength * boxlen
-  kx = 2._dp * pi / lambda(1)
-  ky = 2._dp * pi / lambda(2)
-  kz = 2._dp * pi / lambda(3)
-  modk = sqrt(kx**2 + ky**2 + kz**2)
+  kval   = 2._dp * pi / lambda(1)
+  kx = kval; ky = kval; kz = kval
 
   ! factors for the density and velocity perturbations, respectively: eqns. (28),(29) in Macpherson+(2017)
-  perturb_rho0 = - kx**2 / (4._dp * pi * rho0 * asq) - 2._dp
-  perturb_v0   = - hub / ( 4._dp * pi * rhostar )
+  !    note \delta \propto kval^2 \phi not |k| because this is not technically a single mode in k-space
+  !perturb_rho0 = - kval**2 / (4._dp * pi * rho0 * asq) - 2._dp
+  !perturb_v0   = - hub / ( 4._dp * pi * rhostar )
+  perturb_rho0 = - 2._dp * kval**2 / (3._dp * hub**2)  - 2._dp
+  perturb_v0   = - 2._dp / (3._dp * a0 * hub)
+
   !
   ! rough check of the amplitude of the perturbs, and warn if larger
   !
