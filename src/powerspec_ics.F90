@@ -45,6 +45,7 @@ contains
         CCTK_REAL, allocatable :: Pk(:),ks(:)
         CCTK_REAL :: dumk,dumP,spacing,spacing_phys,C1,C3,twopi
         logical :: loop
+        character(len=200) :: pkfilename        
 
         !
         ! Define constants C1, C3 from Macpherson et al. 2017 (in code units)
