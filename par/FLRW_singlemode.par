@@ -209,9 +209,9 @@ FLRWSolver::phi_phase_offset          = 0.
 
 ActiveThorns = "CarpetIOASCII CarpetIOScalar CarpetIOHDF5 CarpetIOBasic"
 
-#IOBasic::outInfo_criterion	= "iteration"
-#IOBasic::outInfo_every      = 1
-#IOBasic::outInfo_vars       = "HydroBase::rho ADMBase::lapse"
+IOBasic::outInfo_criterion	= "iteration"
+IOBasic::outInfo_every      = 1
+IOBasic::outInfo_vars       = "HydroBase::rho ADMBase::lapse"
 
 IO::out_dir      = $parfile
 
