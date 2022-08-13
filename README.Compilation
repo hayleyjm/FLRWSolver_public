@@ -18,19 +18,17 @@ Instructions for compiling the ET with FLRWSolver
 
             EinsteinInitialData/flrwsolver
 
-2. In flrwsolver/src/make.code.deps add the path to your FFTW3 include directory
-
-3. Set up simfactory for the particular machine you're using:
+2. Set up simfactory for the particular machine you're using:
 
 		./simfactory/bin/sim setup
 
 	and follow the prompts.
 
-4. Configuration files for the build are in simfactory/mdb/optionlists/, which is the default directory that Cactus looks in when specified below.
+3. Configuration files for the build are in simfactory/mdb/optionlists/, which is the default directory that Cactus looks in when specified below.
 
     Choose one appropriate for the machine you're using and make any necessary edits.
 
-5. Build Cactus with:
+4. Build Cactus with:
 
 		./simfactory/bin/sim build --thornlist=manifest/einsteintoolkit.th --optionlist=my-config-file.cfg
 

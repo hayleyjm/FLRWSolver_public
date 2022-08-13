@@ -1,4 +1,4 @@
-# Configuration definition for thorn GRHydro
+# Configuration definition for thorn FLRWSolver
 
-REQUIRES THORNS: Boundary CartGrid3D SpaceMask
+REQUIRES FFTW3 SpaceMask
 
