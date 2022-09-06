@@ -1,0 +1,5 @@
+In this directory you will find a number of useful tools for use with cosmological ET data using FLRWSolver
+See the documentation for detailed descriptions of each of these files.
+
+README.splash   - provides some information on using SPLASH to visualise cactus HDF5 data
+README.tutorial - provides some links to tutorials on compiling the ET and running some simulations using FLRWSolver

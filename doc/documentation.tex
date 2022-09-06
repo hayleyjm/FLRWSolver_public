@@ -167,9 +167,6 @@ where the initial value for the scale factor, $a_{\rm ini}$, is set via \texttt{
 
 When setting pure FLRW or single-mode perturbations to FLRW (see Section~\ref{EinsteinInitialData_flrwsolver_sec:singlemode_ics} below), the physical side of the box (or, equivalently, the initial redshift $z_{\rm init}$) is not necessary for creating initial data. However, setting a powerspectrum of initial data does require the physical length of the box at the initial time, see Section~\ref{EinsteinInitialData_flrwsolver_sec:pspec_ics}.
 
-The Python script \texttt{tools/get\_init\_HL.py} can assist in ensuring all relevant parameters are set consistently. Given a numerical resolution, comoving box length in Gpc$/h$ (i.e. the proper length at $z=0$), and initial redshift, it will give the corresponding initial $\mathcal{H}L$ and conformal time in code units. The script will also output the final time corresponding to a particular (approximate; based on the EdS prediction) scale factor, and intermediate times corresponding to particular redshifts (again based on EdS predictions) to assist with restarting simulations for increased output frequency. 
-First, please check the parameters in this script carefully to ensure they are consistent with your simulation parameters. The script assumes an EdS evolution for $\mathcal{H}$ in scaling $H_0=100 h$ km/s/Mpc back to an initial value of $\mathcal{H}_{\rm ini}$.
-
 
 \subsection{Linear perturbations to FLRW spacetime}
 
@@ -250,7 +247,8 @@ The initial data are generated from a user-specified 3-dimensional matter power 
 \end{equation}
 and the metric perturbation in longitudinal gauge is $\phi=\Phi$. We use equations \eqref{EinsteinInitialData_flrwsolver_eqs:linear_solnsg0} and \eqref{EinsteinInitialData_flrwsolver_eq:poisson} in Fourier space to find the corresponding density and velocity perturbations in the longitudinal gauge, which are then inverse Fourier transformed back to give the perturbations in real space.
 
-This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. Set the FLRW background according to Section~\ref{EinsteinInitialData_flrwsolver_sec:FLRWinit}, and set the path to (including the name of) the text file containing the matter power spectrum using \texttt{FLRW\_powerspectrum\_file}. The Gaussian random field will be drawn with seed from \texttt{FLRW\_random\_seed}, so keep this constant to draw the same realisation more than once. You also must specify the size of the domain in comoving Mpc$/h$ using \texttt{FLRW\_boxlength}, which is required to use the correct physical scales from the power spectrum. 
+This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. Set the FLRW background according to Section~\ref{EinsteinInitialData_flrwsolver_sec:FLRWinit}, and set the path to (including the name of) the text file containing the matter power spectrum using \texttt{FLRW\_powerspectrum\_file}. There is an example power spectrum in \texttt{FLRWSolver/powerspectra/} which was generated using CLASS\footnote{https://class-code.net} (see the \texttt{README} in that directory for the exact parameters used), however, we recommend you run CLASS or CAMB\footnote{https://camb.info} with your desired cosmological parameters.
+The Gaussian random field will be drawn with seed from \texttt{FLRW\_random\_seed}, so keep this constant to draw the same realisation more than once. You also must specify the size of the domain in comoving Mpc$/h$ using \texttt{FLRW\_boxlength}, which is required to use the correct physical scales from the power spectrum. 
 
 
 
@@ -265,6 +263,27 @@ Namely, the data must be written in 2D $N\times N$ slices of the $x-y$ plane, wi
 To use this initial condition set \texttt{FLRW\_perturb\_type}=``fileread''. The files you must supply are the linear perturbations around an EdS background, and it is up to you to ensure these satisfy the constraint equations. You must set several string parameters containing the path to each file. 
 The parameter \texttt{FLRW\_deltafile} specifies the fractional density perturbation $\delta$, \texttt{FLRW\_phifile} for the metric perturbation $\phi/c^2$, and \texttt{FLRW\_velxfile}, \texttt{FLRW\_velyfile}, and \texttt{FLRW\_velzfile} for the components of the contravariant fluid three-velocity with respect to the Eulerian observer, $v^i/c$ (see \texttt{HydroBase} documentation for an explicit definition of $v^i$). 
 
+
+\section{Tools}
+
+There are some useful tools located in \texttt{FLRWSolver/tools/}. Here we describe the purpose and use of each of these files.
+\begin{itemize}
+
+\item \texttt{get\_init\_HL.py}: This script is useful for ensuring all background parameters are set consistently. Given a numerical resolution, comoving box length in Gpc$/h$ (i.e. the proper length at $z=0$), and initial redshift, it will give the corresponding initial $\mathcal{H}L$ and conformal time in code units. The script will also output the final time corresponding to a particular (approximate; based on the EdS prediction) scale factor, and intermediate times corresponding to particular redshifts (again based on EdS predictions) to assist with restarting simulations for increased output frequency. 
+First, please check the parameters in this script carefully to ensure they are consistent with your simulation parameters. The script assumes an EdS evolution for $\mathcal{H}$ in scaling $H_0=100 h$ km/s/Mpc back to an initial value of $\mathcal{H}_{\rm ini}$.
+
+\item \texttt{cut\_powerspectrum.py}: This script makes a minimum scale cut to a provided power spectrum to remove small-scale structure. We might be interested in doing this if we want to ensure our simulation initially samples all perturbation modes with a certain number of grid cells. This can help reduce the amount of constraint violation due to under-sampled structures. Follow the instructions inside the script and ensure you have set all parameters within the ``user changes'' section of the script. 
+
+\item \texttt{make\_test\_ics.py}: This script's purpose is to generate initial data for convergence testing. For numerical convergence studies of quantities calculated at the grid scale (i.e., not statistical convergence), we need physical gradients to be consistent between all resolutions. This script will generate three sets of power spectrum initial data (at specified resolutions) which have identical structure at the initial time. This script uses \texttt{cut\_powerspectrum.py} to ensure the modes are large-scale and thus remain in the linear regime.
+
+\item \texttt{split\_HDF5\_per\_iteration2(3).py}: This script takes the *.xyz.h5 files in your simulation directory output by the ET (using \texttt{IO::out\_mode = "onefile"} and \texttt{IO::out\_unchunked = "yes"}, namely, one file per variable containing all time steps) and splits them into individual files for each time step containing all variables. The format output by this script can be read SPLASH (see \texttt{tools/README.splash}) for visualisation as well as into the Python notebook \texttt{Plot\_ET\_data.ipynb}.
+
+\item \texttt{Plot\_ET\_data.ipynb}: This notebook provides an example of how to read in ET data with Python, using the split HDF5 file format described above.
+
+\item \texttt{README.tutorial}: This file contains links to two documents containing step-by-step tutorials for downloading, compiling, and running the ET with FLRWSolver. 
+
+\end{itemize}
+Please correctly cite \texttt{FLRWSolver} if you use any of these tools in your analysis, and do let us know of any improvements that can be made. 
 
 
 %--------------------------
