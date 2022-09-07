@@ -31,3 +31,8 @@ else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"
     LANG: Fortran
   } "Sets up initial data for linear perturbations to FLRW spacetime from user-specified ascii files"
 }
+
+schedule FLRW_ParamCheck AT CCTK_PARAMCHECK
+{
+ LANG: Fortran
+} "Check some parameters are set correctly"

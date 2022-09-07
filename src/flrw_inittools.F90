@@ -8,15 +8,14 @@
 #include "cctk_Functions.h"
 #include "cctk_Parameters.h"
 
-module init_tools
-  use, intrinsic :: iso_c_binding    
+module FLRW_InitTools
+  !use, intrinsic :: iso_c_binding    
   implicit none
-  integer,   parameter :: dp = 8
-  CCTK_REAL, parameter :: pi = 4._dp * atan(1._dp)
+  CCTK_REAL, parameter :: pi = 4.0d0 * atan(1.0d0)
 
 contains
 
-  subroutine set_logicals(lapse,dtlapse,shift,data,hydro)
+  subroutine FLRW_SetLogicals(lapse,dtlapse,shift,data,hydro)
     !
     ! a subroutine to set the logical parameters that are set by choices in the .par
     !   file that we use to create initial data in all (or >1) cases
@@ -37,11 +36,11 @@ contains
     data    = CCTK_EQUALS (initial_data,  "flrw")
     hydro   = CCTK_EQUALS (initial_hydro, "flrw")
 
-  end subroutine set_logicals
+  end subroutine FLRW_SetLogicals
 
 
 
-  subroutine set_parameters(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
+  subroutine FLRW_SetBackground(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
     !
     ! a subroutine to set common background paramters used by all (or >1) cases
     !
@@ -59,29 +58,23 @@ contains
     a0      = FLRW_init_a                         ! Initial scale factor
     asq     = a0*a0                               ! Scale factor squared
     hub     = FLRW_init_HL / boxlen(1)            ! Initial Hubble parameter
-    rho0    = 3._dp * hub**2 / (8._dp * pi * asq) ! Initial background density from Friedmann eqn.
+    rho0    = 3.0d0 * hub**2 / (8.0d0 * pi * asq) ! Initial background density from Friedmann eqn.
     rhostar = rho0 * a0**3                        ! Conserved FLRW density
     adot    = hub * a0                            ! a' (conformal) from H = a'/a
-    hubdot  = -4._dp * pi * rho0 * asq / 3._dp    ! H' from derivative of Friedmann eqns
+    hubdot  = -4.0d0 * pi * rho0 * asq / 3.0d0    ! H' from derivative of Friedmann eqns
 
-  end subroutine set_parameters
+  end subroutine FLRW_SetBackground
 
-
-  ! --------------------------------------------------------------------------------
-  !          ROUTINES COPIED FROM MESCALINE IN MARCH 2022 AND AMENDED SLIGHTLY
-  !      These have been modified only for the specific purposes we need them here
-  ! --------------------------------------------------------------------------------
 
   !
   ! A subroutine to take in an array and do linear interpolation to a point
-  !    *new and based on our needs to hide some ugly stuff
   !
-  subroutine array_interp1Dlin(xi,nx,xvals,func,func_interp)
+  subroutine FLRW_Interp1DLinear(xi,nx,xvals,func,func_interp)
       integer, intent(in) :: nx        ! the size of the array
       CCTK_REAL, intent(in) :: xi ! the point of interpolation
       CCTK_REAL, intent(in) :: xvals(nx),func(nx) ! xvals must be increasing
       CCTK_REAL, intent(out) :: func_interp ! interpolated point
-      CCTK_REAL :: xl,xu,xvi
+      CCTK_REAL :: xl,xu,xdu,xdl
       integer :: i,il,iu
 
       ! We assume that xi lies somewhere in the range xvals(1:)
@@ -101,46 +94,50 @@ contains
       xl = xvals(il)  ! lower limit
       xu = xvals(iu)  ! upper limit
       ! do the interpolation
-      call interp1Dlin(xi,xl,xu,(/func(il),func(iu)/),func_interp)
+      !call interp1Dlin(xi,xl,xu,(/func(il),func(iu)/),func_interp)
 
-  end subroutine array_interp1Dlin
+      !
+      ! distance of interp point from edges
+      xdl = (xi - xl) / (xu - xl)
+      xdu = (xu - xi) / (xu - xl)
+      
+      ! do the interpolation
+      func_interp = func(il) * xdu + func(iu) * xdl
+
+    end subroutine FLRW_Interp1DLinear
 
 
-  !
-  ! a subroutine to perform 1D linear interpolation
-  !   --> taken from mescaline raytracer interpolate.f90 (NOT amended)
-  !
-  subroutine interp1Dlin(xinterp,xl,xu,func,func_interp)
-    CCTK_REAL, intent(in) :: xl,xu   ! x-values at lower and upper points
-    CCTK_REAL, intent(in) :: xinterp ! 1D point to interpolate to
-    CCTK_REAL, intent(in) :: func(2)
-    CCTK_REAL, intent(out) :: func_interp
-    ! func = (/ func(xl), func(xu) /)
-    CCTK_REAL :: xdl,xdu
     !
-    ! distance of interp point from edges
-    xdl = (xinterp - xl) / (xu - xl)
-    xdu = (xu - xinterp) / (xu - xl)
-
-    func_interp = func(1) * xdu + func(2) * xdl
-
-  end subroutine interp1Dlin
-
-
-  subroutine check_metric()
+    ! A subroutine to return an array of 3D random numbers drawn from normal distribution
     !
-    ! a subroutine to check the metric, something that we do at the end of each initial data routine
-    !
-    implicit none
-    DECLARE_CCTK_FUNCTIONS
-    DECLARE_CCTK_PARAMETERS
+    subroutine FLRW_GetRandomNormal3D(nx,ny,nz,randnums,rseed)
+        integer, intent(in) :: nx,ny,nz,rseed
+        CCTK_REAL, intent(out) :: randnums(nx,ny,nz)
+        CCTK_REAL :: rand1(nx,ny,nz),rand2(nx,ny,nz)
+        integer :: n
+        integer, allocatable :: seedn(:)
+        !
+        ! 0. Initialise the random seed
+        !
+        ! Seed the intrinsic RANDOM_NUMBER generator using intrinsic RANDOM_SEED
+        call RANDOM_SEED(size=n)
+        allocate(seedn(n))
+        ! apply the chosen random seed
+        seedn = rseed
+        call RANDOM_SEED(put=seedn)
+        deallocate(seedn)
+        
+        !
+        ! 1. Generate the random numbers in [0,1]
+        !       --> when seeded, two subsequent calls give different numbers, but are the same if re-run with same seed
+        call RANDOM_NUMBER(rand1)
+        call RANDOM_NUMBER(rand2)
+        
+        !
+        ! 2. Now get the normally distributed numbers using the Box-Muller transformation from a distribution in [0,1]
+        randnums = sqrt(-2.0d0*log(rand1))*cos(2.0d0*pi*rand2)
 
-    if (CCTK_EQUALS (metric_type, "physical")) then
-       ! do nothing
-    else
-       call CCTK_WARN (0, "Unknown value of ADMBase::metric_type -- FLRW only set-up for metric_type = physical")
-    endif
-  end subroutine check_metric
+      end subroutine FLRW_GetRandomNormal3D
+    
 
-
-end module init_tools
+end module FLRW_InitTools

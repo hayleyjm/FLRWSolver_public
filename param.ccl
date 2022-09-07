@@ -146,22 +146,3 @@ EXTENDS KEYWORD initial_shift
 }
 
 USES KEYWORD metric_type
-
-shares:StaticConformal
-
-USES KEYWORD conformal_storage
-
-shares:GRHydro
-
-USES real rho_abs_min
-USES real rho_rel_min
-USES REAL initial_rho_abs_min
-USES REAL initial_rho_rel_min
-USES REAL initial_atmosphere_factor
-USES real GRHydro_rho_central
-
-shares:Cactus
-USES real cctk_initial_time
-
-shares:EOS_Omni
-USES REAL gl_gamma

@@ -8,10 +8,9 @@
 #include "cctk_Functions.h"
 #include "cctk_Parameters.h"
 
-module powerspec_ics
-  use, intrinsic :: iso_c_binding
-  use random, only: get_random_normal_3d
-  use init_tools, only: dp,pi,array_interp1Dlin
+module FLRW_PowerspecICs
+  use, intrinsic :: iso_c_binding ! we need this for the fftw calls
+  use FLRW_InitTools, only: pi,FLRW_Interp1DLinear,FLRW_GetRandomNormal3D
   implicit none
   include 'fftw3.f03'
 
@@ -20,7 +19,7 @@ contains
     !
     ! A subroutine to generate the ICs
     !
-    subroutine make_ics(CCTK_ARGUMENTS,a0,hub,boxlen,nx,delta_gs,phi_gs,velx_gs,vely_gs,velz_gs)
+    subroutine FLRW_MakePkICs(CCTK_ARGUMENTS,a0,hub,boxlen,nx,delta_gs,phi_gs,velx_gs,vely_gs,velz_gs)
         implicit none
         DECLARE_CCTK_ARGUMENTS
         DECLARE_CCTK_FUNCTIONS
@@ -44,20 +43,29 @@ contains
         integer :: pklen,nks,nheads,ierr,i,j,k,n,pkunit,ngh,istrt,ifin
         CCTK_REAL, allocatable :: Pk(:),ks(:)
         CCTK_REAL :: dumk,dumP,spacing,spacing_phys,C1,C3,twopi
-        logical :: loop
+        logical :: loop,pkexist
         character(len=200) :: pkfilename        
 
         !
         ! Define constants C1, C3 from Macpherson et al. 2017 (in code units)
-        C1 = 2._dp / (3._dp * hub**2)            ! equiv to: a_init / ( 4. * np.pi * Grhostar)
-        C3 = - 2._dp / (3._dp * a0*hub)          ! equiv to: - np.sqrt( a_init / ( 6. * np.pi * Grhostar ) ) / a_init
+        C1 = 2.0d0 / (3.0d0 * hub**2)            ! equiv to: a_init / ( 4. * np.pi * Grhostar)
+        C3 = - 2.0d0 / (3.0d0 * a0*hub)          ! equiv to: - np.sqrt( a_init / ( 6. * np.pi * Grhostar ) ) / a_init
 
         !
         ! Read the powerspectrum in from the given filename
         !
-        !   first; convert to a Fortran string & open the file
+        !
+        !   first; convert to a Fortran string check if it exists
         call CCTK_FortranString(pklen,FLRW_powerspectrum_file,pkfilename)
-        open(newunit=pkunit,file=pkfilename,status='old')
+        pkexist = .False.
+        inquire(file=pkfilename,exist=pkexist)
+        if (pkexist) then
+           ! the file exists; carry on
+           open(newunit=pkunit,file=pkfilename,status='old')
+        else
+           ! the file does not exist; abort!!
+           call CCTK_WARN(CCTK_WARN_ABORT,"The power spectrum file you specified does not exist. Check FLRWSolver::FLRW_powerspectrum_file and use the example file in FLRWSolver/powerspectrum/ or generate your own using CLASS.")
+        endif
         !
         ! We need to count the number of lines in the file
         !     (typically ~ 100 lines, this will be quick)
@@ -78,7 +86,7 @@ contains
             endif
         enddo
         ! Allocate arrays +1 to allow for zero power at k=0
-        allocate(Pk(nks+1),ks(nks+1)); Pk = 0._dp; ks = 0._dp
+        allocate(Pk(nks+1),ks(nks+1)); Pk = 0.d0; ks = 0.d0
         !
         ! Now read in the data to these arrays
         rewind(pkunit) ! rewind to the beginning of the file
@@ -105,9 +113,11 @@ contains
         !      and scale to be centered around zero (this will be delta)
         !
         allocate(Rerand(nx,nx,nx),Imrand(nx,nx,nx))
-        call get_random_normal_3d(nx,nx,nx,Rerand)
-        call get_random_normal_3d(nx,nx,nx,Imrand)
-        random = cmplx(Rerand,Imrand,dp)
+        ! Note that two calls to this generator with same seed will generate the same numbers
+        !       so we change the seed slightly, which will still be consistent between runs
+        call FLRW_GetRandomNormal3D(nx,nx,nx,Rerand,FLRW_random_seed)
+        call FLRW_GetRandomNormal3D(nx,nx,nx,Imrand,FLRW_random_seed*42+1068)
+        random = cmplx(Rerand,Imrand,kind(1.0d0))
         random = random - sum(random)/size(random)
         deallocate(Rerand,Imrand)
         !
@@ -123,9 +133,9 @@ contains
         !
 
         ! Set up some things we need to define the k-values
-        val   = 1._dp / (nx * spacing)  ! frequency spacing
+        val   = 1.0d0 / (nx * spacing)  ! frequency spacing
         n     = int((nx-1)/2) + 1       ! (n-1)//2 + 1: index for positive vs negative k values
-        twopi = 2._dp * pi
+        twopi = 2.0d0 * pi
         call CCTK_INFO("Setting up Gaussian random perturbations")
         do k = 1,nx
             do j = 1,nx
@@ -165,7 +175,7 @@ contains
                     !
                     ! Interpolate P to this point using PHYSICAL value of modk
                     modk_phys = modk / Lunit
-                    call array_interp1Dlin(modk_phys,nks,ks,Pk,Pk_interp)
+                    call FLRW_Interp1DLinear(modk_phys,nks,ks,Pk,Pk_interp)
 
                     !
                     ! Scale random field to this P(k) = delta in synchronous gauge
@@ -173,9 +183,9 @@ contains
                     delta_sync    = random(i,j,k) * Pkscale
                     !
                     ! Calculate phi from delta in synchronous
-                    if (modk2==0._dp) then
+                    if (modk2==0.0d0) then
                         ! k=0 point; set to zero to avoid NaN/infs
-                        phi(i,j,k) = cmplx(0._dp,0._dp,dp)
+                        phi(i,j,k) = cmplx(0.0d0,0.0d0,kind(1.0d0))
                     else
                         ! k/=0 points
                         phi(i,j,k) = - delta_sync / (C1 * modk2)
@@ -183,10 +193,10 @@ contains
                     !
                     ! Calculate delta in longitudinal gauge & delta_vel from phi
                     !    (all in code units)
-                    delta(i,j,k)  = - phi(i,j,k) * (C1 * modk2 + 2._dp)
-                    velx(i,j,k)   = cmplx(0._dp,C3*kx,dp) * phi(i,j,k) ! C3 * 1j * kx * phi
-                    vely(i,j,k)   = cmplx(0._dp,C3*ky,dp) * phi(i,j,k) ! C3 * 1j * ky * phi
-                    velz(i,j,k)   = cmplx(0._dp,C3*kz,dp) * phi(i,j,k) ! C3 * 1j * kz * phi
+                    delta(i,j,k)  = - phi(i,j,k) * (C1 * modk2 + 2.0d0)
+                    velx(i,j,k)   = cmplx(0.0d0,C3*kx,kind(1.0d0)) * phi(i,j,k) ! C3 * 1j * kx * phi
+                    vely(i,j,k)   = cmplx(0.0d0,C3*ky,kind(1.0d0)) * phi(i,j,k) ! C3 * 1j * ky * phi
+                    velz(i,j,k)   = cmplx(0.0d0,C3*kz,kind(1.0d0)) * phi(i,j,k) ! C3 * 1j * kz * phi
                 enddo
             enddo
         enddo
@@ -233,7 +243,7 @@ contains
         ! Put data into global sized grid arrays (including boundary zones) to be passed out
         !
         ! Initialise to zero such that boundary zones remain zero
-        delta_gs = 0._dp; phi_gs = 0._dp; velx_gs = 0._dp; vely_gs = 0._dp; velz_gs = 0._dp
+        delta_gs = 0.0d0; phi_gs = 0.0d0; velx_gs = 0.0d0; vely_gs = 0.0d0; velz_gs = 0.0d0
         ! Fill interior values
         !   Define indexing to extract interior zone
         ngh   = cctk_nghostzones(1) ! uniform grid only
@@ -247,7 +257,7 @@ contains
 
         deallocate(delta_r,phi_r,velx_r,vely_r,velz_r,Pk,ks)
 
-    end subroutine make_ics
+      end subroutine FLRW_MakePkICs
 
 
-end module powerspec_ics
+    end module FLRW_PowerspecICs

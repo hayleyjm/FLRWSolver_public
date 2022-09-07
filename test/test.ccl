@@ -1,0 +1,4 @@
+TEST FLRW_singlemode_test
+{
+  RELTOL 1e-10
+}
