@@ -294,7 +294,7 @@ Please correctly cite \texttt{FLRWSolver} if you use any of these tools in your 
 
 We note here that a useful gauge is the ``harmonic-type'' gauge specified by
 \begin{equation}
-	\partial_t \alpha = f \alpha^n K,
+	\partial_t \alpha = - f \alpha^n K,
 \end{equation}
 where $K$ is the trace of the extrinsic curvature. This is implemented in \texttt{ML\_BSSN}, and the parameters $f$ and $n$ are controlled using \texttt{ML\_BSSN::harmonicF} and \texttt{ML\_BSSN::harmonicN}, respectively. The initial value of the lapse, $\alpha$ is set using \texttt{FLRW\_lapse\_value}. In a perturbed FLRW spacetime (using {\tt single\_mode} or {\tt powerspectrum}) this is the background value of the lapse, which is then perturbed according to \eqref{EinsteinInitialData_flrwsolver_eq:perturbed_metric}. This thorn uses $\beta^i=0$.
 
