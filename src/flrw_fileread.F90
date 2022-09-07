@@ -11,7 +11,7 @@
 #include "cctk_Parameters.h"
 
 subroutine FLRW_FileRead (CCTK_ARGUMENTS)
-  USE init_tools
+  USE FLRW_InitTools
   implicit none
   DECLARE_CCTK_ARGUMENTS
   DECLARE_CCTK_FUNCTIONS
@@ -20,7 +20,7 @@ subroutine FLRW_FileRead (CCTK_ARGUMENTS)
   integer   :: i,j,k
   logical   :: lapse,dtlapse,shift,data,hydro
   CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
-  CCTK_REAL :: phi_ijk,kvalue
+  CCTK_REAL :: phi_ijk,kdiag_bg
   !
   ! globally-size arrays (to read in initial data files)
   CCTK_REAL, dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3))   :: phi_gs, delta_gs
@@ -56,13 +56,13 @@ subroutine FLRW_FileRead (CCTK_ARGUMENTS)
   !
   ! set logicals that tell us whether we want to use FLRWSolver to set ICs
   !
-  call set_logicals(lapse,dtlapse,shift,data,hydro)
+  call FLRW_SetLogicals(lapse,dtlapse,shift,data,hydro)
 
   !
   ! set parameters used in setting metric, matter parameters
   ! --> note boxlen is in code units here
   !
-  call set_parameters(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
+  call FLRW_SetBackground(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
   
   !
   ! read in perturbations from files
@@ -122,36 +122,36 @@ subroutine FLRW_FileRead (CCTK_ARGUMENTS)
               phi_ijk = phi(i,j,k)
               
               if (lapse) then
-                 alp(i,j,k) = FLRW_lapse_value * sqrt(1._dp + 2._dp * phi_ijk)
+                 alp(i,j,k) = FLRW_lapse_value * sqrt(1.0d0 + 2.0d0 * phi_ijk)
               endif
               
               ! time deriv of lapse -- evolution of this is specified in ADMBase.
               if (dtlapse) then
-                 dtalp(i,j,k) = 0._dp
+                 dtalp(i,j,k) = 0.0d0
               endif
 
               ! shift vector, always zero in this thorn
               if (shift) then
-                 betax(i,j,k) = 0._dp
-                 betay(i,j,k) = 0._dp
-                 betaz(i,j,k) = 0._dp
+                 betax(i,j,k) = 0.0d0
+                 betay(i,j,k) = 0.0d0
+                 betaz(i,j,k) = 0.0d0
               endif
 
               ! set perturbed metric and K_ij
-              gxx(i,j,k) = asq * (1._dp - 2._dp * phi_ijk)
-              gxy(i,j,k) = 0._dp
-              gxz(i,j,k) = 0._dp
-              gyy(i,j,k) = asq * (1._dp - 2._dp * phi_ijk)
-              gyz(i,j,k) = 0._dp
-              gzz(i,j,k) = asq * (1._dp - 2._dp * phi_ijk)
+              gxx(i,j,k) = asq * (1.0d0 - 2.0d0 * phi_ijk)
+              gxy(i,j,k) = 0.0d0
+              gxz(i,j,k) = 0.0d0
+              gyy(i,j,k) = asq * (1.0d0 - 2.0d0 * phi_ijk)
+              gyz(i,j,k) = 0.0d0
+              gzz(i,j,k) = asq * (1.0d0 - 2.0d0 * phi_ijk)
 
-              kvalue     = - adot * a0 / alp(i,j,k)
-              kxx(i,j,k) = kvalue * (1._dp - 2._dp * phi_ijk)
-              kxy(i,j,k) = 0._dp
-              kxz(i,j,k) = 0._dp
-              kyy(i,j,k) = kvalue * (1._dp - 2._dp * phi_ijk)
-              kyz(i,j,k) = 0._dp
-              kzz(i,j,k) = kvalue * (1._dp - 2._dp * phi_ijk)
+              kdiag_bg   = - adot * a0 / alp(i,j,k)
+              kxx(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk)
+              kxy(i,j,k) = 0.0d0
+              kxz(i,j,k) = 0.0d0
+              kyy(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk)
+              kyz(i,j,k) = 0.0d0
+              kzz(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk)
 
               !
               ! set up  matter variables
@@ -159,9 +159,9 @@ subroutine FLRW_FileRead (CCTK_ARGUMENTS)
               if (hydro) then
                  !
                  ! perturb the matter
-                 press(i,j,k) = 0._dp ! pressure will be overwritten by EOS_Omni anyway
-                 eps(i,j,k)   = 0._dp
-                 rho(i,j,k)   = rho0 * (1._dp + delta(i,j,k))
+                 press(i,j,k) = 0.0d0 ! pressure will be overwritten by EOS_Omni anyway
+                 eps(i,j,k)   = 0.0d0
+                 rho(i,j,k)   = rho0 * (1.0d0 + delta(i,j,k))
                  vel(i,j,k,:) = delta_vel(i,j,k,:)
               endif
 
@@ -170,11 +170,6 @@ subroutine FLRW_FileRead (CCTK_ARGUMENTS)
         enddo
      enddo
   enddo
-
-  !
-  ! make sure the metric type is physical (not conformal)
-  !
-  call check_metric()
 
 
 end subroutine FLRW_FileRead
