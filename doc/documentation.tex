@@ -74,7 +74,14 @@
 % (Automatically used from Cactus distribution, if you have a
 %  thorn without the Cactus Flesh download this from the Cactus
 %  homepage at www.cactuscode.org)
-\usepackage{../../../../doc/latex/cactus}
+% FLRWSolver's directory hierarchy is not the expected one and breaks either
+% direct latex calls or make FLRWSolver-Thorndoc if only a single path is used
+\IfFileExists{../../../doc/latex/cactus.sty}
+% then
+{\usepackage{../../../doc/latex/cactus}}
+% else
+{\usepackage{../../../../doc/latex/cactus}}
+
 %\usepackage{cactus}
 \usepackage{latexsym}
 \usepackage{amssymb}
