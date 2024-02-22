@@ -12,7 +12,7 @@ module FLRW_PowerspecICs
   use, intrinsic :: iso_c_binding ! we need this for the fftw calls
   use FLRW_InitTools, only: pi,FLRW_Interp1DLinear,FLRW_GetRandomNormal3D
   implicit none
-  include 'fftw3.f03'
+# include "fftw3.f03"
 
 contains
 
