@@ -1,20 +1,19 @@
 !
-! file    flrw_powerspectrum.F90
+! file    flrw_powerspectrum_exact.F90
 ! author  Hayley Macpherson
-! date    30.12.2019
+! date    13.03.2025
 ! desc    A spectrum of perturbations to FLRW initial data, longitudinal gauge, zero shift
-!            calls create_ics.py initial conditions generator for the given parameters
-!
-! ** a copy of the working code to test out the Fortran-only version of the code **
+!            solves the constraints exactly given a spectrum of metric fluctuations
 !
 #include "cctk.h"
 #include "cctk_Arguments.h"
 #include "cctk_Functions.h"
 #include "cctk_Parameters.h"
 
-subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
-  USE FLRW_InitTools
-  USE FLRW_PowerspecICs, only:FLRW_MakePkICs
+subroutine FLRW_Powerspectrum_Exact (CCTK_ARGUMENTS)
+  USE FLRW_InitTools, only:FLRW_SetLogicals,FLRW_SetBackground,FLRW_Interp1DLinear
+  USE FLRW_ExactICs, only:FLRW_SolveConstraints
+  USE FLRW_PowerspecICs, only:FLRW_MakePkICs_Phi
   implicit none
   DECLARE_CCTK_ARGUMENTS
   DECLARE_CCTK_FUNCTIONS
@@ -26,17 +25,20 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   CCTK_REAL :: phi_ijk,kdiag_bg
   !
   ! globally-size arrays (to read in initial data files)
-  CCTK_REAL, dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3))   :: phi_gs,delta_gs
-  CCTK_REAL, dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3),3) :: delta_vel_gs
+  CCTK_REAL, dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: phi_gs,rhoR_gs
+  CCTK_REAL, dimension(cctk_gsh(1),cctk_gsh(2),cctk_gsh(3)) :: vel1_gs,vel2_gs,vel3_gs
   !
   ! locally-sized arrays (for this processor)
-  CCTK_REAL, dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3))   :: phi, delta
-  CCTK_REAL, dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3),3) :: delta_vel
+  CCTK_REAL, dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)) :: phi,rhoR
+  CCTK_REAL, dimension(cctk_lsh(1),cctk_lsh(2),cctk_lsh(3)) :: vel1,vel2,vel3
+  !
+  ! we need a phi array that is just nx,nx,nx which is then placed into the cctk_gsh arrays
+  CCTK_REAL, dimension(:,:,:), allocatable :: phi_nx
   !
   CCTK_INT :: ncells(3)
   integer :: il,jl,kl,iu,ju,ku
 
-  call CCTK_INFO("Initialising a power spectrum of linear perturbations to an EdS spacetime")
+  call CCTK_INFO("Initialising a power spectrum of perturbations to an EdS spacetime")
 
   !
   ! set logicals that tell us whether we want to use FLRWSolver to set ICs
@@ -54,9 +56,17 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   !      --> note FLRW_boxlength is in cMpc here
   !
   if (ncells(1)/=ncells(2)) call CCTK_WARN(CCTK_WARN_ALERT,"Non-uniform grid. We assume a uniform grid.")
-  call FLRW_MakePkICs(CCTK_ARGUMENTS,a0,hub,boxlen(1),ncells(1),delta_gs,phi_gs,delta_vel_gs(:,:,:,1),&
-    & delta_vel_gs(:,:,:,2),delta_vel_gs(:,:,:,3))
+
+  !
+  ! First: generate the Gaussian field of Phi fluctuations given the input power spectrum P_\phi
+  allocate(phi_nx(ncells(1),ncells(1),ncells(1)))
+  call FLRW_MakePkICs_Phi(CCTK_ARGUMENTS,boxlen(1),ncells(1),phi_nx)
+
+  !
+  ! Next we need to solve the constraints to get a rho and v^i from the perturbed metric
+  call FLRW_SolveConstraints(CCTK_ARGUMENTS,ncells(1),a0,asq,adot,phi_nx,rhoR_gs,vel1_gs,vel2_gs,vel3_gs,phi_gs)
   call CCTK_INFO("Done making initial conditions.")
+  deallocate(phi_nx) ! don't need this no mo
 
   !
   ! indices for lower bound of local (processor) grid within global grid
@@ -73,9 +83,11 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   !
   ! extract local part of global grid i.e. part this processor is using and store it
   !
-  phi = phi_gs(il:iu, jl:ju, kl:ku)
-  delta     = delta_gs(il:iu, jl:ju, kl:ku)
-  delta_vel = delta_vel_gs(il:iu, jl:ju, kl:ku, :)
+  phi  = phi_gs(il:iu, jl:ju, kl:ku)
+  rhoR = rhoR_gs(il:iu, jl:ju, kl:ku)
+  vel1 = vel1_gs(il:iu, jl:ju, kl:ku)
+  vel2 = vel2_gs(il:iu, jl:ju, kl:ku)
+  vel3 = vel3_gs(il:iu, jl:ju, kl:ku)
   !
   do k = 1, cctk_lsh(3)
      do j = 1, cctk_lsh(2)
@@ -128,8 +140,10 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
                  ! perturb the matter
                  press(i,j,k) = 0.0d0 ! pressure will be overwritten by EOS_Omni anyway
                  eps(i,j,k)   = 0.0d0
-                 rho(i,j,k)   = rho0 * (1.0d0 + delta(i,j,k))
-                 vel(i,j,k,:) = delta_vel(i,j,k,:)
+                 rho(i,j,k)   = rhoR(i,j,k)
+                 vel(i,j,k,1) = vel1(i,j,k)
+                 vel(i,j,k,2) = vel2(i,j,k)
+                 vel(i,j,k,3) = vel3(i,j,k)
               endif
 
            endif
@@ -139,4 +153,4 @@ subroutine FLRW_Powerspectrum (CCTK_ARGUMENTS)
   enddo
 
 
-end subroutine FLRW_Powerspectrum
+end subroutine FLRW_Powerspectrum_Exact

@@ -21,6 +21,14 @@ else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"
   schedule FLRW_Powerspectrum IN HydroBase_Initial
   {
     LANG: Fortran
+  } "Sets up initial data for a power spectrum of linear perturbations to FLRW spacetime"
+}
+
+else if ( (CCTK_Equals(FLRW_perturb, "yes")) && (CCTK_Equals(FLRW_perturb_type,"powerspectrum_exact")) )
+{
+  schedule FLRW_Powerspectrum_Exact IN HydroBase_Initial
+  {
+    LANG: Fortran
   } "Sets up initial data for a power spectrum of perturbations to FLRW spacetime"
 }
 

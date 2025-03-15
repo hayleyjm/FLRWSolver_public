@@ -45,16 +45,21 @@ KEYWORD FLRW_perturb "Add perturbation to matter and metric"
 KEYWORD FLRW_perturb_type "Add perturbation of the following type"
 {
  "single_mode" :: "Single mode perturbation (sine wave in density). Set FLRW_perturb_direction to choose dimensions of perturbation and single_perturb_wavelength."
- "powerspectrum" :: "A power spectrum of (linear) perturbations. Supply the path to your chosen power spectrum in FLRW_powerspectrum_file"
+ "powerspectrum" :: "A power spectrum of (linear) perturbations. Supply the path to your chosen P_delta(k) in FLRW_powerspectrum_file"
+ "powerspectrum_exact" :: "A power spectrum of phi perturbations; constraints solved exactly. Supply the path to your chosen P_phi(k) in FLRW_phi_powerspectrum_file"
  "fileread" :: "Linear perturbations to FLRW in longitudinal gauge -- read in from supplied ascii files (specific format - see doc)"
 } "single_mode"
 
 
-STRING FLRW_powerspectrum_file "Path to (and name of) text file specifying the matter P(k) (in synchronous gauge) to be used to generate scalar perturbations if perturb_type=powerspectrum is chosen."
+STRING FLRW_powerspectrum_file "Path to (and name of) text file specifying the matter P_delta(k) (in synchronous gauge) to be used to generate scalar perturbations if perturb_type=powerspectrum is chosen."
 {
- "" :: "Any string containing the path to the powerspectrum file"
+ "" :: "Any string containing the path to the matter powerspectrum file"
 } ""
 
+STRING FLRW_phi_powerspectrum_file "Path to (and name of) text file specifying the phi P_phi(k) (Newtonian gauge) to be used to generate scalar perturbations if perturb_type=powerspectrum_exact is chosen."
+{
+ "" :: "Any string containing the path to the phi powerspectrum file"
+} ""
 
 CCTK_INT FLRW_random_seed "Random seed for generating the Gaussian random density perturbation from the power spectrum given in FLRW_powerspectrum_file."
 {
