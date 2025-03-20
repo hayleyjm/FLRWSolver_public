@@ -9,7 +9,7 @@
 #include "cctk_Functions.h"
 #include "cctk_Parameters.h"
 
-module FLRW_MescalineHelpers
+module FLRW_Mescaline_Helpers
   use FLRW_InitTools, only: pi
   implicit none
 
@@ -56,6 +56,8 @@ contains
       ! initialise sums to zero
       term1 = 0.d0; term2 = 0.d0
       term3 = 0.d0; term4 = 0.d0
+      gamma1_p1 = 0.d0; gamma1_m1 = 0.d0
+      gamma1_p2 = 0.d0; gamma1_m2 = 0.d0      
       do l=1,3
          if (l==1) then
             ! x-deriv: calculate \Gamma1 at i+1, i-1
@@ -102,6 +104,8 @@ contains
 
          !
          ! SECOND TERM
+         gamma2_p1 = 0.d0; gamma2_m1 = 0.d0
+         gamma2_p2 = 0.d0; gamma2_m2 = 0.d0
          if (ridx1==1) then
             !
             ! take the x-derivative of christoffel, get at i-stencil
@@ -173,13 +177,12 @@ contains
     !
     !  --> * checked March 27th, 2020 (Hi from lockdown!) and all OK
     !
-    subroutine get_christoffel(i,j,k,gij,nx,dx,idx1,idx2,idx3,chr,gupijk)
+    subroutine get_christoffel(i,j,k,gij,nx,dx,idx1,idx2,idx3,chr)
       integer, intent(in) :: nx                        ! the size of the grid (assuming uniform)
       integer, intent(in) :: i,j,k                     ! current position in space
       integer, intent(in) :: idx1, idx2, idx3          ! the indices of the christoffel: \Gamma^{idx1}_{idx2,idx3}
       CCTK_REAL, intent(in), dimension(6,nx,nx,nx) :: gij
       CCTK_REAL, intent(in) :: dx                       ! the gridspacing
-      CCTK_REAL, intent(in), optional :: gupijk(3,3) ! g^ij at i,j,k -- optional because sometimes we have it, sometimes we don't
       CCTK_REAL, intent(out) :: chr                     ! the resulting christoffel symbol
       CCTK_REAL, dimension(3) :: g3dum_p1, g3dum_m1, gdum2_m1, gdum2_p1, upg1dum  ! the g_{k,l} and g_{l,j} terms we pass in depending on which derivative we are taking of these terms, see explanation of notation below...
       CCTK_REAL, dimension(3) :: g3dum_p2, g3dum_m2, gdum2_p2, gdum2_m2
@@ -456,7 +459,6 @@ contains
     subroutine apply_periodic(j,jp1,jm1,nx)
       integer, intent(in) :: j, nx
       integer, intent(inout) :: jp1, jm1
-      integer :: stp
 
       !
       ! Set (j+1), (j-1) depending on j value, implementing periodic BC's
@@ -710,4 +712,4 @@ contains
     end subroutine calc_ham_source
 
 
-end module FLRW_MescalineHelpers
+end module FLRW_Mescaline_Helpers

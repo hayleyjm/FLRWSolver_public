@@ -19,7 +19,7 @@ contains
     !    given 3D array of phi perturbations -- then obtain \rho and v^i by solving the constraints
     !
     subroutine FLRW_SolveConstraints(CCTK_ARGUMENTS,nx,ai,asq,adot,phi,rhoR_gs,vel1_gs,vel2_gs,vel3_gs,phi_gs)
-        USE FLRW_MescalineHelpers ! uses them all
+        USE FLRW_Mescaline_Helpers ! uses them all
         implicit none
         DECLARE_CCTK_ARGUMENTS
         DECLARE_CCTK_FUNCTIONS

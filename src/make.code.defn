@@ -6,7 +6,10 @@ SRCS = flrw_inittools.F90 \
        flrw_noperturb.F90 \
        flrw_singlemode.F90 \
        flrw_powerspectrum.F90 \
+       flrw_powerspectrum_exact.F90 \
        flrw_powerspecics.F90 \
+       flrw_mescaline_helpers.F90 \
+       flrw_exactics.F90 \
        flrw_fileread.F90 \
        flrw_paramcheck.F90
 
