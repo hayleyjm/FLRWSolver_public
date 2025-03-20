@@ -112,7 +112,7 @@
 %   \def\mydef etc
 
 \begin{abstract}
-  This thorn provides cosmological initial conditions based on a Friedmann-Lemaitre-Robertson-Walker (FLRW) spacetime, either with or without small (linear) perturbations. 
+  This thorn provides cosmological initial conditions based on a Friedmann-Lemaitre-Robertson-Walker (FLRW) spacetime, either with or without small perturbations. 
 \end{abstract}
 
 
@@ -123,12 +123,11 @@
 FLRW spacetime is a homogeneous, isotropic, expanding solution to Einstein's equations. This solution is the basis for the current standard cosmological model; $\Lambda$CDM.
 The spatially-flat FLRW spacetime sourced by pure-dust with no cosmological constant is the Einstein-de Sitter (EdS) spacetime. 
 
-Here we provide a thorn to give initial conditions for cosmology using the Einstein Toolkit (ET). Currently, \texttt{FLRWSolver}\ only implements the EdS solution. We provide pure-EdS spacetime (no perturbations), and linearly-perturbed EdS spacetime for various kinds of perturbations. Namely, you can choose a single (3-dimensional) sine-wave perturbation, a powerspectrum of perturbations, or your own perturbations read in from files. 
-Currently this thorn implements only a linearly-accurate solution of the constraint equations, so there is a second-order violation in the constraints in the solution from the beginning of the simulation. %This can be removed by implementing exact solutions to the constraint equations; which can be added in the future. 
+Here we provide a thorn to give initial conditions for cosmology using the Einstein Toolkit (ET). Currently, \texttt{FLRWSolver}\ only implements the EdS solution. We provide pure-EdS spacetime (no perturbations) and perturbed EdS spacetime for various kinds of perturbations. Namely, you can choose a single (3-dimensional) sine-wave perturbation, a powerspectrum of perturbations, or your own perturbations read in from files. 
 
 Links to detailed tutorials on setting up, compiling, and running simple simulations using \texttt{FLRWSolver}\ with the ET can be found in \texttt{doc/tutorials/}.
 
-In this documentation we have set $G=c=1$.
+In this documentation, and in \texttt{FLRWSolver}, we have set $G=c=1$.
 
 %--------------------------
 \section{Use of this thorn}
@@ -252,7 +251,7 @@ The initial data are generated from a user-specified 3-dimensional matter power 
 \end{equation}
 and the metric perturbation in longitudinal gauge is $\phi=\Phi$. We use equations \eqref{EinsteinInitialData_flrwsolver_eqs:linear_solnsg0} and \eqref{EinsteinInitialData_flrwsolver_eq:poisson} in Fourier space to find the corresponding density and velocity perturbations in the longitudinal gauge, which are then inverse Fourier transformed back to give the perturbations in real space.
 
-This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. Set the FLRW background according to Section~\ref{EinsteinInitialData_flrwsolver_sec:FLRWinit}, and set the path to (including the name of) the text file containing the matter power spectrum using \texttt{FLRW\_powerspectrum\_file}. There is an example power spectrum in \texttt{FLRWSolver/powerspectra/} which was generated using CLASS\footnote{https://class-code.net} (see the \texttt{README} in that directory for the exact parameters used), however, we recommend you run CLASS or CAMB\footnote{https://camb.info} with your desired cosmological parameters.
+This initial condition is chosen by setting \texttt{FLRW\_perturb\_type}=``powerspectrum''. Set the FLRW background according to Section~\ref{EinsteinInitialData_flrwsolver_sec:FLRWinit}, and set the path to (including the name of) the text file containing the matter power spectrum using \texttt{FLRW\_powerspectrum\_file}. There is an example power spectrum in \texttt{FLRWSolver/powerspectra/} for $z_{\rm ini}=1000$ which was generated using CLASS\footnote{https://class-code.net} (see the \texttt{README} in that directory), however, we recommend you run CLASS or CAMB\footnote{https://camb.info} with your desired cosmological parameters.
 The Gaussian random field will be drawn with seed from \texttt{FLRW\_random\_seed}, so keep this constant to draw the same realisation more than once. You also must specify the size of the domain in comoving Mpc$/h$ using \texttt{FLRW\_boxlength}, which is required to use the correct physical scales from the power spectrum. 
 
 
@@ -267,6 +266,29 @@ Namely, the data must be written in 2D $N\times N$ slices of the $x-y$ plane, wi
 
 To use this initial condition set \texttt{FLRW\_perturb\_type}=``fileread''. The files you must supply are the linear perturbations around an EdS background, and it is up to you to ensure these satisfy the constraint equations. You must set several string parameters containing the path to each file. 
 The parameter \texttt{FLRW\_deltafile} specifies the fractional density perturbation $\delta$, \texttt{FLRW\_phifile} for the metric perturbation $\phi/c^2$, and \texttt{FLRW\_velxfile}, \texttt{FLRW\_velyfile}, and \texttt{FLRW\_velzfile} for the components of the contravariant fluid three-velocity with respect to the Eulerian observer, $v^i/c$ (see \texttt{HydroBase} documentation for an explicit definition of $v^i$). 
+
+
+
+%--------------------------------
+\subsection{`Exact' perturbations to FLRW spacetime}
+%--------------------------------
+
+This initial condition choice results in a power spectrum of metric fluctuations $\phi$ then solves the Hamiltonian and momentum constraints `exactly' (i.e., to the level we can achieve with the order of finite-difference used in the calculations described below) to obtain the corresponding density $\rho$ and velocity $v^i$ fields. 
+The form of the metric components is the same as \eqref{EinsteinInitialData_flrwsolver_eq:perturbed_metric}, and the method similar to that described in Section~\ref{EinsteinInitialData_flrwsolver_sec:pspec_ics}. The difference is the user-specified 3-dimensional power spectrum instead describes the power in fluctuations of the metric potential $\phi$ in \textit{Newtonian gauge} (this can be output from CAMB\footnote{\url{https://camb.info}}. At the time of writing I don't think you can output this from CLASS without making adjustments to the code itself). As in Section~\ref{EinsteinInitialData_flrwsolver_sec:pspec_ics}, the power spectrum should be for the same initial redshift as the simulation and be in the CAMB/CLASS output style: a plain text file with two columns $k,P(k)$ with no first line for $k=0$. 
+
+\texttt{FLRWSolver} then generates a Gaussian random field scaled to this power spectrum, representing the initial $\phi(x^i)$. The next step is to put this into the components $g_{ij}$ as in \eqref{EinsteinInitialData_flrwsolver_eq:perturbed_metric} (for the chosen FLRW background parameters), as well as the components of the extrinsic curvature $K_{ij}$ (with the time derivative assumed to be $\dot{\phi}=0$, which is a good approximation so long as the simulation is initialised in the matter-dominated era when perturbations are close to linear). We then calculate the Ricci scalar, trace of $K_{ij}$, derivatives of $K_{ij}$, using existing routines amended from the \texttt{mescaline}\footnote{\url{https://github.com/hayleyjm/mescaline-1.0}} post-processing code \cite{EinsteinInitialData_flrwsolver_macpherson2019} (all using fourth-order accurate finite differences). From these we use the Hamiltonian constraint to obtain the simulation-frame density $\rho$ and the momentum density $S_i$. 
+
+The rest-mass density $\rho_R\equiv T_{\mu\nu}u^\mu u^\nu$, where $u^\mu$ is the fluid 4--velocity, is related to the simulation-frame density $\rho\equiv T_{\mu\nu}n^\mu n^\nu$, where $n^\mu$ is the normal to the hypersurfaces, via $\rho=\rho_R\alpha^2 (u^0)^2$, where $\alpha$ is the lapse. For a pressureless (dust) fluid, the momentum density is $S_i=\alpha \rho_Ru^i u^0$. With these expressions we can obtain the rest-mass density and velocity in \texttt{FLRWSolver} using
+\begin{equation}
+	\rho_R = \rho - \frac{S_i S^i}{\rho}; \quad v^i = \frac{S^i}{\rho},
+\end{equation}
+where $\rho$ and $S_i$ are obtained directly from the Hamiltonian and momentum constraints, respectively. In principle, this method could be adapted to other forms of the stress-energy tensor $T_{\mu\nu}$, however currently we have only implemented this case of a cosmological dust fluid. 
+
+The point of this method is to minimise constraint violation on the initial surface with respect to the method using linearised equations in Section~\ref{EinsteinInitialData_flrwsolver_sec:pspec_ics}. If your simulation begins at a high enough redshift ($z_{\rm init}\sim1000$) then you shouldn't get much difference in violation between the two methods. The main benefit of using this type of initial condition is that you can start at much later redshifts (we have tested down to $z_{\rm init}=20$), where the linear approximation might be violated but the Universe is still in a matter-dominated era. This also means your simulation will have less accumulation of finite-difference constraint violation since the number of iterations can be almost halved. 
+
+Choose this initial condition by setting \texttt{FLRW\_perturb\_type}=``powerspectrum\_exact''. Set the FLRW background according to Section~\ref{EinsteinInitialData_flrwsolver_sec:FLRWinit}, and set the path to (including the name of) the text file containing your desired power spectrum of $\phi$ using \texttt{FLRW\_phi\_powerspectrum\_file}. There is an example phi power spectrum in \texttt{FLRWSolver/powerspectra/} which was generated using CAMB (see the \texttt{README} in that directory) for redshift $z_{\rm ini}=20$, however, we recommend you run CAMB yourself with your desired cosmological parameters.
+The Gaussian random field will be drawn with seed from \texttt{FLRW\_random\_seed}, so keep this constant to draw the same realisation more than once. You also must specify the size of the domain in comoving Mpc$/h$ using \texttt{FLRW\_boxlength}, which is required to use the correct physical scales from the power spectrum. 
+
 
 
 \section{Tools}
