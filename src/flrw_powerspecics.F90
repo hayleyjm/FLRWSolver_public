@@ -35,12 +35,12 @@ contains
         type(C_PTR) :: pland,planp,planvx,planvy,planvz
         complex(C_DOUBLE_COMPLEX), dimension(nx,nx,nx) :: delta,phi,velx,vely,velz,random
         complex(C_DOUBLE_COMPLEX) :: delta_sync
-        CCTK_REAL :: modk2,modk_phys,modk,kspacing
+        CCTK_REAL :: kx,ky,kz,modk2,modk_phys,modk,kspacing
         ! Real arrays for the transformed complex arrays - to be padded w/ ghosts for the output
         CCTK_REAL, dimension(:,:,:), allocatable :: delta_r,phi_r,velx_r,vely_r,velz_r
 
         CCTK_REAL :: Pk_interp,scalefac,Lunit
-        integer :: i,j,k,n,ngh,istrt,ifin,nks
+        integer :: i,j,k,n,ngh,istrt,ifin,nks,pklen
         CCTK_REAL, allocatable :: Pk(:),ks(:)
         CCTK_REAL :: C1,C3,twopi
         character(len=200) :: pkfilename
@@ -54,7 +54,7 @@ contains
         call CCTK_FortranString(pklen,FLRW_powerspectrum_file,pkfilename)
 
         ! Set up things for the power spec ICs
-        call FLRW_PkICs_Setup(pkfilename,nx,boxlen,ks,Pk,nks,scalefac,kspacing,n,Lunit,random)
+        call FLRW_PkICs_Setup(CCTK_ARGUMENTS,pkfilename,nx,boxlen,ks,Pk,nks,scalefac,kspacing,n,Lunit,random)
 
         !
         ! Loop over k-space and get k-values & interpolated power spectrum
@@ -66,7 +66,7 @@ contains
                 do i = 1,nx
 
                     ! Get our position in k-space grid
-                    call FLRW_get_modk(i,j,k,nx,kspacing,n,modk,modk2)
+                    call FLRW_get_modk(CCTK_ARGUMENTS,i,j,k,nx,kspacing,n,kx,ky,kz,modk,modk2)
                     !
                     ! Interpolate P to this point using PHYSICAL value of modk
                     modk_phys = modk / Lunit
@@ -172,9 +172,9 @@ contains
           ! We make the initial data in k-space (complex arrays) and DFT back afterwards
           type(C_PTR) :: planp
           complex(C_DOUBLE_COMPLEX), dimension(nx,nx,nx) :: phi_c,random
-          CCTK_REAL :: modk2,modk_phys,modk,Lunit,kspacing
+          CCTK_REAL :: kx,ky,kz,modk2,modk_phys,modk,Lunit,kspacing
           CCTK_REAL :: Pk_interp,scalefac
-          integer :: nks,i,j,k,n
+          integer :: nks,i,j,k,n,pklen
           CCTK_REAL, allocatable :: Pk(:),ks(:)
           character(len=200) :: pkfilename
 
@@ -184,7 +184,7 @@ contains
 
           !
           ! Set up things for the power spec ICs
-          call FLRW_PkICs_Setup(pkfilename,nx,boxlen,ks,Pk,nks,scalefac,kspacing,n,Lunit,random)
+          call FLRW_PkICs_Setup(CCTK_ARGUMENTS,pkfilename,nx,boxlen,ks,Pk,nks,scalefac,kspacing,n,Lunit,random)
 
           !
           ! Loop over k-space and get k-values & interpolated power spectrum
@@ -196,7 +196,7 @@ contains
                   do i = 1,nx
                       !
                       ! Get k values in ~~ code units ~~
-                      call FLRW_get_modk(i,j,k,nx,kspacing,n,modk,modk2)
+                      call FLRW_get_modk(CCTK_ARGUMENTS,i,j,k,nx,kspacing,n,kx,ky,kz,modk,modk2)
 
                       !
                       ! Interpolate P to this point using PHYSICAL value of modk
@@ -238,7 +238,7 @@ contains
         !       -- sets up the 3D random field in k-space (Gaussian; unscaled)
         !       -- sets up the volume scale factor for the power spectrum
         !
-        subroutine FLRW_PkICs_Setup(pkfilename,nx,boxlen,ks,Pk,nks,scalefac,kspacing,ni,Lunit,random)
+        subroutine FLRW_PkICs_Setup(CCTK_ARGUMENTS,pkfilename,nx,boxlen,ks,Pk,nks,scalefac,kspacing,ni,Lunit,random)
             implicit none
             DECLARE_CCTK_ARGUMENTS
             DECLARE_CCTK_FUNCTIONS
@@ -255,7 +255,7 @@ contains
             integer, intent(out) :: nks,ni ! number of k-values in given file; integer defining the boundary between +ve and -ve k-values
 
             CCTK_REAL, dimension(:,:,:), allocatable :: Rerand,Imrand
-            CCTK_REAL :: dumk,dumP,spacing_phys
+            CCTK_REAL :: dumk,dumP,spacing_phys,dV,volume
             logical :: pkexist,loop
             integer :: pkunit,ierr,nheads,i,j
 
@@ -344,7 +344,7 @@ contains
         !
         ! A subroutine to use current grid position to get the |k| for this i,j,k
         !
-        subroutine FLRW_get_modk(i,j,k,nx,kspacing,ni,modk,modk2)
+        subroutine FLRW_get_modk(CCTK_ARGUMENTS,i,j,k,nx,kspacing,ni,kx,ky,kz,modk,modk2)
             implicit none
             DECLARE_CCTK_ARGUMENTS
             DECLARE_CCTK_FUNCTIONS
@@ -357,9 +357,7 @@ contains
             CCTK_INT, intent(in) :: ni ! index separating positive vs negative k-values
             CCTK_REAL, intent(in) :: kspacing ! frequency spacing
 
-            CCTK_REAL, intent(out) :: modk2,modk ! k^2 and k in code units
-
-            CCTK_REAL :: kx,ky,kz
+            CCTK_REAL, intent(out) :: kx,ky,kz,modk2,modk ! k^2 and k in code units
 
             !
             ! Get k values in ~~ code units ~~
