@@ -100,6 +100,8 @@ subroutine FLRW_Powerspectrum_Exact (CCTK_ARGUMENTS)
 
               phi_ijk = phi(i,j,k)
 
+              ! initialise the lapse given the background lapse value FLRW_lapse_value
+              !      -- note we require phi_ijk << 1 so that 1+2phi>0 always
               if (lapse) then
                  alp(i,j,k) = FLRW_lapse_value * sqrt(1.0d0 + 2.0d0 * phi_ijk)
               endif
@@ -124,13 +126,13 @@ subroutine FLRW_Powerspectrum_Exact (CCTK_ARGUMENTS)
               gyz(i,j,k) = 0.0d0
               gzz(i,j,k) = asq * (1.0d0 - 2.0d0 * phi_ijk)
 
-              kdiag_bg   = - adot * a0 / alp(i,j,k)
-              kxx(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk)
+              kdiag_bg   = - adot * a0
+              kxx(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk) / alp(i,j,k)
               kxy(i,j,k) = 0.0d0
               kxz(i,j,k) = 0.0d0
-              kyy(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk)
+              kyy(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk) / alp(i,j,k)
               kyz(i,j,k) = 0.0d0
-              kzz(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk)
+              kzz(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk) / alp(i,j,k)
 
               !
               ! set up  matter variables

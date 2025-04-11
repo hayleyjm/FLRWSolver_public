@@ -37,7 +37,7 @@ contains
         CCTK_REAL, allocatable, dimension(:,:,:,:,:,:) :: Chrsijk
         CCTK_REAL, allocatable, dimension(:,:,:) :: alpha,trK
         CCTK_REAL :: trRijk,rhoijk,dx,SuSd,Su(3),Sd(3),kud(3,3)
-        CCTK_REAL :: rxx,rxy,rxz,ryy,ryz,rzz,rdd(6),gdown(3,3),gup(3,3)
+        CCTK_REAL :: rxx,rxy,rxz,ryy,ryz,rzz,rdd(6),gdown(3,3),gup(3,3),detg
 
         integer :: i,j,k,l,m,n,ngh,istrt,ifin
 
@@ -88,10 +88,14 @@ contains
            do j=1,nx
               do i=1,nx
 
+                 ! get g^{ij} here to pass in to save multiple calls per position
+                 call get_metric_at_pos(i,j,k,nx,gij,gdown)
+                 call inv3x3(gdown,gup,detg)
+
                  do n=1,3
                     do m=1,3
                        do l=1,3
-                          call get_christoffel(i,j,k,gij,nx,dx,l,m,n,Chrsijk(l,m,n,i,j,k))
+                          call get_christoffel(i,j,k,gij,gup,nx,dx,l,m,n,Chrsijk(l,m,n,i,j,k))
                        enddo
                     enddo
                  enddo

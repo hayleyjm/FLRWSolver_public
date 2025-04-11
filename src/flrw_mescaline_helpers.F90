@@ -57,7 +57,7 @@ contains
       term1 = 0.d0; term2 = 0.d0
       term3 = 0.d0; term4 = 0.d0
       gamma1_p1 = 0.d0; gamma1_m1 = 0.d0
-      gamma1_p2 = 0.d0; gamma1_m2 = 0.d0      
+      gamma1_p2 = 0.d0; gamma1_m2 = 0.d0
       do l=1,3
          if (l==1) then
             ! x-deriv: calculate \Gamma1 at i+1, i-1
@@ -177,18 +177,19 @@ contains
     !
     !  --> * checked March 27th, 2020 (Hi from lockdown!) and all OK
     !
-    subroutine get_christoffel(i,j,k,gij,nx,dx,idx1,idx2,idx3,chr)
+    subroutine get_christoffel(i,j,k,gij,gup,nx,dx,idx1,idx2,idx3,chr)
       integer, intent(in) :: nx                        ! the size of the grid (assuming uniform)
       integer, intent(in) :: i,j,k                     ! current position in space
       integer, intent(in) :: idx1, idx2, idx3          ! the indices of the christoffel: \Gamma^{idx1}_{idx2,idx3}
       CCTK_REAL, intent(in), dimension(6,nx,nx,nx) :: gij
       CCTK_REAL, intent(in) :: dx                       ! the gridspacing
+      CCTK_REAL, intent(in) :: gup(3,3)                 ! g^{ij} at the current (i,j,k) location; saves lots of calls to inv3x3
       CCTK_REAL, intent(out) :: chr                     ! the resulting christoffel symbol
       CCTK_REAL, dimension(3) :: g3dum_p1, g3dum_m1, gdum2_m1, gdum2_p1, upg1dum  ! the g_{k,l} and g_{l,j} terms we pass in depending on which derivative we are taking of these terms, see explanation of notation below...
       CCTK_REAL, dimension(3) :: g3dum_p2, g3dum_m2, gdum2_p2, gdum2_m2
       CCTK_REAL :: g23_ip1, g23_im1, g23_jp1, g23_jm1, g23_kp1, g23_km1  ! more temp gij terms
       CCTK_REAL :: g23_ip2, g23_im2, g23_jp2, g23_jm2, g23_kp2, g23_km2  ! more temp gij terms
-      CCTK_REAL :: g23p1(3), g23m1(3), detg, g23p2(3), g23m2(3)
+      CCTK_REAL :: g23p1(3), g23m1(3), g23p2(3), g23m2(3)
       CCTK_REAL, dimension(3,3) :: gup, gdown, gdown_ip1, gdown_im1, gdown_jp1, gdown_jm1, gdown_kp1, gdown_km1
       CCTK_REAL, dimension(3,3) :: gdown_ip2,gdown_im2,gdown_jp2,gdown_jm2,gdown_kp2,gdown_km2
       CCTK_REAL :: trm1, trm2, trm3
@@ -217,7 +218,7 @@ contains
       call get_metric_at_pos(i,jm2,k,nx,gij,gdown_jm2)
       call get_metric_at_pos(i,j,kp2,nx,gij,gdown_kp2)
       call get_metric_at_pos(i,j,km2,nx,gij,gdown_km2)
-      call inv3x3(gdown,gup,detg)
+      !call inv3x3(gdown,gup,detg)
 
       !
       ! Notes on notation below: g3dum is: g_{idx3,dummy}, gdum2 is: g_{dummy,idx2}

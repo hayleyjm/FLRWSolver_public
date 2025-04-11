@@ -31,7 +31,7 @@ subroutine FLRW_NoPerturb (CCTK_ARGUMENTS)
   ! set parameters used in setting metric, matter parameters
   !
   call FLRW_SetBackground(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
-  
+
   !
   ! spatial loop over *local* grid size for this processor
   !
@@ -43,22 +43,23 @@ subroutine FLRW_NoPerturb (CCTK_ARGUMENTS)
            ! set up metric, extrinsic curvature, lapse and shift
            !
            if (data) then
-              
+
+              ! initialise the lapse given the background lapse value FLRW_lapse_value
               if (lapse) then
                  alp(i,j,k) = FLRW_lapse_value
               endif
-              
+
               ! time deriv of lapse -- evolution of this is specified in ADMBase.
               if (dtlapse) then
                  dtalp(i,j,k) = 0.0d0
               endif
-              
+
               if (shift) then
                  betax(i,j,k) = 0.0d0
                  betay(i,j,k) = 0.0d0
                  betaz(i,j,k) = 0.0d0
               endif
-              
+
               ! set FLRW metric and K_ij
               gxx(i,j,k) = asq
               gxy(i,j,k) = 0.0d0
@@ -66,7 +67,7 @@ subroutine FLRW_NoPerturb (CCTK_ARGUMENTS)
               gyy(i,j,k) = asq
               gyz(i,j,k) = 0.0d0
               gzz(i,j,k) = asq
-              
+
               kdiag_bg   = - adot * a0 / FLRW_lapse_value
               kxx(i,j,k) = kdiag_bg
               kxy(i,j,k) = 0.0d0
@@ -74,7 +75,7 @@ subroutine FLRW_NoPerturb (CCTK_ARGUMENTS)
               kyy(i,j,k) = kdiag_bg
               kyz(i,j,k) = 0.0d0
               kzz(i,j,k) = kdiag_bg
-             
+
               !
               ! set up  matter variables
               !
@@ -88,10 +89,10 @@ subroutine FLRW_NoPerturb (CCTK_ARGUMENTS)
               endif
 
            endif
-           
+
         enddo
      enddo
   enddo
-  
+
 
 end subroutine FLRW_NoPerturb

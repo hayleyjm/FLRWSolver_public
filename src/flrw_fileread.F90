@@ -16,7 +16,7 @@ subroutine FLRW_FileRead (CCTK_ARGUMENTS)
   DECLARE_CCTK_ARGUMENTS
   DECLARE_CCTK_FUNCTIONS
   DECLARE_CCTK_PARAMETERS
-  
+
   integer   :: i,j,k
   logical   :: lapse,dtlapse,shift,data,hydro
   CCTK_REAL :: a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen(3)
@@ -34,7 +34,7 @@ subroutine FLRW_FileRead (CCTK_ARGUMENTS)
   character(len=200) :: deltafile,vel1file,vel2file,vel3file,phifile
   integer :: dr_unit,dv_unit1,dv_unit2,dv_unit3,p_unit
   integer :: il,jl,kl,iu,ju,ku,dlen
-  
+
   call CCTK_INFO("Initialising linear perturbations to an FLRW spacetime")
 
   !
@@ -63,20 +63,20 @@ subroutine FLRW_FileRead (CCTK_ARGUMENTS)
   ! --> note boxlen is in code units here
   !
   call FLRW_SetBackground(CCTK_ARGUMENTS,a0,rho0,asq,rhostar,hub,adot,hubdot,boxlen,ncells)
-  
+
   !
   ! read in perturbations from files
   !
   open(newunit=dr_unit,file=deltafile,status='old')  ! delta rho file
   open(newunit=dv_unit1,file=vel1file,status='old')  ! delta vel file [1]
   open(newunit=dv_unit2,file=vel2file,status='old')  ! delta vel file [2]
-  open(newunit=dv_unit3,file=vel3file,status='old')  ! delta vel file [3] 
+  open(newunit=dv_unit3,file=vel3file,status='old')  ! delta vel file [3]
   open(newunit=p_unit,file=phifile,status='old')     ! phi file
 
   !
   ! spatial loop over *global* grid size
   do k = 1, cctk_gsh(3)
-     do j = 1, cctk_gsh(2) 
+     do j = 1, cctk_gsh(2)
         ! loop over ROW no. (i is COLUMN no.) (i,j,k) --> (column, row, z)
 
         !
@@ -120,11 +120,13 @@ subroutine FLRW_FileRead (CCTK_ARGUMENTS)
            if (data) then
 
               phi_ijk = phi(i,j,k)
-              
+
+              ! initialise the lapse given the background lapse value FLRW_lapse_value
+              !      -- note we require phi_ijk << 1 so that 1+2phi>0 always
               if (lapse) then
                  alp(i,j,k) = FLRW_lapse_value * sqrt(1.0d0 + 2.0d0 * phi_ijk)
               endif
-              
+
               ! time deriv of lapse -- evolution of this is specified in ADMBase.
               if (dtlapse) then
                  dtalp(i,j,k) = 0.0d0
@@ -145,13 +147,13 @@ subroutine FLRW_FileRead (CCTK_ARGUMENTS)
               gyz(i,j,k) = 0.0d0
               gzz(i,j,k) = asq * (1.0d0 - 2.0d0 * phi_ijk)
 
-              kdiag_bg   = - adot * a0 / alp(i,j,k)
-              kxx(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk)
+              kdiag_bg   = - adot * a0
+              kxx(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk) / alp(i,j,k)
               kxy(i,j,k) = 0.0d0
               kxz(i,j,k) = 0.0d0
-              kyy(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk)
+              kyy(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk) / alp(i,j,k)
               kyz(i,j,k) = 0.0d0
-              kzz(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk)
+              kzz(i,j,k) = kdiag_bg * (1.0d0 - 2.0d0 * phi_ijk) / alp(i,j,k)
 
               !
               ! set up  matter variables
