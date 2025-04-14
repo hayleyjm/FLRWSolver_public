@@ -106,41 +106,41 @@ contains
          ! SECOND TERM
          gamma2_p1 = 0.d0; gamma2_m1 = 0.d0
          gamma2_p2 = 0.d0; gamma2_m2 = 0.d0
-         if (ridx1==1) then
+         if (ridx2==1) then
             !
             ! take the x-derivative of christoffel, get at i-stencil
             !call get_christoffel(ip1,j,k,gij,nx,dx,l,l,ridx2,gamma2_p1)
-            gamma2_p1 = Chrsijk(l,l,ridx2,ip1,j,k)
+            gamma2_p1 = Chrsijk(l,l,ridx1,ip1,j,k)
             !call get_christoffel(im1,j,k,gij,nx,dx,l,l,ridx2,gamma2_m1)
-            gamma2_m1 = Chrsijk(l,l,ridx2,im1,j,k)
+            gamma2_m1 = Chrsijk(l,l,ridx1,im1,j,k)
             !call get_christoffel(ip2,j,k,gij,nx,dx,l,l,ridx2,gamma2_p2)
-            gamma2_p2 = Chrsijk(l,l,ridx2,ip2,j,k)
+            gamma2_p2 = Chrsijk(l,l,ridx1,ip2,j,k)
             !call get_christoffel(im2,j,k,gij,nx,dx,l,l,ridx2,gamma2_m2)
-            gamma2_m2 = Chrsijk(l,l,ridx2,im2,j,k)
+            gamma2_m2 = Chrsijk(l,l,ridx1,im2,j,k)
 
-         elseif (ridx1==2) then
+         elseif (ridx2==2) then
             !
             ! take the y-derivaitve of christoffel, get at j-stencil
             !call get_christoffel(i,jp1,k,gij,nx,dx,l,l,ridx2,gamma2_p1)
-            gamma2_p1 = Chrsijk(l,l,ridx2,i,jp1,k)
+            gamma2_p1 = Chrsijk(l,l,ridx1,i,jp1,k)
             !call get_christoffel(i,jm1,k,gij,nx,dx,l,l,ridx2,gamma2_m1)
-            gamma2_m1 = Chrsijk(l,l,ridx2,i,jm1,k)
+            gamma2_m1 = Chrsijk(l,l,ridx1,i,jm1,k)
             !call get_christoffel(i,jp2,k,gij,nx,dx,l,l,ridx2,gamma2_p2)
-            gamma2_p2 = Chrsijk(l,l,ridx2,i,jp2,k)
+            gamma2_p2 = Chrsijk(l,l,ridx1,i,jp2,k)
             !call get_christoffel(i,jm2,k,gij,nx,dx,l,l,ridx2,gamma2_m2)
-            gamma2_m2 = Chrsijk(l,l,ridx2,i,jm2,k)
+            gamma2_m2 = Chrsijk(l,l,ridx1,i,jm2,k)
 
-         elseif (ridx1==3) then
+         elseif (ridx2==3) then
             !
             ! take the z-derivaitve of christoffel, get at j-stencil
             !call get_christoffel(i,j,kp1,gij,nx,dx,l,l,ridx2,gamma2_p1)
-            gamma2_p1 = Chrsijk(l,l,ridx2,i,j,kp1)
+            gamma2_p1 = Chrsijk(l,l,ridx1,i,j,kp1)
             !call get_christoffel(i,j,km1,gij,nx,dx,l,l,ridx2,gamma2_m1)
-            gamma2_m1 = Chrsijk(l,l,ridx2,i,j,km1)
+            gamma2_m1 = Chrsijk(l,l,ridx1,i,j,km1)
             !call get_christoffel(i,j,kp2,gij,nx,dx,l,l,ridx2,gamma2_p2)
-            gamma2_p2 = Chrsijk(l,l,ridx2,i,j,kp2)
+            gamma2_p2 = Chrsijk(l,l,ridx1,i,j,kp2)
             !call get_christoffel(i,j,km2,gij,nx,dx,l,l,ridx2,gamma2_m2)
-            gamma2_m2 = Chrsijk(l,l,ridx2,i,j,km2)
+            gamma2_m2 = Chrsijk(l,l,ridx1,i,j,km2)
 
          endif
          call get_deriv1fourth(gamma2_p1,gamma2_p2,gamma2_m1,gamma2_m2,dx,dgamma2)
