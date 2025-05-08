@@ -192,7 +192,7 @@ FLRWSolver::FLRW_perturb	  = "yes"
 FLRWSolver::FLRW_perturb_type     = "powerspectrum_exact"
 
 # below for perturb_type = powerspectrum 
-FLRWSolver::FLRW_phi_powerspectrum_file = "FLRW_powerspec_exact_test_phi_powerspectrum.dat"
+FLRWSolver::FLRW_phi_powerspectrum_file = "../../../arrangements/EinsteinInitialData/FLRWSolver/test/FLRW_powerspec_exact_test_phi_powerspectrum.dat"
 FLRWSolver::FLRW_random_seed        = 10
 FLRWSolver::FLRW_boxlength          = 1000.0
 
