@@ -2,3 +2,8 @@ TEST FLRW_singlemode_test
 {
   RELTOL 1e-10
 }
+
+TEST FLRW_powerspec_exact_test
+{
+  RELTOL 1e-3
+}
