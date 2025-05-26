@@ -47,8 +47,8 @@ KEYWORD FLRW_perturb_type "Add perturbation of the following type"
  "single_mode" :: "Single mode perturbation (sine wave in density). Set FLRW_perturb_direction to choose dimensions of perturbation and single_perturb_wavelength."
  "powerspectrum" :: "A power spectrum of (linear) perturbations. Supply the path to your chosen P_delta(k) in FLRW_powerspectrum_file"
  "powerspectrum_exact" :: "A power spectrum of phi perturbations; constraints solved exactly. Supply the path to your chosen P_phi(k) in FLRW_phi_powerspectrum_file"
- "fileread" :: "Linear perturbations to FLRW in longitudinal gauge; specify \phi, delta, v^i; read in from supplied ascii files (specific format - see doc)"
- "fileread_exact" :: "Perturbations to FLRW in longitudinal gauge; specify \phi only; constraints solved exactly; read in from supplied ascii files (specific format - see doc)" 
+ "fileread" :: "Linear perturbations to FLRW in longitudinal gauge; specify phi, delta, vi; read in from supplied ascii files (specific format - see doc)"
+ "fileread_exact" :: "Perturbations to FLRW in longitudinal gauge; specify phi only; constraints solved exactly; read in from supplied ascii files (specific format - see doc)" 
 } "single_mode"
 
 

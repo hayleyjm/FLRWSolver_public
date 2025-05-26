@@ -1,9 +1,9 @@
 TEST FLRW_singlemode_test
 {
   RELTOL 1e-10
-}
+} # this test uses analytic functions; expect very small differences
 
-TEST FLRW_powerspec_exact_test
+TEST FLRW_fileread_exact_test
 {
   RELTOL 1e-3
-}
+} # this test uses fourth-order finite differences; test has dx=0.1; err = O(1e-4)

@@ -188,7 +188,7 @@ FLRWSolver::FLRW_init_HL         = 1.0
 FLRWSolver::FLRW_init_a          = 1.0
 
 # choose some things regarding perturbations
-FLRWSolver::FLRW_perturb	  = "yes"
+FLRWSolver::FLRW_perturb      = "yes"
 FLRWSolver::FLRW_perturb_type = "fileread_exact"
 
 # below for perturb_type = fileread_exact
