@@ -11,6 +11,7 @@ SRCS = flrw_inittools.F90 \
        flrw_mescaline_helpers.F90 \
        flrw_exactics.F90 \
        flrw_fileread.F90 \
+       flrw_fileread_exact.F90 \
        flrw_paramcheck.F90
 
 # Subdirectories containing source files
